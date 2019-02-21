@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import os
-os.chdir('/Users/vidale/Documents/PyCode/Codes')
+os.chdir('/Users/vidale/Documents/GitHub/Hinet-codes')
 from pro2_dec import pro2_decimate
 
 os.environ['PATH'] += os.pathsep + '/usr/local/bin'

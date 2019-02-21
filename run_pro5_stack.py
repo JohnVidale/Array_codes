@@ -6,7 +6,7 @@
 # John Vidale 2/2019
 
 import os
-os.chdir('/Users/vidale/Documents/PyCode/Codes')
+os.chdir('/Users/vidale/Documents/GitHub/Hinet-codes')
 from pro5_stack import pro5stack
 
 os.environ['PATH'] += os.pathsep + '/usr/local/bin'
