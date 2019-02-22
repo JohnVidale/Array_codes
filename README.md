@@ -1,1 +1,1 @@
-# codes to get and analyze Hinet and LASA data with seismic sections and beamforming
+# Codes to get and analyze Hinet and analyze LASA data with selection, seismic sections, and beamforming.
