@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-# input is set of hinet traces
+# input is set of hinet or LASA traces
 # this program tapers, filters, selects range and SNR
 # plots against traveltime curves, either raw or reduced against traveltimes
-# This programs deals with both of repeated events.
+# This programs deals with both of a pair of repeated events.
 # John Vidale 2/2019
 
 def pro3pair(eq_file1, eq_file2, stat_corr = 1, dphase = 'PKIKP', dphase2 = 'PKiKP', dphase3 = 'PKIKP', dphase4 = 'PKiKP',
@@ -56,7 +56,7 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, dphase = 'PKIKP', dphase2 = 'PKi
 	print('2nd event: date_label ' + date_label2 + ' time ' + str(t2) + ' lat '
 	   + str(ev_lat2) + ' lon ' + str( ev_lon2) + ' depth ' + str(ev_depth2))
 
-	#%% Get Hinet station location file
+	#%% Get Hinet or LASA station location file
 	if stat_corr == 1:  # correcting for static terms, needs to input them
 		if alt_statics == 0: # standard set
 			sta_file = '/Users/vidale/Documents/GitHub/Hinet-codes/hinet_sta_statics.txt'
@@ -83,9 +83,9 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, dphase = 'PKIKP', dphase2 = 'PKi
 			st_shift.append(split_line[4])
 			st_corr.append(split_line[5])
 	else: # no static terms, always true for LASA
-		if LASA == 0: # standard set
+		if LASA == 0: # Hinet set
 			sta_file = '/Users/vidale/Documents/GitHub/Hinet-codes/hinet_sta.txt'
-		else: # custom set made by this event for this event
+		else: #         LASA set
 			sta_file = '/Users/vidale/Documents/GitHub/Hinet-codes/LASA_sta.txt'
 		with open(sta_file, 'r') as file:
 			lines = file.readlines()
@@ -103,35 +103,36 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, dphase = 'PKIKP', dphase2 = 'PKi
 			st_lons.append( split_line[2])
 
 	#%%
-#	LASA = 0  # flag that the data is from LASA so that station list is appropriate
-#	stat_corr = 1 # apply station static corrections
 	verbose = 0           # more output
 	rel_time = 1          # timing is relative to a chosen phase, otherwise relative to OT
+	taper_frac = .05      #Fraction of window tapered on both ends
+	signal_dur = 5.       # signal length used in SNR calculation
+	plot_tt = 1           # plot the traveltimes?
+	do_decimate = 0         # 0 if no decimation desired
+	ref_loc = 0  # 1 if selecting stations within ref_rad of ref_lat and ref_lon
+	if ref_loc == 0:
+		ref_lat = 36.3  # °N, around middle of Japan
+		ref_lon = 138.5 # °E
+		ref_rad = 1.5   # ° radius
+	             # 0 if selecting stations by distance from earthquake
+# Parameters entered on the command line
+#	LASA = 0  # flag that the data is from LASA so that station list is appropriate
+#	stat_corr = 1 # apply station static corrections
 #	dphase  = 'PKIKP'       # phase to be aligned
 #	dphase2 = 'PKiKP'      # another phase to have traveltime plotted
 #	dphase3 = 'pPKiKP'        # another phase to have traveltime plotted
 #	dphase4 = 'pPKIKP'        # another phase to have traveltime plotted
 #	start_buff = 50       # plots start Xs before PKIKP
 #	end_buff   = 200       # plots end Xs before PKIKP
-	taper_frac = .05      #Fraction of window tapered on both ends
-	signal_dur = 5.       # signal length used in SNR calculation
 #	plot_scale_fac = 0.5  #  Bigger numbers make each trace amplitude bigger on plot
 #	qual_threshold =  0.2   # minimum SNR
 #	corr_threshold = 0.7  # minimum correlation in measuring shift to use station
-	plot_tt = 1           # plot the traveltimes?
-	do_decimate = 0         # 0 if no decimation desired
 #	max_dist = 180
 #	min_dist = 0
 	#max_dist = 52.5
 	#min_dist = 45
 #	freq_min = 1
 #	freq_max = 3
-	ref_loc = 0  # 1 if selecting stations within ref_rad of ref_lat and ref_lon
-	             # 0 if selecting stations by distance from earthquake
-	if ref_loc == 0:
-		ref_lat = 36.3  # °N, around middle of Japan
-		ref_lon = 138.5 # °E
-		ref_rad = 1.5   # ° radius
 
 	#%% Is taper too long compared to noise estimation window?
 	totalt = start_buff + end_buff
@@ -153,20 +154,6 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, dphase = 'PKIKP', dphase2 = 'PKi
 	red_dist = 55
 	red_time = 300
 	red_slow = 7.2 # seconds per degree
-
-	#%% In case one wants to manually enter data here
-#	date_label1 = '2008-02-18' # date for filename
-#	date_label2 = '2011-02-21' # event has to be unique and in specified 10 minutes
-#
-#	ev_lon1   = -25.697
-#	ev_lat1   = -58.986
-#	ev_depth1 = 66.5
-#	t1        = UTCDateTime('2008-02-17T19:32:09.100')
-#
-#	ev_lon2   = -25.696
-#	ev_lat2   = -58.986
-#	ev_depth2 = 66.5
-#	t2        = UTCDateTime('2011-02-20T17:37:45.022')
 
 	#%% Load waveforms
 	st1 = Stream()
@@ -347,8 +334,6 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, dphase = 'PKIKP', dphase2 = 'PKi
 				if (SNR1 > qual_threshold and SNR2 > qual_threshold):
 					st1good += tr1
 					st2good += tr2
-	#print(st1good)
-	#print(st2good)
 	print('Above SNR threshold: ' + str(len(st1good)) + ' traces')
 
 	#%%  get station lat-lon, compute distance for plot
@@ -471,7 +456,6 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, dphase = 'PKIKP', dphase2 = 'PKi
 	plt.xlabel('Time (s)')
 	plt.ylabel('Epicentral distance from event (°)')
 	plt.title(dphase + ' for ' + fname1[2:12] + ' vs ' + fname2[2:12])
-	#plt.title('Two Sumatra M5.5 quakes, seven years apart, SNR > 15')
 	plt.show()
 
 	#  Save processed files

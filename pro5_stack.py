@@ -9,7 +9,7 @@
 def pro5stack(eq_file, plot_scale_fac = 0.05, slow_lo = -0.1, slow_hi = 0.1,
 			  slow_delta = 0.0005, start_buff = 50, end_buff = 50,
 			  ref_lat = 36.3, ref_lon = 138.5, envelope = 1,
-			  norm = 1, global_norm_plot = 1, color_plot = 1, fig_index = 401):
+			  norm = 1, global_norm_plot = 1, color_plot = 1, fig_index = 401, LASA = 0):
 
 	import obspy
 	import obspy.signal
@@ -46,29 +46,25 @@ def pro5stack(eq_file, plot_scale_fac = 0.05, slow_lo = -0.1, slow_hi = 0.1,
 	#if not sys.warnoptions:
 	#    warnings.simplefilter("ignore")
 
-	#%% Get Hinet station location file
-	sta_file = '/Users/vidale/Documents/PyCode/Codes/Hinet_station/hinet_master_list.txt'
+	#%% Get Hinet or LASA station location file
+	if LASA == 0: # Hinet set
+		sta_file = '/Users/vidale/Documents/GitHub/Hinet-codes/hinet_sta.txt'
+	else:         # LASA set
+		sta_file = '/Users/vidale/Documents/GitHub/Hinet-codes/LASA_sta.txt'
 	with open(sta_file, 'r') as file:
 		lines = file.readlines()
-	print(str(len(lines)) + ' stations are on hinet_master_list')
-
+	print(str(len(lines)) + ' stations read from ' + sta_file)
 	# Load station coords into arrays
 	station_index = range(len(lines))
 	st_names = []
-	st_dist  = []
 	st_lats  = []
 	st_lons  = []
-	st_shift = []
-	st_corr  = []
 	for ii in station_index:
 		line = lines[ii]
 		split_line = line.split()
 		st_names.append(split_line[0])
-		st_dist.append(split_line[1])
-		st_lats.append( split_line[2])
-		st_lons.append( split_line[3])
-		st_shift.append(split_line[4])
-		st_corr.append(split_line[5])
+		st_lats.append( split_line[1])
+		st_lons.append( split_line[2])
 
 	#%% Input parameters
 	# #%% Get saved event info, also used to name files
@@ -187,7 +183,7 @@ def pro5stack(eq_file, plot_scale_fac = 0.05, slow_lo = -0.1, slow_hi = 0.1,
 		plt.ylim(slow_lo,slow_hi)
 		plt.xlim(-start_buff,end_buff)
 	plt.xlabel('Time (s)')
-	plt.ylabel('Slowness (s/°)')
+	plt.ylabel('Slowness (s/km)')
 	plt.title(fname[2:12])
 	plt.show()
 
