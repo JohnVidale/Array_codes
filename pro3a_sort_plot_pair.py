@@ -9,7 +9,7 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, dphase = 'PKIKP', dphase2 = 'PKi
 			start_buff = 200, end_buff = 500,
 			plot_scale_fac = 0.05,qual_threshold = 0, corr_threshold = 0,
 			freq_min = 1, freq_max = 3, min_dist = 0, max_dist = 180,
-			alt_statics = 0, statics_file = 'nothing'):
+			alt_statics = 0, statics_file = 'nothing', LASA = 0):
 
 	from obspy import UTCDateTime
 	from obspy import Stream
@@ -57,33 +57,53 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, dphase = 'PKIKP', dphase2 = 'PKi
 	   + str(ev_lat2) + ' lon ' + str( ev_lon2) + ' depth ' + str(ev_depth2))
 
 	#%% Get Hinet station location file
-	if alt_statics == 0: # standard set
-		sta_file = '/Users/vidale/Documents/PyCode/Codes/Hinet_station/hinet_master_list.txt'
-	else: # custom set made by this event for this event
-		sta_file = '/Users/vidale/Documents/PyCode/Hinet/Statics/' + 'HA' + date_label1[:10] + 'pro4_' + dphase + '.statics'
-	with open(sta_file, 'r') as file:
-		lines = file.readlines()
-	print(str(len(lines)) + ' lines read from hinet_master_list')
-
-	# Load station coords into arrays
-	station_index = range(len(lines))
-	st_names = []
-	st_dist  = []
-	st_lats  = []
-	st_lons  = []
-	st_shift = []
-	st_corr  = []
-	for ii in station_index:
-		line = lines[ii]
-		split_line = line.split()
-		st_names.append(split_line[0])
-		st_dist.append(split_line[1])
-		st_lats.append( split_line[2])
-		st_lons.append( split_line[3])
-		st_shift.append(split_line[4])
-		st_corr.append(split_line[5])
+	if stat_corr == 1:  # correcting for static terms, needs to input them
+		if alt_statics == 0: # standard set
+			sta_file = '/Users/vidale/Documents/GitHub/Hinet-codes/hinet_sta_statics.txt'
+		else: # custom set made by this event for this event
+			sta_file = '/Users/vidale/Documents/PyCode/Hinet/Statics/' + 'HA' + date_label1[:10] + 'pro4_' + dphase + '.statics'
+		with open(sta_file, 'r') as file:
+			lines = file.readlines()
+		print(str(len(lines)) + ' stations read from ' + sta_file)
+		# Load station coords into arrays
+		station_index = range(len(lines))
+		st_names = []
+		st_dist  = []
+		st_lats  = []
+		st_lons  = []
+		st_shift = []
+		st_corr  = []
+		for ii in station_index:
+			line = lines[ii]
+			split_line = line.split()
+			st_names.append(split_line[0])
+			st_dist.append(split_line[1])
+			st_lats.append( split_line[2])
+			st_lons.append( split_line[3])
+			st_shift.append(split_line[4])
+			st_corr.append(split_line[5])
+	else: # no static terms, always true for LASA
+		if LASA == 0: # standard set
+			sta_file = '/Users/vidale/Documents/GitHub/Hinet-codes/hinet_sta.txt'
+		else: # custom set made by this event for this event
+			sta_file = '/Users/vidale/Documents/GitHub/Hinet-codes/LASA_sta.txt'
+		with open(sta_file, 'r') as file:
+			lines = file.readlines()
+		print(str(len(lines)) + ' stations read from ' + sta_file)
+		# Load station coords into arrays
+		station_index = range(len(lines))
+		st_names = []
+		st_lats  = []
+		st_lons  = []
+		for ii in station_index:
+			line = lines[ii]
+			split_line = line.split()
+			st_names.append(split_line[0])
+			st_lats.append( split_line[1])
+			st_lons.append( split_line[2])
 
 	#%%
+#	LASA = 0  # flag that the data is from LASA so that station list is appropriate
 #	stat_corr = 1 # apply station static corrections
 	verbose = 0           # more output
 	rel_time = 1          # timing is relative to a chosen phase, otherwise relative to OT
