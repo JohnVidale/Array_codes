@@ -6,11 +6,10 @@
 # This programs deals with a single event.
 # John Vidale 2/2019
 
-def pro5stack2d(eq_file, plot_scale_fac = 0.05,
+def pro5stack2d(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 			  slowR_lo = -0.1, slowR_hi = 0.1, slowT_lo = -0.1, slowT_hi = 0.1,
-			  slow_delta = 0.0005, start_buff = 50, end_buff = 50,
-			  ref_lat = 36.3, ref_lon = 138.5, envelope = 1,
-			  norm = 1, global_norm_plot = 1, color_plot = 1, fig_index = 401,
+			  start_buff = 50, end_buff = 50,
+			  envelope = 1, norm = 1, global_norm_plot = 1, fig_index = 401,
 			  LASA = 0, NS = 0):
 
 	import obspy
@@ -51,8 +50,12 @@ def pro5stack2d(eq_file, plot_scale_fac = 0.05,
 	#%% Get Hinet or LASA station location file
 	if LASA == 0: # Hinet set
 		sta_file = '/Users/vidale/Documents/GitHub/Hinet-codes/hinet_sta.txt'
+		ref_lat = 36.3
+		ref_lon = 138.5
 	else:         # LASA set
 		sta_file = '/Users/vidale/Documents/GitHub/Hinet-codes/LASA_sta.txt'
+		ref_lat = 46.69
+		ref_lon = -106.22
 	with open(sta_file, 'r') as file:
 		lines = file.readlines()
 	print(str(len(lines)) + ' stations read from ' + sta_file)
@@ -80,10 +83,7 @@ def pro5stack2d(eq_file, plot_scale_fac = 0.05,
 	print('First trace has : ' + str(nt) + ' time pts, time sampling of '
 		  + str(dt) + ' and thus duration of ' + str((nt-1)*dt))
 
-	#%% Build Stack arrays
-	stack = Stream()
-	tr = Trace()
-	tr.stats.delta = dt
+	#%% Make grid of slownesses
 	slowR_n = int(1 + (slowR_hi - slowR_lo)/slow_delta)  # number of slownesses
 	slowT_n = int(1 + (slowT_hi - slowT_lo)/slow_delta)  # number of slownesses
 	stack_nt = int(1 + ((end_buff + start_buff)/dt))  # number of time points
@@ -93,17 +93,27 @@ def pro5stack2d(eq_file, plot_scale_fac = 0.05,
 	stack_Rslows = [(x * slow_delta + slowR_lo) for x in a1R]
 	stack_Tslows = [(x * slow_delta + slowT_lo) for x in a1T]
 	print(str(slowR_n) + ' radial slownesses, ' + str(slowT_n) + ' trans slownesses, ')
+
+	#%% Build empty Stack array
+	stack = Stream()
+	tr = Trace()
+	tr.stats.delta = dt
 	tr.stats.starttime = t - start_buff
-	tr.tr = np.zeros(stack_nt)
+	tr.stats.npts = stack_nt
+	tr.stats.network = 'stack'
+	tr.stats.channel = 'BHZ'
+	tr.data = np.zeros(stack_nt)
+	done = 0
 	for stackR_one in stack_Rslows:
 		for stackT_one in stack_Tslows:
 			tr1 = tr.copy()
-			tr1.stats.station = str(stackR_one*slowT_n + stackT_one)
+			tr1.stats.station = str(int(done))
 			stack.extend([tr1])
+			done += 1
 
 	#  Only need to compute ref location to event distance once
 	ref_dist_az = gps2dist_azimuth(ev_lat,ev_lon,ref_lat,ref_lon)
-#	ref_dist    = ref_dist_az[0]
+#	ref_dist    = ref_dist_az[0]/1000  # km
 	ref_back_az = ref_dist_az[2]
 
 	#%% select by distance, window and adjust start time to align picked times
@@ -122,28 +132,29 @@ def pro5stack2d(eq_file, plot_scale_fac = 0.05,
 #				tr.stats.distance = dist # distance in m
 #				del_distR = (ref_dist - dist) / (1000) # in km
 				# alternate calculation in local coordinates
-				rel_dist_az = gps2dist_azimuth(stalat,stalon,ev_lat,ev_lon)
-				rel_dist    = rel_dist_az[0]
+				rel_dist_az = gps2dist_azimuth(stalat,stalon,ref_lat,ref_lon)
+				rel_dist    = rel_dist_az[0]/1000  # km
 				rel_back_az = rel_dist_az[2]
 				# Radial and transverse
 				if NS == 0:
-					del_distR = (-rel_dist) * math.cos( math.radians( rel_back_az - ref_back_az))
-					del_distT =   rel_dist  * math.sin( math.radians( rel_back_az - ref_back_az))
+					del_distR = (-rel_dist) * math.cos( rel_back_az - ref_back_az)
+					del_distT =   rel_dist  * math.sin( rel_back_az - ref_back_az)
 				# North and east
 				else:
-					del_distR = (-rel_dist) * math.cos( math.radians (rel_back_az))
-					del_distT =   rel_dist  * math.sin( math.radians( rel_back_az))
+					del_distR = (-rel_dist) * math.cos( rel_back_az)
+					del_distT =   rel_dist  * math.sin( rel_back_az)
 				for slowR_i in range(slowR_n):  # for this station, loop over radial slownesses
 					for slowT_i in range(slowT_n):  # loop over transverse slownesses
 						time_lag  = del_distR * stack_Rslows[slowR_i]  # time shift due to slowness
 						time_lag += del_distT * stack_Tslows[slowT_i]  # time shift due to slowness
 						time_correction = ((t-tr.stats.starttime) + (time_lag - start_buff))/dt
-		#				print('Time lag ' + str(time_lag) + ' for slowness ' + str(stack_slows[slow_i]) + ' and distance ' + str(del_dist) + ' time sample correction is ' + str(time_correction))
+		#				print('Time lag ' + str(time_lag) + ' for slowness ' + str(stack_slows[slow_i])
+		#					+ ' and distance ' + str(del_dist) + ' time sample correction is ' + str(time_correction))
 						index = slowR_i*slowT_n + slowT_i
 						for it in range(stack_nt):  # check points one at a time
 							it_in = int(it + time_correction)
 							if it_in >= 0 and it_in < nt: # does data lie within seismogram?
-								stack[index].tr[it] += tr[it_in]
+								stack[index].data[it] += tr[it_in]
 				done += 1
 				if done%50 == 0:
 					print('Done stacking ' + str(done) + ' out of ' + str(len(st)) + ' stations.')
@@ -153,16 +164,16 @@ def pro5stack2d(eq_file, plot_scale_fac = 0.05,
 	for slowR_i in range(slowR_n):  # loop over radial slownesses
 		for slowT_i in range(slowT_n):  # loop over transverse slownesses
 			index = slowR_i*slowT_n + slowT_i
-#			if len(stack[index].tr) == 0:
+#			if len(stack[index].data) == 0:
 #					print('%d data has zero length ' % (slow_i))
-			if envelope == 1 or color_plot == 1:
-				stack[index].tr = np.abs(hilbert(stack[index].tr))
-			local_max = max(abs(stack[index].tr))
+			if envelope == 1:
+				stack[index].data = np.abs(hilbert(stack[index].data))
+			local_max = max(abs(stack[index].data))
 			if local_max > global_max:
 				global_max = local_max
 
 	#  Save processed files
-	fname = 'HD' + date_label + '3dstack.mseed'
+	fname = 'HD' + date_label + '_2dstack.mseed'
 	stack.write(fname,format = 'MSEED')
 
 	elapsed_time_wc = time.time() - start_time_wc

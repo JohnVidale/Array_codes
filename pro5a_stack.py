@@ -8,7 +8,7 @@
 
 def pro5stack(eq_file, plot_scale_fac = 0.05, slow_lo = -0.1, slow_hi = 0.1,
 			  slow_delta = 0.0005, start_buff = 50, end_buff = 50,
-			  ref_lat = 36.3, ref_lon = 138.5, envelope = 1,
+			  ref_lat = 36.3, ref_lon = 138.5, envelope = 1, plot_dyn_range = 1000,
 			  norm = 1, global_norm_plot = 1, color_plot = 1, fig_index = 401, LASA = 0):
 
 	import obspy
@@ -47,10 +47,14 @@ def pro5stack(eq_file, plot_scale_fac = 0.05, slow_lo = -0.1, slow_hi = 0.1,
 	#    warnings.simplefilter("ignore")
 
 	#%% Get Hinet or LASA station location file
-	if LASA == 0: # Hinet set
+	if LASA == 0: # Hinet set and center
 		sta_file = '/Users/vidale/Documents/GitHub/Hinet-codes/hinet_sta.txt'
-	else:         # LASA set
+		ref_lat = 36.3
+		ref_lon = 138.5
+	else:         # LASA set and center
 		sta_file = '/Users/vidale/Documents/GitHub/Hinet-codes/LASA_sta.txt'
+		ref_lat = 46.69
+		ref_lon = -106.22
 	with open(sta_file, 'r') as file:
 		lines = file.readlines()
 	print(str(len(lines)) + ' stations read from ' + sta_file)
@@ -82,6 +86,8 @@ def pro5stack(eq_file, plot_scale_fac = 0.05, slow_lo = -0.1, slow_hi = 0.1,
 	stack = Stream()
 	tr = Trace()
 	tr.stats.delta = dt
+	tr.stats.network = 'stack'
+	tr.stats.channel = 'BHZ'
 	slow_n = int(1 + (slow_hi - slow_lo)/slow_delta)  # number of slownesses
 	stack_nt = int(1 + ((end_buff + start_buff)/dt))  # number of time points
 	# In English, stack_slows = range(slow_n) * slow_delta - slow_lo
@@ -89,11 +95,13 @@ def pro5stack(eq_file, plot_scale_fac = 0.05, slow_lo = -0.1, slow_hi = 0.1,
 	stack_slows = [(x * slow_delta + slow_lo) for x in a1]
 	print(str(slow_n) + ' slownesses.')
 	tr.stats.starttime = t - start_buff
-	tr.tr = np.zeros(stack_nt)
+	tr.data = np.zeros(stack_nt)
+	done = 0
 	for stack_one in stack_slows:
 		tr1 = tr.copy()
-		tr1.stats.station = str(stack_one)
+		tr1.stats.station = str(int(done))
 		stack.extend([tr1])
+		done += 1
 	#	stack.append([tr])
 	#	stack += tr
 
@@ -128,23 +136,23 @@ def pro5stack(eq_file, plot_scale_fac = 0.05, slow_lo = -0.1, slow_hi = 0.1,
 					for it in range(stack_nt):  # check points one at a time
 						it_in = int(it + time_correction)
 						if it_in >= 0 and it_in < nt: # does data lie within seismogram?
-							stack[slow_i].tr[it] += tr[it_in]
+							stack[slow_i].data[it] += tr[it_in]
 				done += 1
 				if done%50 == 0:
 					print('Done stacking ' + str(done) + ' out of ' + str(len(st)) + ' stations.')
 	# plot traces
 	global_max = 0
 	for slow_i in range(slow_n): # find global max, and if requested, take envelope
-		if len(stack[slow_i].tr) == 0:
+		if len(stack[slow_i].data) == 0:
 				print('%d data has zero length ' % (slow_i))
 		if envelope == 1 or color_plot == 1:
-			stack[slow_i].tr = np.abs(hilbert(stack[slow_i].tr))
-		local_max = max(abs(stack[slow_i].tr))
+			stack[slow_i].data = np.abs(hilbert(stack[slow_i].data))
+		local_max = max(abs(stack[slow_i].data))
 		if local_max > global_max:
 			global_max = local_max
 
 	# create time axis (x-axis)
-	ttt = (np.arange(len(stack[slow_i].tr)) * stack[slow_i].stats.delta +
+	ttt = (np.arange(len(stack[slow_i].data)) * stack[slow_i].stats.delta +
 		 (stack[slow_i].stats.starttime - t)) # in units of seconds
 
 	#%%  Plotting
@@ -152,10 +160,10 @@ def pro5stack(eq_file, plot_scale_fac = 0.05, slow_lo = -0.1, slow_hi = 0.1,
 		stack_array = np.zeros((slow_n,stack_nt))
 
 	#	stack_array = np.random.rand(int(slow_n),int(stack_nt))  # test with random numbers
-		min_allowed = global_max/1000
+		min_allowed = global_max/plot_dyn_range
 		for it in range(stack_nt):  # check points one at a time
 			for slow_i in range(slow_n):  # for this station, loop over slownesses
-				num_val = stack[slow_i].tr[it]
+				num_val = stack[slow_i].data[it]
 				if num_val < min_allowed:
 					num_val = min_allowed
 				stack_array[slow_i, it] = math.log10(num_val)
@@ -174,11 +182,11 @@ def pro5stack(eq_file, plot_scale_fac = 0.05, slow_lo = -0.1, slow_hi = 0.1,
 		for slow_i in range(slow_n):
 			dist_offset = stack_slows[slow_i] # in units of slowness
 			if global_norm_plot != 1:
-				plt.plot(ttt, stack[slow_i].tr*plot_scale_fac / (stack[slow_i].tr.max()
-			- stack[slow_i].tr.min()) + dist_offset, color = 'black')
+				plt.plot(ttt, stack[slow_i].data*plot_scale_fac / (stack[slow_i].data.max()
+			- stack[slow_i].data.min()) + dist_offset, color = 'black')
 			else:
-				plt.plot(ttt, stack[slow_i].tr*plot_scale_fac / (global_max
-			- stack[slow_i].tr.min()) + dist_offset, color = 'black')
+				plt.plot(ttt, stack[slow_i].data*plot_scale_fac / (global_max
+			- stack[slow_i].data.min()) + dist_offset, color = 'black')
 		plt.figure(3,figsize=(10,10))
 		plt.ylim(slow_lo,slow_hi)
 		plt.xlim(-start_buff,end_buff)
@@ -186,6 +194,10 @@ def pro5stack(eq_file, plot_scale_fac = 0.05, slow_lo = -0.1, slow_hi = 0.1,
 	plt.ylabel('Slowness (s/km)')
 	plt.title(fname[2:12])
 	plt.show()
+
+	#  Save processed files
+	fname = 'HD' + date_label + '_1dstack.mseed'
+	stack.write(fname,format = 'MSEED')
 
 	elapsed_time_wc = time.time() - start_time_wc
 	print('This job took ' + str(elapsed_time_wc) + ' seconds')
