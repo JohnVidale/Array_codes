@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# input is set of hinet or LASA traces
+# input is set of hinet, LASA, or NORSAR traces
 # this program tapers, filters, selects range and SNR
 # plots against traveltime curves, either raw or reduced against traveltimes
 # This programs deals with both of a pair of repeated events.
@@ -9,7 +9,8 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, dphase = 'PKIKP', dphase2 = 'PKi
 			start_buff = 200, end_buff = 500,
 			plot_scale_fac = 0.05,qual_threshold = 0, corr_threshold = 0,
 			freq_min = 1, freq_max = 3, min_dist = 0, max_dist = 180,
-			alt_statics = 0, statics_file = 'nothing', LASA = 0):
+			alt_statics = 0, statics_file = 'nothing', ARRAY = 0):
+# 0 is Hinet, 1 is LASA, 2 is NORSAR
 
 	from obspy import UTCDateTime
 	from obspy import Stream
@@ -82,11 +83,13 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, dphase = 'PKIKP', dphase2 = 'PKi
 			st_lons.append( split_line[3])
 			st_shift.append(split_line[4])
 			st_corr.append(split_line[5])
-	else: # no static terms, always true for LASA
-		if LASA == 0: # Hinet set
+	else: # no static terms, always true for LASA or NORSAR
+		if ARRAY == 0: # Hinet set
 			sta_file = '/Users/vidale/Documents/GitHub/Hinet-codes/hinet_sta.txt'
-		else: #         LASA set
+		elif ARRAY == 1: #         LASA set
 			sta_file = '/Users/vidale/Documents/GitHub/Hinet-codes/LASA_sta.txt'
+		else: #         NORSAR set
+			sta_file = '/Users/vidale/Documents/GitHub/Hinet-codes/NORSAR_sta.txt'
 		with open(sta_file, 'r') as file:
 			lines = file.readlines()
 		print(str(len(lines)) + ' stations read from ' + sta_file)
@@ -116,7 +119,6 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, dphase = 'PKIKP', dphase2 = 'PKi
 		ref_rad = 1.5   # ° radius
 	             # 0 if selecting stations by distance from earthquake
 # Parameters entered on the command line
-#	LASA = 0  # flag that the data is from LASA so that station list is appropriate
 #	stat_corr = 1 # apply station static corrections
 #	dphase  = 'PKIKP'       # phase to be aligned
 #	dphase2 = 'PKiKP'      # another phase to have traveltime plotted

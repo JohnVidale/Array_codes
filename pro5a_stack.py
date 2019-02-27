@@ -9,7 +9,7 @@
 def pro5stack(eq_file, plot_scale_fac = 0.05, slow_lo = -0.1, slow_hi = 0.1,
 			  slow_delta = 0.0005, start_buff = 50, end_buff = 50,
 			  ref_lat = 36.3, ref_lon = 138.5, envelope = 1, plot_dyn_range = 1000,
-			  norm = 1, global_norm_plot = 1, color_plot = 1, fig_index = 401, LASA = 0):
+			  norm = 1, global_norm_plot = 1, color_plot = 1, fig_index = 401, ARRAY = 0):
 
 	import obspy
 	import obspy.signal
@@ -47,14 +47,18 @@ def pro5stack(eq_file, plot_scale_fac = 0.05, slow_lo = -0.1, slow_hi = 0.1,
 	#    warnings.simplefilter("ignore")
 
 	#%% Get Hinet or LASA station location file
-	if LASA == 0: # Hinet set and center
+	if ARRAY == 0: # Hinet set and center
 		sta_file = '/Users/vidale/Documents/GitHub/Hinet-codes/hinet_sta.txt'
 		ref_lat = 36.3
 		ref_lon = 138.5
-	else:         # LASA set and center
+	elif ARRAY == 1: # LASA set and center
 		sta_file = '/Users/vidale/Documents/GitHub/Hinet-codes/LASA_sta.txt'
 		ref_lat = 46.69
 		ref_lon = -106.22
+	else:         # NORSAR set and center if 2
+		sta_file = '/Users/vidale/Documents/GitHub/Hinet-codes/NORSAR_sta.txt'
+		ref_lat = 61
+		ref_lon = 11
 	with open(sta_file, 'r') as file:
 		lines = file.readlines()
 	print(str(len(lines)) + ' stations read from ' + sta_file)
