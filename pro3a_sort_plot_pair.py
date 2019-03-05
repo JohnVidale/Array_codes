@@ -5,12 +5,15 @@
 # This programs deals with both of a pair of repeated events.
 # John Vidale 2/2019
 
-def pro3pair(eq_file1, eq_file2, stat_corr = 1, dphase = 'PKIKP', dphase2 = 'PKiKP', dphase3 = 'PKIKP', dphase4 = 'PKiKP',
+def pro3pair(eq_file1, eq_file2, stat_corr = 1,
+			 dphase = 'PKIKP', dphase2 = 'PKiKP', dphase3 = 'PKIKP', dphase4 = 'PKiKP',
 			start_buff = 200, end_buff = 500,
 			plot_scale_fac = 0.05,qual_threshold = 0, corr_threshold = 0,
 			freq_min = 1, freq_max = 3, min_dist = 0, max_dist = 180,
-			alt_statics = 0, statics_file = 'nothing', ARRAY = 0):
+			alt_statics = 0, statics_file = 'nothing', ARRAY = 0, ref_loc = 0):
 # 0 is Hinet, 1 is LASA, 2 is NORSAR
+	if ARRAY != 0:
+		stat_corr = 0 # correlations only exist for Hinet so far
 
 	from obspy import UTCDateTime
 	from obspy import Stream
@@ -57,12 +60,13 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, dphase = 'PKIKP', dphase2 = 'PKi
 	print('2nd event: date_label ' + date_label2 + ' time ' + str(t2) + ' lat '
 	   + str(ev_lat2) + ' lon ' + str( ev_lon2) + ' depth ' + str(ev_depth2))
 
-	#%% Get Hinet or LASA station location file
-	if stat_corr == 1:  # correcting for static terms, needs to input them
+	#%% Get Hinet, LASA, or NORSAR station location file
+	if stat_corr == 1:  # load static terms, only applies to Hinet
 		if alt_statics == 0: # standard set
 			sta_file = '/Users/vidale/Documents/GitHub/Hinet-codes/hinet_sta_statics.txt'
 		else: # custom set made by this event for this event
-			sta_file = '/Users/vidale/Documents/PyCode/Hinet/Statics/' + 'HA' + date_label1[:10] + 'pro4_' + dphase + '.statics'
+			sta_file = ('/Users/vidale/Documents/PyCode/Hinet/Statics/' + 'HA' +
+			   date_label1[:10] + 'pro4_' + dphase + '.statics')
 		with open(sta_file, 'r') as file:
 			lines = file.readlines()
 		print(str(len(lines)) + ' stations read from ' + sta_file)
@@ -112,12 +116,18 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, dphase = 'PKIKP', dphase2 = 'PKi
 	signal_dur = 5.       # signal length used in SNR calculation
 	plot_tt = 1           # plot the traveltimes?
 	do_decimate = 0         # 0 if no decimation desired
-	ref_loc = 0  # 1 if selecting stations within ref_rad of ref_lat and ref_lon
-	if ref_loc == 0:
-		ref_lat = 36.3  # °N, around middle of Japan
-		ref_lon = 138.5 # °E
-		ref_rad = 1.5   # ° radius
+	#ref_loc = 0  # 1 if selecting stations within ref_rad of ref_lat and ref_lon
 	             # 0 if selecting stations by distance from earthquake
+	if ref_loc == 1:
+		if ARRAY == 0:
+			ref_lat = 36.3  # °N, around middle of Japan
+			ref_lon = 138.5 # °E
+			ref_rad = 1.5   # ° radius (°)
+		elif ARRAY == 1:
+			ref_lat = 46.7  # °N keep only inner rings A-D
+			ref_lon = -106.22   # °E
+			ref_rad = 0.4    # ° radius (°)
+
 # Parameters entered on the command line
 #	stat_corr = 1 # apply station static corrections
 #	dphase  = 'PKIKP'       # phase to be aligned

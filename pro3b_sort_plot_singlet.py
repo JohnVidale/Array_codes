@@ -11,7 +11,10 @@ def pro3singlet(eq_file, stat_corr = 0,
 			plot_scale_fac = 0.05, qual_threshold = 0, corr_threshold = 0,
 			freq_min = 0.25, freq_max = 1,
 			min_dist = 0, max_dist = 180, do_decimate = 0,
-			alt_statics = 0, statics_file = 'nothing'):
+			alt_statics = 0, statics_file = 'nothing', ARRAY = 0, ref_loc = 0):
+# 0 is Hinet, 1 is LASA, 2 is NORSAR
+	if ARRAY != 0:
+		stat_corr = 0 # correlations only exist for Hinet so far
 
 	from obspy import UTCDateTime
 	from obspy import Stream
@@ -45,32 +48,54 @@ def pro3singlet(eq_file, stat_corr = 0,
 	ev_depth    = float(      split_line[4])
 	print('date_label ' + date_label + ' time ' + str(t) + ' lat ' + str(ev_lat) + ' lon ' + str( ev_lon) + ' depth ' + str(ev_depth))
 
-	#%% Get Hinet station location file
-	if alt_statics == 0: # standard set
-		sta_file = '/Users/vidale/Documents/PyCode/Codes/Hinet_station/hinet_master_list.txt'
-	else: # custom set made by this event for this event
-		sta_file = '/Users/vidale/Documents/PyCode/Hinet/Statics/' + 'HA' + date_label[:10] + 'pro4_' + dphase + '.statics'
-	with open(sta_file, 'r') as file:
-		lines = file.readlines()
-	print(str(len(lines)) + ' lines read from hinet_master_list')
-
-	# Load station coords into arrays
-	station_index = range(len(lines))
-	st_names = []
-	st_dist  = []
-	st_lats  = []
-	st_lons  = []
-	st_shift = []
-	st_corr  = []
-	for ii in station_index:
-		line = lines[ii]
-		split_line = line.split()
-		st_names.append(split_line[0])
-		st_dist.append(split_line[1])
-		st_lats.append( split_line[2])
-		st_lons.append( split_line[3])
-		st_shift.append(split_line[4])
-		st_corr.append(split_line[5])
+	#%% Get Hinet, LASA, or NORSAR station location file
+	if stat_corr == 1:  # load static terms, only applies to Hinet
+		if alt_statics == 0: # standard set
+			sta_file = '/Users/vidale/Documents/GitHub/Hinet-codes/hinet_sta_statics.txt'
+		else: # custom set made by this event for this event
+			sta_file = ('/Users/vidale/Documents/PyCode/Hinet/Statics/' + 'HA' +
+			   date_label[:10] + 'pro4_' + dphase + '.statics')
+		with open(sta_file, 'r') as file:
+			lines = file.readlines()
+		print(str(len(lines)) + ' stations read from ' + sta_file)
+		# Load station coords into arrays
+		station_index = range(len(lines))
+		st_names = []
+		st_dist  = []
+		st_lats  = []
+		st_lons  = []
+		st_shift = []
+		st_corr  = []
+		for ii in station_index:
+			line = lines[ii]
+			split_line = line.split()
+			st_names.append(split_line[0])
+			st_dist.append(split_line[1])
+			st_lats.append( split_line[2])
+			st_lons.append( split_line[3])
+			st_shift.append(split_line[4])
+			st_corr.append(split_line[5])
+	else: # no static terms, always true for LASA or NORSAR
+		if ARRAY == 0: # Hinet set
+			sta_file = '/Users/vidale/Documents/GitHub/Hinet-codes/hinet_sta.txt'
+		elif ARRAY == 1: #         LASA set
+			sta_file = '/Users/vidale/Documents/GitHub/Hinet-codes/LASA_sta.txt'
+		else: #         NORSAR set
+			sta_file = '/Users/vidale/Documents/GitHub/Hinet-codes/NORSAR_sta.txt'
+		with open(sta_file, 'r') as file:
+			lines = file.readlines()
+		print(str(len(lines)) + ' stations read from ' + sta_file)
+		# Load station coords into arrays
+		station_index = range(len(lines))
+		st_names = []
+		st_lats  = []
+		st_lons  = []
+		for ii in station_index:
+			line = lines[ii]
+			split_line = line.split()
+			st_names.append(split_line[0])
+			st_lats.append( split_line[1])
+			st_lons.append( split_line[2])
 
 	#%%
 	fig_index = 101
@@ -96,12 +121,17 @@ def pro3singlet(eq_file, stat_corr = 0,
 	#min_dist = 154
 #	freq_min = 0.25
 #	freq_max = 1
-	ref_loc = 0  # 1 if selecting stations within ref_rad of ref_lat and ref_lon
+#	ref_loc = 0  # 1 if selecting stations within ref_rad of ref_lat and ref_lon
 	             # 0 if selecting stations by distance from earthquake
 	if ref_loc == 1:
-		ref_lat = 36.3  # °N, around middle of Japan
-		ref_lon = 138.5 # °E
-		ref_rad = 1.5   # ° radius
+		if ARRAY == 0:
+			ref_lat = 36.3  # °N, around middle of Japan
+			ref_lon = 138.5 # °E
+			ref_rad = 1.5   # ° radius (°)
+		elif ARRAY == 1:
+			ref_lat = 46.7  # °N keep only inner rings A-D
+			ref_lon = -106.22   # °E
+			ref_rad = 0.4    # ° radius (°)
 
 	#%% Is taper too long compared to noise estimation window?
 	totalt = start_buff + end_buff
@@ -160,7 +190,7 @@ def pro3singlet(eq_file, stat_corr = 0,
 						ref_distance = gps2dist_azimuth(stalat,stalon,ref_lat,ref_lon)
 						ref_dist = ref_distance[0]/(1000*111)
 					distance = gps2dist_azimuth(stalat,stalon,ev_lat,ev_lon) # Get traveltimes again, hard to store
-					tr.stats.distance=distance[0] # distance in m
+					tr.stats.distance=distance[0] # distance in km
 					dist = distance[0]/(1000*111)
 					if ref_loc != 1 and min_dist < dist and dist < max_dist: # select distance range from earthquake
 						try:

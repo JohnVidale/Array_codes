@@ -155,7 +155,7 @@ def pro5stack(eq_file, plot_scale_fac = 0.05, slow_lo = -0.1, slow_hi = 0.1,
 		if local_max > global_max:
 			global_max = local_max
 
-	# create time axis (x-axis)
+	# create time axis (x-axis), use of slow_i here is arbitrary, oops
 	ttt = (np.arange(len(stack[slow_i].data)) * stack[slow_i].stats.delta +
 		 (stack[slow_i].stats.starttime - t)) # in units of seconds
 
