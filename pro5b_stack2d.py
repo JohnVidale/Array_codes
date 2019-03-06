@@ -10,7 +10,7 @@ def pro5stack2d(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 			  slowR_lo = -0.1, slowR_hi = 0.1, slowT_lo = -0.1, slowT_hi = 0.1,
 			  start_buff = 50, end_buff = 50,
 			  envelope = 1, norm = 1, global_norm_plot = 1, fig_index = 401,
-			  LASA = 0, NS = 0):
+			  LASA = 0, NS = 0, decimate_fac = 0):
 
 	import obspy
 	from obspy import UTCDateTime
@@ -168,6 +168,8 @@ def pro5stack2d(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 #					print('%d data has zero length ' % (slow_i))
 			if envelope == 1:
 				stack[index].data = np.abs(hilbert(stack[index].data))
+			if decimate_fac != 0:
+				stack[index].decimate(decimate_fac)
 			local_max = max(abs(stack[index].data))
 			if local_max > global_max:
 				global_max = local_max
