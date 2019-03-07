@@ -12,8 +12,6 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1,
 			freq_min = 1, freq_max = 3, min_dist = 0, max_dist = 180,
 			alt_statics = 0, statics_file = 'nothing', ARRAY = 0, ref_loc = 0):
 # 0 is Hinet, 1 is LASA, 2 is NORSAR
-	if ARRAY != 0:
-		stat_corr = 0 # correlations only exist for Hinet so far
 
 	from obspy import UTCDateTime
 	from obspy import Stream
@@ -61,12 +59,15 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1,
 	   + str(ev_lat2) + ' lon ' + str( ev_lon2) + ' depth ' + str(ev_depth2))
 
 	#%% Get Hinet, LASA, or NORSAR station location file
-	if stat_corr == 1:  # load static terms, only applies to Hinet
-		if alt_statics == 0: # standard set
-			sta_file = '/Users/vidale/Documents/GitHub/Hinet-codes/hinet_sta_statics.txt'
-		else: # custom set made by this event for this event
-			sta_file = ('/Users/vidale/Documents/PyCode/Hinet/Statics/' + 'HA' +
-			   date_label1[:10] + 'pro4_' + dphase + '.statics')
+	if stat_corr == 1:  # load static terms, only applies to Hinet and LASA
+		if ARRAY == 0:
+			if alt_statics == 0: # standard set
+				sta_file = '/Users/vidale/Documents/GitHub/Hinet-codes/hinet_sta_statics.txt'
+			else: # custom set made by this event for this event
+				sta_file = ('/Users/vidale/Documents/PyCode/Hinet/Statics/' + 'HA' +
+				   date_label1[:10] + 'pro4_' + dphase + '.statics')
+		elif ARRAY == 1:
+			sta_file = '/Users/vidale/Documents/GitHub/Hinet-codes/L_sta_statics.txt'
 		with open(sta_file, 'r') as file:
 			lines = file.readlines()
 		print(str(len(lines)) + ' stations read from ' + sta_file)

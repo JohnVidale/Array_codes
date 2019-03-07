@@ -4,7 +4,7 @@
 def pro4statics(eq_file, out_name = 'test', ref_trace = 'N.SZW',
 				dphase = 'PKIKP', dphase2 = 'PKiKP', dphase3 = 'PKIKP', dphase4 = 'PKiKP',
 				start_corr_win = -1, end_corr_win = 3, plot_scale_fac = 0.05,qual_threshold = 0, corr_threshold = 0,
-				max_time_shift = 2, min_dist = 150, max_dist = 164):
+				max_time_shift = 2, min_dist = 150, max_dist = 164, ARRAY = 0):
 
 	from obspy import UTCDateTime
 	from obspy.signal.cross_correlation import xcorr_pick_correction
@@ -24,11 +24,16 @@ def pro4statics(eq_file, out_name = 'test', ref_trace = 'N.SZW',
 	if not sys.warnoptions:
 	    warnings.simplefilter("ignore")
 	#%% Get Hinet station location file
-	sta_file = '/Users/vidale/Documents/PyCode/Codes/Hinet_station/hinet_list'
+#	sta_file = '/Users/vidale/Documents/PyCode/Codes/Hinet_station/hinet_list'
+	if ARRAY == 0: # Hinet set
+		sta_file = '/Users/vidale/Documents/GitHub/Hinet-codes/hinet_sta.txt'
+	elif ARRAY == 1: #         LASA set
+		sta_file = '/Users/vidale/Documents/GitHub/Hinet-codes/LASA_sta.txt'
 	with open(sta_file, 'r') as file:
 		lines = file.readlines()
+	print('Station file has ' + str(len(lines)) + ' lines.')
 	# Load station coords into arrays
-	station_index = range(781)
+	station_index = range(343)
 	st_lats  = []
 	st_lons  = []
 	st_deps  = []
@@ -82,8 +87,14 @@ def pro4statics(eq_file, out_name = 'test', ref_trace = 'N.SZW',
 	ev_lon      = float(      split_line[3])
 	ev_depth    = float(      split_line[4])
 
+	print('Date label ' + date_label + ' lat ' + str(ev_lat) + ' lon ' + str(ev_lon))
+
 	st = Stream()
 	fname     = 'HD' + date_label + 'sel.mseed'
+
+	print('fname ' + fname)
+
+	os.system('pwd')
 	st=read(fname)
 	print('Read in: ' + str(len(st)) + ' traces')
 	print('First trace has : ' + str(len(st[0].data)) + ' time pts ')
@@ -121,10 +132,14 @@ def pro4statics(eq_file, out_name = 'test', ref_trace = 'N.SZW',
 	bad_corr = 0
 	for tr in st: # do all seismograms
 		for ii in station_index: # find station in inventory
-			this_name = st_names[ii]
-			this_name_truc = this_name[0:5]
-			name_truc_cap  = this_name_truc.upper()
-			if (tr.stats.station == name_truc_cap): # found it
+			tested_name = st_names[ii]
+			actual_trace = tr.stats.station
+			if ARRAY == 0: # convoluted patch for long Hinet names
+				this_name_truc = tested_name[0:5]
+				name_truc_cap  = this_name_truc.upper()
+				this_name = name_truc_cap
+				actual_trace = tr.stats.station.upper
+			if (actual_trace == tested_name): # found it
 				tr_time = tr.stats.starttime
 				stalon = float(st_lons[ii]) # look up lat & lon to find distance
 				stalat = float(st_lats[ii])
@@ -259,10 +274,14 @@ def pro4statics(eq_file, out_name = 'test', ref_trace = 'N.SZW',
 
 	for tr in st2: # regenerate distances into st2 as they were loaded into st for plots
 		for ii in station_index: # find station in inventory
-			this_name = st_names[ii]
-			this_name_truc = this_name[0:5]
-			name_truc_cap  = this_name_truc.upper()
-			if (tr.stats.station == name_truc_cap): # found it
+			tested_name = st_names[ii]
+			actual_trace = tr.stats.station
+			if ARRAY == 0: # convoluted patch for long Hinet names
+				this_name_truc = tested_name[0:5]
+				name_truc_cap  = this_name_truc.upper()
+				this_name = name_truc_cap
+				actual_trace = tr.stats.station.upper
+			if (actual_trace == tested_name): # found it
 				stalon = float(st_lons[ii]) # look up lat & lon to find distance
 				stalat = float(st_lats[ii])
 				distance = gps2dist_azimuth(stalat,stalon,ev_lat,ev_lon)

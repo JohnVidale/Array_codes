@@ -11,10 +11,9 @@ def pro3singlet(eq_file, stat_corr = 0,
 			plot_scale_fac = 0.05, qual_threshold = 0, corr_threshold = 0,
 			freq_min = 0.25, freq_max = 1,
 			min_dist = 0, max_dist = 180, do_decimate = 0,
-			alt_statics = 0, statics_file = 'nothing', ARRAY = 0, ref_loc = 0):
+			alt_statics = 0, statics_file = 'nothing', ARRAY = 0, ref_loc = 0,
+			verbose = 0):
 # 0 is Hinet, 1 is LASA, 2 is NORSAR
-	if ARRAY != 0:
-		stat_corr = 0 # correlations only exist for Hinet so far
 
 	from obspy import UTCDateTime
 	from obspy import Stream
@@ -49,12 +48,15 @@ def pro3singlet(eq_file, stat_corr = 0,
 	print('date_label ' + date_label + ' time ' + str(t) + ' lat ' + str(ev_lat) + ' lon ' + str( ev_lon) + ' depth ' + str(ev_depth))
 
 	#%% Get Hinet, LASA, or NORSAR station location file
-	if stat_corr == 1:  # load static terms, only applies to Hinet
-		if alt_statics == 0: # standard set
-			sta_file = '/Users/vidale/Documents/GitHub/Hinet-codes/hinet_sta_statics.txt'
-		else: # custom set made by this event for this event
-			sta_file = ('/Users/vidale/Documents/PyCode/Hinet/Statics/' + 'HA' +
-			   date_label[:10] + 'pro4_' + dphase + '.statics')
+	if stat_corr == 1:  # load static terms, only applies to Hinet and LASA
+		if ARRAY == 0:
+			if alt_statics == 0: # standard set
+				sta_file = '/Users/vidale/Documents/GitHub/Hinet-codes/hinet_sta_statics.txt'
+			else: # custom set made by this event for this event
+				sta_file = ('/Users/vidale/Documents/PyCode/Hinet/Statics/' + 'HA' +
+				   date_label1[:10] + 'pro4_' + dphase + '.statics')
+		elif ARRAY == 1:
+			sta_file = '/Users/vidale/Documents/GitHub/Hinet-codes/L_sta_statics.txt'
 		with open(sta_file, 'r') as file:
 			lines = file.readlines()
 		print(str(len(lines)) + ' stations read from ' + sta_file)
@@ -100,7 +102,7 @@ def pro3singlet(eq_file, stat_corr = 0,
 	#%%
 	fig_index = 101
 #	stat_corr = 1 # apply station static corrections
-	verbose  = 0           # more output
+#	verbose  = 0           # more output
 	rel_time = 1          # timing is relative to a chosen phase, otherwise relative to OT
 #	dphase  = 'PKIKP'       # phase to be aligned
 #	dphase2 = 'PKiKP'      # another phase to have traveltime plotted
