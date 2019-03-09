@@ -376,8 +376,8 @@ def pro4statics(eq_file, out_name = 'test', ref_trace = 'N.SZW',
 	len_file1 = len(sta_names)
 	for j in range(0,len_file1):
 		dist_str = '{:.2f}'.format(  sta_dists[j]) # 3 digits after decimal place
-		lat_str  = '{:.2f}'.format(   sta_lats[j]) # 2 digits after decimal place
-		lon_str  = '{:.2f}'.format(   sta_lons[j])
+		lat_str  = '{:.4f}'.format(   sta_lats[j]) # 2 digits after decimal place
+		lon_str  = '{:.4f}'.format(   sta_lons[j])
 		stat_str = '{:.3f}'.format(sta_statics[j])
 		corr_str = '{:.3f}'.format(  sta_corrs[j])
 		write_line = sta_names[j] +' ' + dist_str +' ' + lat_str +' ' + lon_str +' ' + stat_str + ' ' + corr_str + '\n'

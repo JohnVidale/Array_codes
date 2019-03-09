@@ -9,8 +9,8 @@
 def pro5stack2d(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 			  slowR_lo = -0.1, slowR_hi = 0.1, slowT_lo = -0.1, slowT_hi = 0.1,
 			  start_buff = 50, end_buff = 50,
-			  envelope = 1, norm = 1, global_norm_plot = 1, fig_index = 401,
-			  LASA = 0, NS = 0, decimate_fac = 0):
+			  envelope = 1, norm = 1, global_norm_plot = 1,
+			  ARRAY = 0, NS = 0, decimate_fac = 0):
 
 	import obspy
 	from obspy import UTCDateTime
@@ -48,7 +48,7 @@ def pro5stack2d(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 	#    warnings.simplefilter("ignore")
 
 	#%% Get Hinet or LASA station location file
-	if LASA == 0: # Hinet set
+	if ARRAY == 0: # Hinet set
 		sta_file = '/Users/vidale/Documents/GitHub/Hinet-codes/hinet_sta.txt'
 		ref_lat = 36.3
 		ref_lon = 138.5
