@@ -19,11 +19,13 @@ def pro3singlet(eq_file, stat_corr = 0,
 	from obspy import Stream
 	from obspy import read
 	from obspy.geodetics import gps2dist_azimuth
+	from dateutil.relativedelta import relativedelta
 	import numpy as np
 	import os
 	from obspy.taup import TauPyModel
 	import matplotlib.pyplot as plt
 	import time
+	from datetime import datetime
 	model = TauPyModel(model='iasp91')
 
 	import sys # don't show any warnings
@@ -42,6 +44,7 @@ def pro3singlet(eq_file, stat_corr = 0,
 #			ids.append(split_line[0])  ignore label for now
 	t           = UTCDateTime(split_line[1])
 	date_label  = split_line[1][0:10]
+	year        = split_line[1][0:4]
 	ev_lat      = float(      split_line[2])
 	ev_lon      = float(      split_line[3])
 	ev_depth    = float(      split_line[4])
@@ -54,7 +57,7 @@ def pro3singlet(eq_file, stat_corr = 0,
 				sta_file = '/Users/vidale/Documents/GitHub/Hinet-codes/hinet_sta_statics.txt'
 			else: # custom set made by this event for this event
 				sta_file = ('/Users/vidale/Documents/PyCode/Hinet/Statics/' + 'HA' +
-				   date_label1[:10] + 'pro4_' + dphase + '.statics')
+				   date_label[:10] + 'pro4_' + dphase + '.statics')
 		elif ARRAY == 1:
 			sta_file = '/Users/vidale/Documents/GitHub/Hinet-codes/L_sta_statics.txt'
 		with open(sta_file, 'r') as file:
@@ -172,17 +175,24 @@ def pro3singlet(eq_file, stat_corr = 0,
 
 	print('Read in: ' + str(len(st)) + ' traces')
 	print('First trace has : ' + str(len(st[0].data)) + ' time pts ')
+	print('Start time : ' + str(st[0].stats.starttime) + '  event time : ' + str(t))
 	print('After decimation: ' + str(len(st)) + ' traces')
 	nt = len(st[0].data)
 	dt = st[0].stats.delta
 	print('First trace has : ' + str(nt) + ' time pts, time sampling of '
 		  + str(dt) + ' and thus duration of ' + str((nt-1)*dt))
+#	print(f'Sta lat-lon {stalat:.4f}  {stalon:.4f}')
+
 
 	#%%
 	# select by distance, window and adjust start time to align picked times
 	st_pickalign = Stream()
 
 	for tr in st: # traces one by one, find lat-lon by searching entire inventory.  Inefficient
+		if float(year) < 1970: # fix the damn 1969 -> 2069 bug in Gibbon's LASA data
+			temp_t = str(tr.stats.starttime)
+			temp_tt = '19' + temp_t[2:]
+			tr.stats.starttime = UTCDateTime(temp_tt)
 		for ii in station_index:
 			if (tr.stats.station == st_names[ii]): # find station in inventory
 				if stat_corr != 1 or float(st_corr[ii]) > corr_threshold: # if using statics, reject low correlations

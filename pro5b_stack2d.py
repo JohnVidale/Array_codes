@@ -115,6 +115,7 @@ def pro5stack2d(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 	ref_dist_az = gps2dist_azimuth(ev_lat,ev_lon,ref_lat,ref_lon)
 #	ref_dist    = ref_dist_az[0]/1000  # km
 	ref_back_az = ref_dist_az[2]
+#	print(f'Ref location {ref_lat:.4f} , {ref_lon:.4f}, event location {ev_lat:.4f}  {ev_lon:.4f} ref_back_az  {ref_back_az:.1f}°')
 
 	#%% select by distance, window and adjust start time to align picked times
 	done = 0
@@ -122,41 +123,33 @@ def pro5stack2d(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 		for ii in station_index:
 			if (tr.stats.station == st_names[ii]): # found station in inventory
 				if norm == 1:
-					tr.normalize()
-#					tr.normalize(norm= -len(st)) # mystery command or error
+					tr.normalize() # trace divided abs(max of trace)
 				stalat = float(st_lats[ii])
-				stalon = float(st_lons[ii]) # look up lat & lon again to find distance
-#				dist_az = gps2dist_azimuth(stalat,stalon,ev_lat,ev_lon) # Get traveltimes again, hard to store
-#				dist = dist_az[0]
-#				back_az = dist_az[2]
-#				tr.stats.distance = dist # distance in m
-#				del_distR = (ref_dist - dist) / (1000) # in km
-				# alternate calculation in local coordinates
+				stalon = float(st_lons[ii]) # use lat & lon to find distance and back-az
 				rel_dist_az = gps2dist_azimuth(stalat,stalon,ref_lat,ref_lon)
 				rel_dist    = rel_dist_az[0]/1000  # km
-				rel_back_az = rel_dist_az[2]
-				# Radial and transverse
+				rel_back_az = rel_dist_az[1]       # radians
+
+#				print(f'Sta lat-lon {stalat:.4f}  {stalon:.4f}')
 				if NS == 0:
-					del_distR = (-rel_dist) * math.cos( rel_back_az - ref_back_az)
-					del_distT =   rel_dist  * math.sin( rel_back_az - ref_back_az)
+					del_distR = rel_dist * math.cos((rel_back_az - ref_back_az)* math.pi/180)
+					del_distT = rel_dist * math.sin((rel_back_az - ref_back_az)* math.pi/180)
 				# North and east
 				else:
-					del_distR = (-rel_dist) * math.cos( rel_back_az)
-					del_distT =   rel_dist  * math.sin( rel_back_az)
+					del_distR = rel_dist * math.cos( rel_back_az * math.pi/180)
+					del_distT = rel_dist * math.sin( rel_back_az * math.pi/180)
 				for slowR_i in range(slowR_n):  # for this station, loop over radial slownesses
 					for slowT_i in range(slowT_n):  # loop over transverse slownesses
-						time_lag  = del_distR * stack_Rslows[slowR_i]  # time shift due to slowness
-						time_lag += del_distT * stack_Tslows[slowT_i]  # time shift due to slowness
+						time_lag  = del_distR * stack_Rslows[slowR_i]  # time shift due to radial slowness
+						time_lag += del_distT * stack_Tslows[slowT_i]  # time shift due to transverse slowness
 						time_correction = ((t-tr.stats.starttime) + (time_lag - start_buff))/dt
-		#				print('Time lag ' + str(time_lag) + ' for slowness ' + str(stack_slows[slow_i])
-		#					+ ' and distance ' + str(del_dist) + ' time sample correction is ' + str(time_correction))
 						index = slowR_i*slowT_n + slowT_i
 						for it in range(stack_nt):  # check points one at a time
 							it_in = int(it + time_correction)
 							if it_in >= 0 and it_in < nt: # does data lie within seismogram?
 								stack[index].data[it] += tr[it_in]
 				done += 1
-				if done%50 == 0:
+				if done%20 == 0:
 					print('Done stacking ' + str(done) + ' out of ' + str(len(st)) + ' stations.')
 	# plot traces
 	 # find global max, and if requested, take envelope

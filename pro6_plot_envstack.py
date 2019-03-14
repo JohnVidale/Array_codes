@@ -179,8 +179,8 @@ def pro6plotstack(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 		c = ax.pcolormesh(x1, y1, stack_array1, cmap=plt.cm.gist_rainbow_r)
 		ax.axis([x1.min(), x1.max(), y1.min(), y1.max()])
 		fig.colorbar(c, ax=ax)
-		plt.xlabel('R Slowness (s/km)')
-		plt.ylabel('T Slowness (s/km)')
+		plt.xlabel('T Slowness (s/km)')
+		plt.ylabel('R Slowness (s/km)')
 		plt.title('T-R stack at rel time ' + str(snaptime + snap_num*dt) + '  ' + fname[2:12])
 		plt.show()
 

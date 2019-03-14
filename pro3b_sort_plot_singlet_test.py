@@ -69,7 +69,6 @@ def pro3singlet(eq_file, stat_corr = 0,
 	fig_index = 101
 	rel_time = 1          # timing is relative to a chosen phase, otherwise relative to OT
 	taper_frac = .05      #Fraction of window tapered on both ends
-	signal_dur = 10.       # signal length used in SNR calculation
 	plot_tt = 1           # plot the traveltimes?
 	if ref_loc == 1:
 		if ARRAY == 0:
@@ -117,35 +116,45 @@ def pro3singlet(eq_file, stat_corr = 0,
 			if (tr.stats.station == st_names[ii]): # find station in inventory
 				stalat = float(st_lats[ii])
 				stalon = float(st_lons[ii]) # look up lat & lon again to find distance
+				if ref_loc == 1:
+					ref_distance = gps2dist_azimuth(stalat,stalon,ref_lat,ref_lon)
+					ref_dist = ref_distance[0]/(1000*111)
 				distance = gps2dist_azimuth(stalat,stalon,ev_lat,ev_lon) # Get traveltimes again, hard to store
 				tr.stats.distance=distance[0] # distance in km
 				dist = distance[0]/(1000*111)
+				if ref_loc != 1 and min_dist < dist and dist < max_dist: # select distance range from earthquake
+					try:
+						arrivals = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree=dist,phase_list=[dphase])
+						atime = arrivals[0].time
+						s_t = t + atime - start_buff
+						e_t = t + atime + end_buff
+						tr.trim(starttime=s_t,endtime = e_t)
+						# deduct theoretical traveltime and start_buf from starttime
+						tr.stats.starttime -= atime
+						st_pickalign += tr
+					except:
+						pass
+				elif ref_loc == 1:
+					if ref_dist < ref_rad: # alternatively, select based on distance from ref location
+						try:
+							arrivals = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree=dist,phase_list=[dphase])
+							atime = arrivals[0].time
+							s_t = t + atime - start_buff
+							e_t = t + atime + end_buff
+							tr.trim(starttime=s_t,endtime = e_t)
+							# deduct theoretical traveltime and start_buf from starttime
+							tr.stats.starttime -= atime
+							st_pickalign += tr
+						except:
+							pass
 
-				try:
-					arrivals = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree=dist,phase_list=[dphase])
-					atime = arrivals[0].time
-					s_t = t + atime - start_buff
-					e_t = t + atime + end_buff
-					tr.trim(starttime=s_t,endtime = e_t)
-					# deduct theoretical traveltime and start_buf from starttime
-					tr.stats.starttime -= atime
-					st_pickalign += tr
-				except:
-					pass
-
-#				for it in range(100):
-#					tr.data[it] = 0
-#				for it in range(180):
-#					tr.data[it+120] = 0
-#				for it in range(481):
-#					tr.data[it+320] = 0
-#				for it in range(20):
-#					tr.data[it+100] = 10000*math.sin(it*(180/10.))
-#					tr.data[it+300] = 10000*math.sin(it*(180/10.))
-				for it in range(20):
-					tr.data[it+100] += 100000*math.sin(it*(180/10.))
-					tr.data[it+560 - int(35*(dist-60.))] += 100000*math.sin(it*(180/5.))
-					tr.data[it+360 + int(35*(dist-60.))] += 100000*math.sin(it*(180/8.))
+				for it in range(20):  # add three strong signals
+#					tr.data[it+100] += 100000*math.sin(it*(180/10.))
+#					tr.data[it+360 - int(35*(dist-60.))] += 100000*math.sin(it*(180/5.))
+#					tr.data[it+260 + int(35*(dist-60.))] += 100000*math.sin(it*(180/8.))
+					tr.data[it+100] += 100000*math.sin(it*(math.pi/10.))
+					tr.data[it+360 - int(35*(dist-60.))] += 100000*math.sin(it*2*math.pi/10.)
+					tr.data[it+260 + int(35*(dist-60.))] += 100000*math.sin(it*4*math.pi/10.)
 	print('After alignment + range and correlation selection - event: ' + str(len(st_pickalign)) + ' traces')
 
 	#%%  Cull further by imposing SNR threshold on both traces

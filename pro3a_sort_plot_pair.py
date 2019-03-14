@@ -40,6 +40,7 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1,
 #			ids.append(split_line[0])  ignore label for now
 	t1           = UTCDateTime(split_line[1])
 	date_label1  = split_line[1][0:10]
+	year1        = split_line[1][0:4]
 	ev_lat1      = float(      split_line[2])
 	ev_lon1      = float(      split_line[3])
 	ev_depth1    = float(      split_line[4])
@@ -52,6 +53,7 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1,
 #			ids.append(split_line[0])  ignore label for now
 	t2           = UTCDateTime(split_line[1])
 	date_label2  = split_line[1][0:10]
+	year2        = split_line[1][0:4]
 	ev_lat2      = float(      split_line[2])
 	ev_lon2      = float(      split_line[3])
 	ev_depth2    = float(      split_line[4])
@@ -191,6 +193,10 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1,
 	st_pickalign2 = Stream()
 
 	for tr in st1: # traces one by one
+		if float(year1) < 1970: # fix the damn 1969 -> 2069 bug in Gibbon's LASA data
+			temp_t = str(tr.stats.starttime)
+			temp_tt = '19' + temp_t[2:]
+			tr.stats.starttime = UTCDateTime(temp_tt)
 		for ii in station_index:
 			if (tr.stats.station == st_names[ii]): # find station in inventory
 				if stat_corr != 1 or float(st_corr[ii]) > corr_threshold: # if using statics, reject low correlations
@@ -245,6 +251,10 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1,
 	#					print('Event 1 - empty window.  Trace starts at ' + str(tr.stats.starttime) + ', event at ' + str(t1))
 
 	for tr in st2: # traces one by one
+		if float(year2) < 1970: # fix the damn 1969 -> 2069 bug in Gibbon's LASA data
+			temp_t = str(tr.stats.starttime)
+			temp_tt = '19' + temp_t[2:]
+			tr.stats.starttime = UTCDateTime(temp_tt)
 		for ii in station_index:
 			if (tr.stats.station == st_names[ii]): # find station in inventory
 				if stat_corr != 1 or float(st_corr[ii]) > corr_threshold: # if using statics, reject low correlations

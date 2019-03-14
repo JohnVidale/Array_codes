@@ -132,7 +132,7 @@ def pro5stack(eq_file, plot_scale_fac = 0.05, slow_lo = -0.1, slow_hi = 0.1,
 	#			for(k=0;k<nslow;k++){
 	#				slow = 110.*(LOWSLOW + k*DELTASLOW);
 				for slow_i in range(slow_n):  # for this station, loop over slownesses
-					time_lag = del_dist * stack_slows[slow_i]  # time shift due to slowness
+					time_lag = -del_dist * stack_slows[slow_i]  # time shift due to slowness, flipped to match 2D
 #					start_offset = tr.stats.starttime - t
 #					time_correction = (-start_buff - (start_offset + time_lag))/dt
 					time_correction = ((t-tr.stats.starttime) + (time_lag - start_buff))/dt
