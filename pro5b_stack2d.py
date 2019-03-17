@@ -34,7 +34,7 @@ def pro5stack2d(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 
 	start_time_wc = time.time()
 
-	file = open(eq_file, 'r')
+	file = open('EvLocs/' + eq_file, 'r')
 	lines=file.readlines()
 	split_line = lines[0].split()
 #			ids.append(split_line[0])  ignore label for now

@@ -34,7 +34,7 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1,
 
 	#%% Get saved event info, also used to name files
 	#  event 2016-05-28T09:47:00.000 -56.241 -26.935 78
-	file = open(eq_file1, 'r')
+	file = open('EvLocs/' + eq_file1, 'r')
 	lines=file.readlines()
 	split_line = lines[0].split()
 #			ids.append(split_line[0])  ignore label for now
@@ -47,7 +47,7 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1,
 	print('1st event: date_label ' + date_label1 + ' time ' + str(t1) + ' lat '
 	   + str(ev_lat1) + ' lon ' + str( ev_lon1) + ' depth ' + str(ev_depth1))
 
-	file = open(eq_file2, 'r')
+	file = open('EvLocs/' + eq_file2, 'r')
 	lines=file.readlines()
 	split_line = lines[0].split()
 #			ids.append(split_line[0])  ignore label for now
@@ -173,8 +173,8 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1,
 	#%% Load waveforms
 	st1 = Stream()
 	st2 = Stream()
-	fname1     = 'HD' + date_label1 + '.mseed'
-	fname2     = 'HD' + date_label2 + '.mseed'
+	fname1     = 'Mseed/HD' + date_label1 + '.mseed'
+	fname2     = 'Mseed/HD' + date_label2 + '.mseed'
 	st1=read(fname1)
 	st2=read(fname2)
 	if do_decimate != 0:
