@@ -98,7 +98,7 @@ def pro7stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.0
 		angle2 = np.angle(seismogram2)
 		phase1 = np.unwrap(angle1)
 		phase2 = np.unwrap(angle2)
-		dphase = angle1 - angle2
+		dphase = (angle1 - angle2)
 #		dphase = phase1 - phase2
 		for it in range(nt1):
 			if dphase[it] > math.pi:
@@ -107,20 +107,21 @@ def pro7stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.0
 				dphase[it] += 2 * math.pi
 			if dphase[it] > math.pi or dphase[it] < -math.pi:
 				print(f'Bad dphase value {dphase[it]:.2f}  {it:4d}')
-		freq1 = np.diff(phase1)
+		freq1 = np.diff(phase1) #freq in radians/sec
 		freq2 = np.diff(phase2)
 		ave_freq = 0.5*(freq1 + freq2)
-		ave_freq_plus = np.append(ave_freq,[0]) # ave_freq one element too short
-#		tshift[slow_i].data     = dphase / ave_freq_plus
-		tshift[slow_i].data     = dphase
+		ave_freq_plus = np.append(ave_freq,[1]) # ave_freq one element too short
+		tshift[slow_i].data     = dphase / ave_freq_plus # 2*pi top and bottom cancels
+#		tshift[slow_i].data     = dphase/(2*math.pi)
 
 		local_max = max(abs(amp_ave[slow_i].data))
 		if local_max > global_max:
 			global_max = local_max
 
+	tshift_full    = tshift.copy()  # make array for time shift
 	for slow_i in range(total_slows): # ignore less robust points
 		for it in range(nt1):
-			if ((amp_ratio[slow_i].data[it] < 0.5) or (amp_ratio[slow_i].data[it] > 2) or (amp_ave[slow_i].data[it] < (0.2 * global_max))):
+			if ((amp_ratio[slow_i].data[it] < 0.4) or (amp_ratio[slow_i].data[it] > 2) or (amp_ave[slow_i].data[it] < (0.2 * global_max))):
 				tshift[slow_i].data[it] = np.nan
 
 	#%% Find transverse slowness nearest zero
@@ -178,7 +179,6 @@ def pro7stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.0
 	plt.figure(fig_index,figsize=(10,10))
 	plt.xlim(-start_buff,end_buff)
 	plt.ylim(stack_Rslows[0], stack_Rslows[-1])
-#	for tr in st1good:
 	for slowR_i in range(slowR_n):  # for this station, loop over slownesses
 		dist_offset = stack_Rslows[slowR_i] # trying for approx degrees
 		ttt = (np.arange(len(centralR_st1[slowR_i].data)) * centralR_st1[slowR_i].stats.delta
@@ -188,7 +188,7 @@ def pro7stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.0
 #		plt.plot(ttt, (centralR_amp[slowR_i].data)  *plot_scale_fac/global_max + dist_offset, color = 'purple')
 		plt.plot(ttt, (centralR_tdiff[slowR_i].data)*plot_scale_fac/5 + dist_offset, color = 'black')
 		plt.plot(ttt, (centralR_amp[slowR_i].data)*0.0 + dist_offset, color = 'yellow') # reference lines
-	plt.title('Amp and tdiff stacks at 0 T slowness')
+	plt.title('Seismograms and tdiff at 0 T slowness')
 
 	# Plot transverse amp and tdiff plots
 	fig_index = 7
@@ -206,13 +206,15 @@ def pro7stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.0
 #		plt.plot(ttt, (centralT_amp[slowT_i].data)  *plot_scale_fac/global_max + dist_offset, color = 'purple')
 		plt.plot(ttt, (centralT_tdiff[slowT_i].data)*plot_scale_fac/5 + dist_offset, color = 'black')
 		plt.plot(ttt, (centralT_amp[slowT_i].data)*0.0 + dist_offset, color = 'yellow') # reference lines
-	plt.title('Amp and tdiff stacks at 0 R slowness')
+	plt.title('Seismograms and tdiff at 0 R slowness')
 
 	#  Save processed files
 	fname = 'HD' + date_label1 + '_' + date_label2 + '_tshift.mseed'
-	tshift.write(fname,format = 'MSEED')
+	tshift_full.write(fname,format = 'MSEED')
 	fname = 'HD' + date_label1 + '_' + date_label2 + '_amp_ave.mseed'
 	amp_ave.write(fname,format = 'MSEED')
+	fname = 'HD' + date_label1 + '_' + date_label2 + '_amp_ratio.mseed'
+	amp_ratio.write(fname,format = 'MSEED')
 
 	elapsed_time_wc = time.time() - start_time_wc
 	print('This job took ' + str(elapsed_time_wc) + ' seconds')
