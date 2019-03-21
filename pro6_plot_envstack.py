@@ -9,7 +9,7 @@
 def pro6plotstack(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 			  slowR_lo = -0.1, slowR_hi = 0.1, slowT_lo = -0.1, slowT_hi = 0.1,
 			  start_buff = 50, end_buff = 50, snaptime = 0, snaps = 1,
-			  plot_dyn_range = 1000, fig_index = 401, skip_T = 1, skip_R = 0):
+			  plot_dyn_range = 1000, fig_index = 401, skip_T = 0, skip_R = 0):
 
 	import obspy
 	import obspy.signal
@@ -29,7 +29,7 @@ def pro6plotstack(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 
 	start_time_wc = time.time()
 
-	file = open(eq_file, 'r')
+	file = open('EvLocs/' + eq_file, 'r')
 	lines=file.readlines()
 	split_line = lines[0].split()
 #			ids.append(split_line[0])  ignore label for now
@@ -39,7 +39,7 @@ def pro6plotstack(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 	#%% Input parameters
 	# #%% Get saved event info, also used to name files
 	# date_label = '2018-04-02' # date for filename
-	fname = 'HD' + date_label + '_2dstack.mseed'
+	fname = 'Pro_files/HD' + date_label + '_2dstack_env.mseed'
 	st = Stream()
 	st = read(fname)
 	print('Read in: ' + str(len(st)) + ' traces')
@@ -127,7 +127,7 @@ def pro6plotstack(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 		fig.colorbar(c, ax=ax)
 		plt.xlabel('Time (s)')
 		plt.ylabel('Slowness (s/km)')
-		plt.title('Radial stack at 0 T slow, ' + fname[2:12])
+		plt.title('Radial stack at 0 T slow, ' + fname[12:22])
 		plt.show()
 
 #%%  Transverse-time stack
@@ -154,11 +154,11 @@ def pro6plotstack(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 		fig.colorbar(c, ax=ax)
 		plt.xlabel('Time (s)')
 		plt.ylabel('Slowness (s/km)')
-		plt.title('Transverse stack at 0 R slow, ' + fname[2:12])
+		plt.title('Transverse stack at 0 R slow, ' + fname[12:22])
 		plt.show()
 
 #%% R-T stack
-	stack_array1 = np.zeros((slowR_n,slowT_n))
+	stack_slice = np.zeros((slowR_n,slowT_n))
 	for snap_num in range(snaps):
 		fig_index += 1
 		it = int((snaptime + start_buff)/dt) + snap_num
@@ -168,20 +168,20 @@ def pro6plotstack(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 				num_val = st[index].data[it]
 				if num_val < min_allowed:
 					num_val = min_allowed
-				stack_array1[slowR_i, slowT_i] = math.log10(num_val)
-		stack_array1[0,0] = math.log10(global_max)
-		stack_array1[0,1] = math.log10(min_allowed)
+				stack_slice[slowR_i, slowT_i] = math.log10(num_val)
+		stack_slice[0,0] = math.log10(global_max)
+		stack_slice[0,1] = math.log10(min_allowed)
 
 		y1, x1 = np.mgrid[slice(stack_Rslows[0], stack_Rslows[-1] + slow_delta, slow_delta),
 					 slice(stack_Tslows[0], stack_Tslows[-1] + slow_delta, slow_delta)]
 
 		fig, ax = plt.subplots(1)
-		c = ax.pcolormesh(x1, y1, stack_array1, cmap=plt.cm.gist_rainbow_r)
+		c = ax.pcolormesh(x1, y1, stack_slice, cmap=plt.cm.gist_rainbow_r)
 		ax.axis([x1.min(), x1.max(), y1.min(), y1.max()])
 		fig.colorbar(c, ax=ax)
 		plt.xlabel('T Slowness (s/km)')
 		plt.ylabel('R Slowness (s/km)')
-		plt.title('T-R stack at rel time ' + str(snaptime + snap_num*dt) + '  ' + fname[2:12])
+		plt.title('T-R stack at rel time ' + str(snaptime + snap_num*dt) + '  ' + fname[12:22])
 		plt.show()
 
 	#  Save processed files

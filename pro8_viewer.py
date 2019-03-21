@@ -43,30 +43,20 @@ class IndexTracker(object):
         self.im.axes.figure.canvas.draw()
 
 #%% define common parameters
-array = 1
-ev1 = 'event1.txt'
-ev2 = 'event2.txt'
-s_buff = 20
-e_buff = 200
+ARRAY = 1
+eq_file1 = 'event1.txt'
+eq_file2 = 'event2.txt'
+start_buff = 20
+end_buff   = 200
 
-sloR_lo   = -0.05
-sloR_hi   =  0.05
-sloT_lo   = -0.05
-sloT_hi   =  0.05
-slo_delta =  0.005
-env       =  0
-dec_fac   =  0
+slowR_lo   = -0.05
+slowR_hi   =  0.05
+slowT_lo   = -0.05
+slowT_hi   =  0.05
+slow_delta =  0.005
+decimate_fac   =  5
 
-eq_file1 = ev1
-eq_file2 = ev2
 plot_scale_fac = 0.003
-slowR_lo = sloR_lo
-slowR_hi = sloR_hi
-slowT_lo = sloT_lo
-slowT_hi = sloT_hi
-slow_delta = slo_delta
-start_buff = s_buff
-end_buff = e_buff
 fig_index = 301
 plot_dyn_range = 100
 
@@ -97,9 +87,10 @@ fname2  = 'HD' + date_label1 + '_' + date_label2 + '_amp_ave.mseed'
 amp_ave = Stream()
 amp_ave = read(fname2)
 
-tshift.decimate(5)
-amp_ratio.decimate(5)
-amp_ave.decimate(5)
+tshift_full = tshift.copy()
+tshift.decimate(decimate_fac)
+amp_ratio.decimate(decimate_fac)
+amp_ave.decimate(decimate_fac)
 
 #print(f'len(tshift): ' {len(tshift):4d} 'len(tshift[0].data): ' {len(tshift[0].data:4d})
 print(f'len(tshift): {len(tshift):4d}')

@@ -8,23 +8,15 @@
 
 def pro5stack2d(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 			  slowR_lo = -0.1, slowR_hi = 0.1, slowT_lo = -0.1, slowT_hi = 0.1,
-			  start_buff = 50, end_buff = 50,
-			  envelope = 1, norm = 1, global_norm_plot = 1,
+			  start_buff = 50, end_buff = 50, norm = 1, global_norm_plot = 1,
 			  ARRAY = 0, NS = 0, decimate_fac = 0):
 
-	import obspy
 	from obspy import UTCDateTime
 	from obspy import Stream, Trace
 	from obspy import read
 	from obspy.geodetics import gps2dist_azimuth
 	import numpy as np
 	import os
-	from obspy.taup import TauPyModel
-#	import obspy.signal
-#	import obspy.signal as sign
-	import matplotlib.pyplot as plt
-#	from matplotlib.colors import LogNorm
-	model = TauPyModel(model='iasp91')
 	from scipy.signal import hilbert
 	import math
 	import time
@@ -44,8 +36,8 @@ def pro5stack2d(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 	ev_lon      = float(      split_line[3])
 #	ev_depth    = float(      split_line[4])
 
-	#if not sys.warnoptions:
-	#    warnings.simplefilter("ignore")
+	if not sys.warnoptions:
+	    warnings.simplefilter("ignore")
 
 	#%% Get Hinet or LASA station location file
 	if ARRAY == 0: # Hinet set
@@ -74,7 +66,7 @@ def pro5stack2d(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 	#%% Input parameters
 	# #%% Get saved event info, also used to name files
 	# date_label = '2018-04-02' # date for filename
-	fname = 'HD' + date_label + 'sel.mseed'
+	fname = 'Pro_Files/HD' + date_label + 'sel.mseed'
 	st = Stream()
 	st = read(fname)
 	print('Read in: ' + str(len(st)) + ' traces')
@@ -143,33 +135,29 @@ def pro5stack2d(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 						time_lag  = del_distR * stack_Rslows[slowR_i]  # time shift due to radial slowness
 						time_lag += del_distT * stack_Tslows[slowT_i]  # time shift due to transverse slowness
 						time_correction = ((t-tr.stats.starttime) + (time_lag - start_buff))/dt
-						index = slowR_i*slowT_n + slowT_i
+						indx = int(slowR_i*slowT_n + slowT_i)
 						for it in range(stack_nt):  # check points one at a time
 							it_in = int(it + time_correction)
-							if it_in >= 0 and it_in < nt: # does data lie within seismogram?
-								stack[index].data[it] += tr[it_in]
+							if it_in >= 0 and it_in < nt - 2: # does data lie within seismogram?
+								# should be 1, not 2, but 2 prevents the problem "index XX is out of bounds for axis 0 with size XX"
+								stack[indx].data[it] += tr[it_in]
 				done += 1
 				if done%20 == 0:
 					print('Done stacking ' + str(done) + ' out of ' + str(len(st)) + ' stations.')
-	# plot traces
-	 # find global max, and if requested, take envelope
-	global_max = 0
+	# take envelope, decimate envelope
+	stack_raw = stack.copy()
 	for slowR_i in range(slowR_n):  # loop over radial slownesses
 		for slowT_i in range(slowT_n):  # loop over transverse slownesses
-			index = slowR_i*slowT_n + slowT_i
-#			if len(stack[index].data) == 0:
-#					print('%d data has zero length ' % (slow_i))
-			if envelope == 1:
-				stack[index].data = np.abs(hilbert(stack[index].data))
+			indx = slowR_i*slowT_n + slowT_i
+			stack[indx].data = np.abs(hilbert(stack[indx].data))
 			if decimate_fac != 0:
-				stack[index].decimate(decimate_fac)
-			local_max = max(abs(stack[index].data))
-			if local_max > global_max:
-				global_max = local_max
+				stack[indx].decimate(decimate_fac)
 
 	#  Save processed files
-	fname = 'HD' + date_label + '_2dstack.mseed'
+	fname = 'Pro_Files/HD' + date_label + '_2dstack_env.mseed'
 	stack.write(fname,format = 'MSEED')
+	fname = 'Pro_Files/HD' + date_label + '_2dstack.mseed'
+	stack_raw.write(fname,format = 'MSEED')
 
 	elapsed_time_wc = time.time() - start_time_wc
 	print('This job took ' + str(elapsed_time_wc) + ' seconds')

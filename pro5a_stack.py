@@ -77,7 +77,7 @@ def pro5stack(eq_file, plot_scale_fac = 0.05, slow_lo = -0.1, slow_hi = 0.1,
 	#%% Input parameters
 	# #%% Get saved event info, also used to name files
 	# date_label = '2018-04-02' # date for filename
-	fname = 'HD' + date_label + 'sel.mseed'
+	fname = 'Pro_Files/HD' + date_label + 'sel.mseed'
 	st = Stream()
 	st = read(fname)
 	print('Read in: ' + str(len(st)) + ' traces')
@@ -139,7 +139,7 @@ def pro5stack(eq_file, plot_scale_fac = 0.05, slow_lo = -0.1, slow_hi = 0.1,
 	#				print('Time lag ' + str(time_lag) + ' for slowness ' + str(stack_slows[slow_i]) + ' and distance ' + str(del_dist) + ' time sample correction is ' + str(time_correction))
 					for it in range(stack_nt):  # check points one at a time
 						it_in = int(it + time_correction)
-						if it_in >= 0 and it_in < nt: # does data lie within seismogram?
+						if it_in >= 0 and it_in < nt - 1: # does data lie within seismogram?
 							stack[slow_i].data[it] += tr[it_in]
 				done += 1
 				if done%50 == 0:
@@ -200,7 +200,7 @@ def pro5stack(eq_file, plot_scale_fac = 0.05, slow_lo = -0.1, slow_hi = 0.1,
 	plt.show()
 
 	#  Save processed files
-	fname = 'HD' + date_label + '_1dstack.mseed'
+	fname = 'Pro_Files/HD' + date_label + '_1dstack.mseed'
 	stack.write(fname,format = 'MSEED')
 
 	elapsed_time_wc = time.time() - start_time_wc

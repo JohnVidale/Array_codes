@@ -5,7 +5,7 @@
 # This programs deals with both of a pair of repeated events.
 # John Vidale 2/2019
 
-def pro3pair(eq_file1, eq_file2, stat_corr = 1,
+def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
 			 dphase = 'PKIKP', dphase2 = 'PKiKP', dphase3 = 'PKIKP', dphase4 = 'PKiKP',
 			start_buff = 200, end_buff = 500,
 			plot_scale_fac = 0.05,qual_threshold = 0, corr_threshold = 0,
@@ -152,14 +152,15 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1,
 	#%% Is taper too long compared to noise estimation window?
 	totalt = start_buff + end_buff
 	noise_time_skipped = taper_frac * totalt
-	if noise_time_skipped >= 0.5 * start_buff:
-		print('Specified taper of ' + str(taper_frac * totalt) +
-		   ' is not big enough compared to available noise estimation window ' +
-		   str(start_buff - noise_time_skipped) + '. May not work well.')
-		old_taper_frac = taper_frac
-		taper_frac = 0.5*start_buff/totalt
-		print('Taper reset from ' + str(old_taper_frac * totalt) + ' to '
-		   + str(taper_frac * totalt) + ' seconds.')
+	if simple_taper == 0:
+		if noise_time_skipped >= 0.5 * start_buff:
+			print('Specified taper of ' + str(taper_frac * totalt) +
+			   ' is not big enough compared to available noise estimation window ' +
+			   str(start_buff - noise_time_skipped) + '. May not work well.')
+			old_taper_frac = taper_frac
+			taper_frac = 0.5*start_buff/totalt
+			print('Taper reset from ' + str(old_taper_frac * totalt) + ' to '
+			   + str(taper_frac * totalt) + ' seconds.')
 
 	if rel_time == 0: # SNR requirement not implemented for unaligned traces
 		qual_threshold = 0
@@ -192,7 +193,7 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1,
 	st_pickalign1 = Stream()
 	st_pickalign2 = Stream()
 
-	for tr in st1: # traces one by one
+	for tr in st1: # traces one by one, find lat-lon by searching entire inventory.  Inefficient
 		if float(year1) < 1970: # fix the damn 1969 -> 2069 bug in Gibbon's LASA data
 			temp_t = str(tr.stats.starttime)
 			temp_tt = '19' + temp_t[2:]
@@ -201,7 +202,7 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1,
 			if (tr.stats.station == st_names[ii]): # find station in inventory
 				if stat_corr != 1 or float(st_corr[ii]) > corr_threshold: # if using statics, reject low correlations
 					stalat = float(st_lats[ii])
-					stalon = float(st_lons[ii])
+					stalon = float(st_lons[ii]) # look up lat & lon again to find distance
 					if ref_loc == 1:
 						ref_distance = gps2dist_azimuth(stalat,stalon,ref_lat,ref_lon)
 						ref_dist = ref_distance[0]/(1000*111)
@@ -337,27 +338,34 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1,
 		for tr2 in st_pickalign2:
 			if ((tr1.stats.network  == tr2.stats.network) &
 			    (tr1.stats.station  == tr2.stats.station)):
-	# estimate median noise
-				t_noise1_start  = int(len(tr1.data) * taper_frac)
-				t_noise2_start  = int(len(tr2.data) * taper_frac)
-				t_noise1_end    = int(len(tr1.data) * start_buff/(start_buff + end_buff))
-				t_noise2_end    = int(len(tr2.data) * start_buff/(start_buff + end_buff))
-				noise1          = np.median(abs(tr1.data[t_noise1_start:t_noise1_end]))
-				noise2          = np.median(abs(tr2.data[t_noise2_start:t_noise2_end]))
-	# estimate median signal
-				t_signal1_start = int(len(tr1.data) * start_buff/(start_buff + end_buff))
-				t_signal2_start = int(len(tr2.data) * start_buff/(start_buff + end_buff))
-				t_signal1_end   = t_signal1_start + int(len(tr1.data) * signal_dur/(start_buff + end_buff))
-				t_signal2_end   = t_signal2_start + int(len(tr2.data) * signal_dur/(start_buff + end_buff))
-				signal1         = np.median(abs(tr1.data[t_signal1_start:t_signal1_end]))
-				signal2         = np.median(abs(tr2.data[t_signal2_start:t_signal2_end]))
-	#			test SNR
-				SNR1 = signal1/noise1;
-				SNR2 = signal2/noise2;
-				if (SNR1 > qual_threshold and SNR2 > qual_threshold):
+				if skip_SNR == 1:
 					st1good += tr1
 					st2good += tr2
-	print('Above SNR threshold: ' + str(len(st1good)) + ' traces')
+				else:
+					# estimate median noise
+					t_noise1_start  = int(len(tr1.data) * taper_frac)
+					t_noise2_start  = int(len(tr2.data) * taper_frac)
+					t_noise1_end    = int(len(tr1.data) * start_buff/(start_buff + end_buff))
+					t_noise2_end    = int(len(tr2.data) * start_buff/(start_buff + end_buff))
+					noise1          = np.median(abs(tr1.data[t_noise1_start:t_noise1_end]))
+					noise2          = np.median(abs(tr2.data[t_noise2_start:t_noise2_end]))
+		# estimate median signal
+					t_signal1_start = int(len(tr1.data) * start_buff/(start_buff + end_buff))
+					t_signal2_start = int(len(tr2.data) * start_buff/(start_buff + end_buff))
+					t_signal1_end   = t_signal1_start + int(len(tr1.data) * signal_dur/(start_buff + end_buff))
+					t_signal2_end   = t_signal2_start + int(len(tr2.data) * signal_dur/(start_buff + end_buff))
+					signal1         = np.median(abs(tr1.data[t_signal1_start:t_signal1_end]))
+					signal2         = np.median(abs(tr2.data[t_signal2_start:t_signal2_end]))
+		#			test SNR
+					SNR1 = signal1/noise1;
+					SNR2 = signal2/noise2;
+					if (SNR1 > qual_threshold and SNR2 > qual_threshold):
+						st1good += tr1
+						st2good += tr2
+	if skip_SNR == 1:
+		print('Matches (no SNR test): ' + str(len(st1good)) + ' traces')
+	else:
+		print('Match and above SNR threshold: ' + str(len(st1good)) + ' traces')
 
 	#%%  get station lat-lon, compute distance for plot
 	for tr in st1good:
@@ -482,8 +490,8 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1,
 	plt.show()
 
 	#  Save processed files
-	fname1 = 'HD' + date_label1 + 'sel.mseed'
-	fname2 = 'HD' + date_label2 + 'sel.mseed'
+	fname1 = 'Pro_Files/HD' + date_label1 + 'sel.mseed'
+	fname2 = 'Pro_Files/HD' + date_label2 + 'sel.mseed'
 	st1good.write(fname1,format = 'MSEED')
 	st2good.write(fname2,format = 'MSEED')
 

@@ -5,7 +5,7 @@
 # This programs deals with a single event.
 # John Vidale 2/2019
 
-def pro3singlet(eq_file, stat_corr = 0,
+def pro3singlet(eq_file, stat_corr = 0, simple_taper = 0, skip_SNR = 0,
 			dphase = 'PKIKP', dphase2 = 'PKiKP', dphase3 = 'PKIKP', dphase4 = 'PKiKP',
 			start_buff = 10, end_buff = 30,
 			plot_scale_fac = 0.05, qual_threshold = 0, corr_threshold = 0,
@@ -18,6 +18,7 @@ def pro3singlet(eq_file, stat_corr = 0,
 	from obspy import UTCDateTime
 	from obspy import Stream
 	from obspy import read
+	import math
 	from obspy.geodetics import gps2dist_azimuth
 	from dateutil.relativedelta import relativedelta
 	import numpy as np
@@ -29,6 +30,7 @@ def pro3singlet(eq_file, stat_corr = 0,
 	model = TauPyModel(model='iasp91')
 
 	import sys # don't show any warnings
+	from sys import exit
 	import warnings
 
 	if not sys.warnoptions:
@@ -38,7 +40,7 @@ def pro3singlet(eq_file, stat_corr = 0,
 
 	#%% input event data with 1-line file of format
 	#  event 2016-05-28T09:47:00.000 -56.241 -26.935 78
-	file = open(eq_file, 'r')
+	file = open('EvLocs/' + eq_file, 'r')
 	lines=file.readlines()
 	split_line = lines[0].split()
 #			ids.append(split_line[0])  ignore label for now
@@ -141,14 +143,15 @@ def pro3singlet(eq_file, stat_corr = 0,
 	#%% Is taper too long compared to noise estimation window?
 	totalt = start_buff + end_buff
 	noise_time_skipped = taper_frac * totalt
-	if noise_time_skipped >= 0.5 * start_buff:
-		print('Specified taper of ' + str(taper_frac * totalt) +
-		   ' is not big enough compared to available noise estimation window ' +
-		   str(start_buff - noise_time_skipped) + '. May not work well.')
-		old_taper_frac = taper_frac
-		taper_frac = 0.5*start_buff/totalt
-		print('Taper reset from ' + str(old_taper_frac * totalt) + ' to '
-		   + str(taper_frac * totalt) + ' seconds.')
+	if simple_taper == 0:
+		if noise_time_skipped >= 0.5 * start_buff:
+			print('Specified taper of ' + str(taper_frac * totalt) +
+			   ' is not big enough compared to available noise estimation window ' +
+			   str(start_buff - noise_time_skipped) + '. May not work well.')
+			old_taper_frac = taper_frac
+			taper_frac = 0.5*start_buff/totalt
+			print('Taper reset from ' + str(old_taper_frac * totalt) + ' to '
+			   + str(taper_frac * totalt) + ' seconds.')
 
 	if rel_time == 0: # SNR requirement not implemented for unaligned traces
 		qual_threshold = 0
@@ -168,7 +171,7 @@ def pro3singlet(eq_file, stat_corr = 0,
 
 	#%% Load waveforms and decimate to 10 sps
 	st = Stream()
-	fname     = 'HD' + date_label + '.mseed'
+	fname     = 'Mseed/HD' + date_label + '.mseed'
 	st=read(fname)
 	if do_decimate != 0:
 		st.decimate(do_decimate)
@@ -260,22 +263,24 @@ def pro3singlet(eq_file, stat_corr = 0,
 	st_pickalign.taper(taper_frac)
 
 	#%%  Cull further by imposing SNR threshold on both traces
-	stgood = Stream()
-	for tr in st_pickalign:
-	# estimate median noise
-		t_noise_start  = int(len(tr.data) * taper_frac)
-		t_noise_end    = int(len(tr.data) * start_buff/(start_buff + end_buff))
-		noise          = np.median(abs(tr.data[t_noise_start:t_noise_end]))
-	# estimate median signal
-		t_signal_start = int(len(tr.data) * start_buff/(start_buff + end_buff))
-		t_signal_end   = t_signal_start + int(len(tr.data) * signal_dur/(start_buff + end_buff))
-		signal         = np.median(abs(tr.data[t_signal_start:t_signal_end]))
-	#			test SNR
-		SNR = signal/noise;
-		if (SNR > qual_threshold):
-			stgood += tr
-	#print(st1good)
-	#print(st2good)
+	if skip_SNR == 1:
+		stgood = st_pickalign.copy()
+	else:
+		stgood = Stream()
+		for tr in st_pickalign:
+		# estimate median noise
+			t_noise_start  = int(len(tr.data) * taper_frac)
+			t_noise_end    = int(len(tr.data) * start_buff/(start_buff + end_buff))
+			noise          = np.median(abs(tr.data[t_noise_start:t_noise_end]))
+		# estimate median signal
+			t_signal_start = int(len(tr.data) * start_buff/(start_buff + end_buff))
+			t_signal_end   = t_signal_start + int(len(tr.data) * signal_dur/(start_buff + end_buff))
+			signal         = np.median(abs(tr.data[t_signal_start:t_signal_end]))
+		#			test SNR
+			SNR = signal/noise;
+			if (SNR > qual_threshold):
+				stgood += tr
+
 	print('Above SNR threshold: ' + str(len(stgood)) + ' traces')
 	if verbose:
 		for tr in stgood:
@@ -381,11 +386,11 @@ def pro3singlet(eq_file, stat_corr = 0,
 
 	plt.xlabel('Time (s)')
 	plt.ylabel('Epicentral distance from event (°)')
-	plt.title(dphase + ' for ' + fname[2:12])
+	plt.title(dphase + ' for ' + fname[12:22])
 	plt.show()
 
 	#  Save processed files
-	fname3 = 'HD' + date_label + 'sel.mseed'
+	fname3 = 'Pro_Files/HD' + date_label + 'sel.mseed'
 	stgood.write(fname3,format = 'MSEED')
 
 	elapsed_time_wc = time.time() - start_time_wc

@@ -26,6 +26,7 @@ def pro7stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.0
 	from scipy.signal import hilbert
 	import math
 	import time
+	import statistics
 
 	start_time_wc = time.time()
 
@@ -44,8 +45,8 @@ def pro7stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.0
 	#%% Input parameters
 	# #%% Get saved event info, also used to name files
 	# date_label = '2018-04-02' # date for filename
-	fname1 = 'HD' + date_label1 + '_2dstack.mseed'
-	fname2 = 'HD' + date_label2 + '_2dstack.mseed'
+	fname1 = 'Pro_Files/HD' + date_label1 + '_2dstack.mseed'
+	fname2 = 'Pro_Files/HD' + date_label2 + '_2dstack.mseed'
 	st1 = Stream()
 	st2 = Stream()
 	st1 = read(fname1)
@@ -111,8 +112,8 @@ def pro7stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.0
 		freq2 = np.diff(phase2)
 		ave_freq = 0.5*(freq1 + freq2)
 		ave_freq_plus = np.append(ave_freq,[1]) # ave_freq one element too short
-		tshift[slow_i].data     = dphase / ave_freq_plus # 2*pi top and bottom cancels
-#		tshift[slow_i].data     = dphase/(2*math.pi)
+#		tshift[slow_i].data     = dphase / ave_freq_plus # 2*pi top and bottom cancels
+		tshift[slow_i].data     = dphase/(2*math.pi)
 
 		local_max = max(abs(amp_ave[slow_i].data))
 		if local_max > global_max:
@@ -121,7 +122,7 @@ def pro7stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.0
 	tshift_full    = tshift.copy()  # make array for time shift
 	for slow_i in range(total_slows): # ignore less robust points
 		for it in range(nt1):
-			if ((amp_ratio[slow_i].data[it] < 0.4) or (amp_ratio[slow_i].data[it] > 2) or (amp_ave[slow_i].data[it] < (0.2 * global_max))):
+			if ((amp_ratio[slow_i].data[it] < 0.6) or (amp_ratio[slow_i].data[it] > 1.8) or (amp_ave[slow_i].data[it] < (0.20 * global_max))):
 				tshift[slow_i].data[it] = np.nan
 
 	#%% Find transverse slowness nearest zero
@@ -186,7 +187,7 @@ def pro7stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.0
 		plt.plot(ttt, (centralR_st1[slowR_i].data - np.median(centralR_st1[slowR_i].data))*plot_scale_fac /global_max + dist_offset, color = 'green')
 		plt.plot(ttt, (centralR_st2[slowR_i].data - np.median(centralR_st2[slowR_i].data))*plot_scale_fac /global_max + dist_offset, color = 'red')
 #		plt.plot(ttt, (centralR_amp[slowR_i].data)  *plot_scale_fac/global_max + dist_offset, color = 'purple')
-		plt.plot(ttt, (centralR_tdiff[slowR_i].data)*plot_scale_fac/5 + dist_offset, color = 'black')
+		plt.plot(ttt, (centralR_tdiff[slowR_i].data)*plot_scale_fac/1 + dist_offset, color = 'black')
 		plt.plot(ttt, (centralR_amp[slowR_i].data)*0.0 + dist_offset, color = 'yellow') # reference lines
 	plt.title('Seismograms and tdiff at 0 T slowness')
 
@@ -204,16 +205,65 @@ def pro7stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.0
 		plt.plot(ttt, (centralT_st1[slowT_i].data - np.median(centralT_st1[slowT_i].data))*plot_scale_fac /global_max + dist_offset, color = 'green')
 		plt.plot(ttt, (centralT_st2[slowT_i].data - np.median(centralT_st2[slowT_i].data))*plot_scale_fac /global_max + dist_offset, color = 'red')
 #		plt.plot(ttt, (centralT_amp[slowT_i].data)  *plot_scale_fac/global_max + dist_offset, color = 'purple')
-		plt.plot(ttt, (centralT_tdiff[slowT_i].data)*plot_scale_fac/5 + dist_offset, color = 'black')
+		plt.plot(ttt, (centralT_tdiff[slowT_i].data)*plot_scale_fac/1 + dist_offset, color = 'black')
 		plt.plot(ttt, (centralT_amp[slowT_i].data)*0.0 + dist_offset, color = 'yellow') # reference lines
 	plt.title('Seismograms and tdiff at 0 R slowness')
 
+#%% R-T tshift averaged over time window
+	fig_index = 8
+	stack_slice = np.zeros((slowR_n,slowT_n))
+	for slowR_i in range(slowR_n):  # loop over radial slownesses
+		for slowT_i in range(slowT_n):  # loop over transverse slownesses
+			index = slowR_i*slowT_n + slowT_i
+			num_val = np.nanmedian(tshift[index].data)
+#			num_val = statistics.median(tshift_full[index].data)
+			stack_slice[slowR_i, slowT_i] = num_val
+	stack_slice[0,0] = -0.25
+	stack_slice[0,1] =  0.25
+
+	y1, x1 = np.mgrid[slice(stack_Rslows[0], stack_Rslows[-1] + slow_delta, slow_delta),
+				 slice(stack_Tslows[0], stack_Tslows[-1] + slow_delta, slow_delta)]
+
+	fig, ax = plt.subplots(1)
+	c = ax.pcolormesh(x1, y1, stack_slice, cmap=plt.cm.gist_rainbow_r)
+	ax.axis([x1.min(), x1.max(), y1.min(), y1.max()])
+	fig.colorbar(c, ax=ax)
+	plt.xlabel('T Slowness (s/km)')
+	plt.ylabel('R Slowness (s/km)')
+	plt.title('T-R average time shift ' + date_label1 + ' ' + date_label2)
+	plt.show()
+
+#%% R-T amplitude averaged over time window
+	fig_index = 9
+	stack_slice = np.zeros((slowR_n,slowT_n))
+	smax = 0
+	for slowR_i in range(slowR_n):  # loop over radial slownesses
+		for slowT_i in range(slowT_n):  # loop over transverse slownesses
+			index = slowR_i*slowT_n + slowT_i
+			num_val = np.nanmedian(amp_ave[index].data)
+			stack_slice[slowR_i, slowT_i] = num_val
+			if num_val > smax:
+				smax = num_val
+	stack_slice[0,0] = 0
+
+	y1, x1 = np.mgrid[slice(stack_Rslows[0], stack_Rslows[-1] + slow_delta, slow_delta),
+				 slice(stack_Tslows[0], stack_Tslows[-1] + slow_delta, slow_delta)]
+
+	fig, ax = plt.subplots(1)
+	c = ax.pcolormesh(x1, y1, stack_slice, cmap=plt.cm.gist_rainbow_r)
+	ax.axis([x1.min(), x1.max(), y1.min(), y1.max()])
+	fig.colorbar(c, ax=ax)
+	plt.xlabel('T Slowness (s/km)')
+	plt.ylabel('R Slowness (s/km)')
+	plt.title('T-R average amplitude ' + date_label1 + ' ' + date_label2)
+	plt.show()
+
 	#  Save processed files
-	fname = 'HD' + date_label1 + '_' + date_label2 + '_tshift.mseed'
+	fname = 'Pro_Files/HD' + date_label1 + '_' + date_label2 + '_tshift.mseed'
 	tshift_full.write(fname,format = 'MSEED')
-	fname = 'HD' + date_label1 + '_' + date_label2 + '_amp_ave.mseed'
+	fname = 'Pro_Files/HD' + date_label1 + '_' + date_label2 + '_amp_ave.mseed'
 	amp_ave.write(fname,format = 'MSEED')
-	fname = 'HD' + date_label1 + '_' + date_label2 + '_amp_ratio.mseed'
+	fname = 'Pro_Files/HD' + date_label1 + '_' + date_label2 + '_amp_ratio.mseed'
 	amp_ratio.write(fname,format = 'MSEED')
 
 	elapsed_time_wc = time.time() - start_time_wc
