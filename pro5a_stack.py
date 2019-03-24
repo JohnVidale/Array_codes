@@ -6,7 +6,7 @@
 # This programs deals with a single event.
 # John Vidale 2/2019
 
-def pro5stack(eq_file, plot_scale_fac = 0.05, slow_lo = -0.1, slow_hi = 0.1,
+def pro5stack(eq_file, plot_scale_fac = 0.05, slowR_lo = -0.1, slowR_hi = 0.1,
 			  slow_delta = 0.0005, start_buff = 50, end_buff = 50,
 			  ref_lat = 36.3, ref_lon = 138.5, envelope = 1, plot_dyn_range = 1000,
 			  norm = 1, global_norm_plot = 1, color_plot = 1, fig_index = 401, ARRAY = 0):
@@ -33,7 +33,7 @@ def pro5stack(eq_file, plot_scale_fac = 0.05, slow_lo = -0.1, slow_hi = 0.1,
 
 	start_time_wc = time.time()
 
-	file = open(eq_file, 'r')
+	file = open('EvLocs/' + eq_file, 'r')
 	lines=file.readlines()
 	split_line = lines[0].split()
 #			ids.append(split_line[0])  ignore label for now
@@ -92,11 +92,11 @@ def pro5stack(eq_file, plot_scale_fac = 0.05, slow_lo = -0.1, slow_hi = 0.1,
 	tr.stats.delta = dt
 	tr.stats.network = 'stack'
 	tr.stats.channel = 'BHZ'
-	slow_n = int(1 + (slow_hi - slow_lo)/slow_delta)  # number of slownesses
+	slow_n = int(1 + (slowR_hi - slowR_lo)/slow_delta)  # number of slownesses
 	stack_nt = int(1 + ((end_buff + start_buff)/dt))  # number of time points
-	# In English, stack_slows = range(slow_n) * slow_delta - slow_lo
+	# In English, stack_slows = range(slow_n) * slow_delta - slowR_lo
 	a1 = range(slow_n)
-	stack_slows = [(x * slow_delta + slow_lo) for x in a1]
+	stack_slows = [(x * slow_delta + slowR_lo) for x in a1]
 	print(str(slow_n) + ' slownesses.')
 	tr.stats.starttime = t - start_buff
 	tr.data = np.zeros(stack_nt)
@@ -192,11 +192,11 @@ def pro5stack(eq_file, plot_scale_fac = 0.05, slow_lo = -0.1, slow_hi = 0.1,
 				plt.plot(ttt, stack[slow_i].data*plot_scale_fac / (global_max
 			- stack[slow_i].data.min()) + dist_offset, color = 'black')
 		plt.figure(3,figsize=(10,10))
-		plt.ylim(slow_lo,slow_hi)
+		plt.ylim(slowR_lo,slowR_hi)
 		plt.xlim(-start_buff,end_buff)
 	plt.xlabel('Time (s)')
 	plt.ylabel('Slowness (s/km)')
-	plt.title(fname[2:12])
+	plt.title(fname[12:22])
 	plt.show()
 
 	#  Save processed files
