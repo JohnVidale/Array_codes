@@ -1,9 +1,7 @@
 #!/usr/bin/env python
-# input is set of hinet traces
-# this program tapers, filters, selects range and SNR
-# plots against traveltime curves, either raw or reduced against traveltimes
+# Add three plane waves to test beam resolution
 # This programs deals with a single event.
-# John Vidale 2/2019
+# John Vidale 3/2019
 
 def pro3singlet(eq_file, stat_corr = 0,
 			dphase = 'PKIKP', dphase2 = 'PKiKP', dphase3 = 'PKIKP', dphase4 = 'PKiKP',

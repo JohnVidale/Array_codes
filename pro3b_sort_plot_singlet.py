@@ -18,19 +18,15 @@ def pro3singlet(eq_file, stat_corr = 0, simple_taper = 0, skip_SNR = 0,
 	from obspy import UTCDateTime
 	from obspy import Stream
 	from obspy import read
-	import math
 	from obspy.geodetics import gps2dist_azimuth
-	from dateutil.relativedelta import relativedelta
 	import numpy as np
 	import os
 	from obspy.taup import TauPyModel
 	import matplotlib.pyplot as plt
 	import time
-	from datetime import datetime
 	model = TauPyModel(model='iasp91')
 
 	import sys # don't show any warnings
-	from sys import exit
 	import warnings
 
 	if not sys.warnoptions:
