@@ -6,9 +6,9 @@
 # This programs deals with a single event.
 # John Vidale 2/2019
 
-def pro7stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.0005,
+def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.0005,
 			  slowR_lo = -0.1, slowR_hi = 0.1, slowT_lo = -0.1, slowT_hi = 0.1,
-			  start_buff = 50, end_buff = 50, snaptime = 0, snaps = 1, norm = 0,
+			  start_buff = 50, end_buff = 50, norm = 0,
 			  plot_dyn_range = 1000, fig_index = 401):
 
 	import obspy

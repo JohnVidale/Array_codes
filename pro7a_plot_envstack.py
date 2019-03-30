@@ -6,10 +6,10 @@
 # This programs deals with a single event.
 # John Vidale 2/2019
 
-def pro6plotstack(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
+def pro7plotstack(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 			  slowR_lo = -0.1, slowR_hi = 0.1, slowT_lo = -0.1, slowT_hi = 0.1,
-			  start_buff = 50, end_buff = 50, snaptime = 0, snaps = 1,
-			  plot_dyn_range = 1000, fig_index = 401, skip_T = 0, skip_R = 0):
+			  start_buff = 50, end_buff = 50, snaptime = 8, snaps = 10,
+			  plot_dyn_range = 1000, fig_index = 401, skip_T = 1, skip_R = 0):
 
 	import obspy
 	import obspy.signal
@@ -75,20 +75,63 @@ def pro6plotstack(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 		for slowR_i in range(slowR_n):
 			centralR_st += st[slowR_i*slowT_n + lowest_Tindex]
 
-	#%% If desired, find radial slowness nearest zero
+	#%% Slices near radial slownesses of zero, 0.005, 0.01, 0.015
 	if skip_T != 1:
 		lowest_Rslow = 1000000
 		for slow_i in range(slowR_n):
 			if abs(stack_Rslows[slow_i]) < lowest_Rslow:
-				lowest_Rindex = slow_i
+				lowest_Rindex00 = slow_i
 				lowest_Rslow = abs(stack_Rslows[slow_i])
 
-		print(str(slowR_n) + ' R slownesses, ' + str(lowest_Rindex) + ' min R slow, min is ' + str(lowest_Rslow))
+		print(str(slowR_n) + ' R slownesses, ')
+		print(f'{lowest_Rindex00:4d} is R slow nearest 0, slowness is {lowest_Rslow:.3f}')
 
 		# Select only stacks with that slowness for Radial plot
-		centralT_st = Stream()
+		centralT00_st = Stream()
 		for slowT_i in range(slowT_n):
-			centralT_st += st[lowest_Rindex*slowT_n + slowT_i]
+			centralT00_st += st[lowest_Rindex00*slowT_n + slowT_i]
+
+		#%% Slice near radial slowness of 0.005
+		lowest_Rslow = 1000000
+		for slow_i in range(slowR_n):
+			if abs(stack_Rslows[slow_i] - 0.005) < lowest_Rslow:
+				lowest_Rindex05 = slow_i
+				lowest_Rslow = abs(stack_Rslows[slow_i] - 0.005)
+
+		print(f'{lowest_Rindex05:4d} is R slow nearest 0.005, slowness is {lowest_Rslow + 0.005:.3f}')
+
+		# Select only stacks with that slowness for Radial plot
+		centralT05_st = Stream()
+		for slowT_i in range(slowT_n):
+			centralT05_st += st[lowest_Rindex05*slowT_n + slowT_i]
+
+		#%% Slice near radial slowness of 0.01
+		lowest_Rslow = 1000000
+		for slow_i in range(slowR_n):
+			if abs(stack_Rslows[slow_i] - 0.01) < lowest_Rslow:
+				lowest_Rindex10 = slow_i
+				lowest_Rslow = abs(stack_Rslows[slow_i] - 0.01)
+
+		print(f'{lowest_Rindex10:4d} is R slow nearest 0.010, slowness is {lowest_Rslow + 0.010:.3f}')
+
+		# Select only stacks with that slowness for Radial plot
+		centralT10_st = Stream()
+		for slowT_i in range(slowT_n):
+			centralT10_st += st[lowest_Rindex10*slowT_n + slowT_i]
+
+		#%% Slice near radial slowness of 0.015
+		lowest_Rslow = 1000000
+		for slow_i in range(slowR_n):
+			if abs(stack_Rslows[slow_i] - 0.015) < lowest_Rslow:
+				lowest_Rindex15 = slow_i
+				lowest_Rslow = abs(stack_Rslows[slow_i] - 0.015)
+
+		print(f'{lowest_Rindex15:4d} is R slow nearest 0.015, slowness is {lowest_Rslow + 0.015:.3f}')
+
+		# Select only stacks with that slowness for Radial plot
+		centralT15_st = Stream()
+		for slowT_i in range(slowT_n):
+			centralT15_st += st[lowest_Rindex15*slowT_n + slowT_i]
 #%%
 	total_slows = slowR_n * slowT_n
 	global_max = 0
@@ -98,6 +141,7 @@ def pro6plotstack(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 		local_max = max(abs(st[slow_i].data))
 		if local_max > global_max:
 			global_max = local_max
+	min_allowed = global_max/plot_dyn_range
 
 	#%% compute timing time series
 	ttt = (np.arange(len(st[0].data)) * st[0].stats.delta - start_buff) # in units of seconds
@@ -107,7 +151,6 @@ def pro6plotstack(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 	if skip_R != 1:
 		stack_array = np.zeros((slowR_n,stack_nt))
 
-		min_allowed = global_max/plot_dyn_range
 		for it in range(stack_nt):  # check points one at a time
 			for slowR_i in range(slowR_n):  # for this station, loop over slownesses
 				num_val = centralR_st[slowR_i].data[it]
@@ -121,7 +164,7 @@ def pro6plotstack(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 					 slice(ttt[0], ttt[-1] + dt, dt)]
 
 		fig, ax = plt.subplots(1)
-		print('Figure is set to ' + str(fig))
+#		print('Figure is set to ' + str(fig))
 		c = ax.pcolormesh(x, y, stack_array, cmap=plt.cm.gist_rainbow_r)
 		ax.axis([x.min(), x.max(), y.min(), y.max()])
 		fig.colorbar(c, ax=ax)
@@ -130,14 +173,13 @@ def pro6plotstack(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 		plt.title('Radial stack at 0 T slow, ' + fname[12:22])
 		plt.show()
 
-#%%  Transverse-time stack
+#%%  Transverse-time stacks
 	if skip_T != 1:
 		stack_array = np.zeros((slowT_n,stack_nt))
 
-		min_allowed = global_max/plot_dyn_range
 		for it in range(stack_nt):  # check points one at a time
 			for slowT_i in range(slowT_n):  # for this station, loop over slownesses
-				num_val = centralT_st[slowT_i].data[it]
+				num_val = centralT00_st[slowT_i].data[it]
 				if num_val < min_allowed:
 					num_val = min_allowed
 				stack_array[slowT_i, it] = math.log10(num_val)
@@ -148,13 +190,88 @@ def pro6plotstack(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 					 slice(ttt[0], ttt[-1] + dt, dt)]
 
 		fig, ax = plt.subplots(1)
-		print('Figure is set to ' + str(fig))
+#		print('Figure is set to ' + str(fig))
 		c = ax.pcolormesh(x, y, stack_array, cmap=plt.cm.gist_rainbow_r)
 		ax.axis([x.min(), x.max(), y.min(), y.max()])
 		fig.colorbar(c, ax=ax)
 		plt.xlabel('Time (s)')
 		plt.ylabel('Slowness (s/km)')
-		plt.title('Transverse stack at 0 R slow, ' + fname[12:22])
+		plt.title('Transverse stack at 0.000 R slow, ' + fname[12:22])
+		plt.show()
+
+		fig_index += 1
+		stack_array = np.zeros((slowT_n,stack_nt))
+
+		for it in range(stack_nt):  # check points one at a time
+			for slowT_i in range(slowT_n):  # for this station, loop over slownesses
+				num_val = centralT05_st[slowT_i].data[it]
+				if num_val < min_allowed:
+					num_val = min_allowed
+				stack_array[slowT_i, it] = math.log10(num_val)
+		stack_array[0,0] = math.log10(global_max)
+		stack_array[0,1] = math.log10(min_allowed)
+
+		y, x = np.mgrid[slice(stack_Tslows[0], stack_Tslows[-1] + slow_delta, slow_delta),
+					 slice(ttt[0], ttt[-1] + dt, dt)]
+
+		fig, ax = plt.subplots(1)
+#		print('Figure is set to ' + str(fig))
+		c = ax.pcolormesh(x, y, stack_array, cmap=plt.cm.gist_rainbow_r)
+		ax.axis([x.min(), x.max(), y.min(), y.max()])
+		fig.colorbar(c, ax=ax)
+		plt.xlabel('Time (s)')
+		plt.ylabel('Slowness (s/km)')
+		plt.title('Transverse stack at 0.005 R slow, ' + fname[12:22])
+		plt.show()
+
+		fig_index += 1
+		stack_array = np.zeros((slowT_n,stack_nt))
+
+		for it in range(stack_nt):  # check points one at a time
+			for slowT_i in range(slowT_n):  # for this station, loop over slownesses
+				num_val = centralT10_st[slowT_i].data[it]
+				if num_val < min_allowed:
+					num_val = min_allowed
+				stack_array[slowT_i, it] = math.log10(num_val)
+		stack_array[0,0] = math.log10(global_max)
+		stack_array[0,1] = math.log10(min_allowed)
+
+		y, x = np.mgrid[slice(stack_Tslows[0], stack_Tslows[-1] + slow_delta, slow_delta),
+					 slice(ttt[0], ttt[-1] + dt, dt)]
+
+		fig, ax = plt.subplots(1)
+#		print('Figure is set to ' + str(fig))
+		c = ax.pcolormesh(x, y, stack_array, cmap=plt.cm.gist_rainbow_r)
+		ax.axis([x.min(), x.max(), y.min(), y.max()])
+		fig.colorbar(c, ax=ax)
+		plt.xlabel('Time (s)')
+		plt.ylabel('Slowness (s/km)')
+		plt.title('Transverse stack at 0.010 R slow, ' + fname[12:22])
+		plt.show()
+
+		fig_index += 1
+		stack_array = np.zeros((slowT_n,stack_nt))
+
+		for it in range(stack_nt):  # check points one at a time
+			for slowT_i in range(slowT_n):  # for this station, loop over slownesses
+				num_val = centralT15_st[slowT_i].data[it]
+				if num_val < min_allowed:
+					num_val = min_allowed
+				stack_array[slowT_i, it] = math.log10(num_val)
+		stack_array[0,0] = math.log10(global_max)
+		stack_array[0,1] = math.log10(min_allowed)
+
+		y, x = np.mgrid[slice(stack_Tslows[0], stack_Tslows[-1] + slow_delta, slow_delta),
+					 slice(ttt[0], ttt[-1] + dt, dt)]
+
+		fig, ax = plt.subplots(1)
+#		print('Figure is set to ' + str(fig))
+		c = ax.pcolormesh(x, y, stack_array, cmap=plt.cm.gist_rainbow_r)
+		ax.axis([x.min(), x.max(), y.min(), y.max()])
+		fig.colorbar(c, ax=ax)
+		plt.xlabel('Time (s)')
+		plt.ylabel('Slowness (s/km)')
+		plt.title('Transverse stack at 0.015 R slow, ' + fname[12:22])
 		plt.show()
 
 #%% R-T stack
