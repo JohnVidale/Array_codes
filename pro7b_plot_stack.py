@@ -1,9 +1,10 @@
 #!/usr/bin/env python
-# Slant stack
-# Input is set of hinet traces
-# traces have already been aligned and corrected for near-vertical statics
-#   to have specified phase start at the earthquake origin time
-# This programs deals with a single event.
+# looks at envelope stack differential parameters from pro6
+# Reads in tdiff, ave_amp, amp_ratio computed from a pair of events
+# window by quality signals
+# plots snapshots at a range of lag times
+# plus plots sections at 4 radial slownesses (0.0, 0.05, 0.01, 0.015)
+# plus plots 1 transverse slowness at 0 slowness
 # John Vidale 2/2019
 
 def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.0005,

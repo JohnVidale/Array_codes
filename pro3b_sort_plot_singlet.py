@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-# input is set of hinet traces
+# reads in raw mseed traces from a single event
 # this program tapers, filters, selects range and SNR
 # plots against traveltime curves, either raw or reduced against traveltimes
-# This programs deals with a single event.
+# writes out "*sel.mseed" file
 # John Vidale 2/2019
 
 def pro3singlet(eq_file, stat_corr = 0, simple_taper = 0, skip_SNR = 0,

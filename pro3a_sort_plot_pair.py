@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-# input is set of hinet, LASA, or NORSAR traces
+# input is pair of repeated events from hinet, LASA, or NORSAR
 # this program tapers, filters, selects range and SNR
-# plots against traveltime curves, either raw or reduced against traveltimes
-# This programs deals with both of a pair of repeated events.
+# plots seismograms with traveltime curves, either raw or reduced against traveltimes
+# outputs selected traces, "*sel.mseed"
 # John Vidale 2/2019
 
 def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,

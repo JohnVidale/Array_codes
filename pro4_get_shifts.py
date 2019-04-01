@@ -1,5 +1,8 @@
 #!/usr/bin/env python
-#  code to align traces by shifting, and record time shifts for station statics
+#  reads in "*sel.mseed" for a pair of events
+#  align traces by shifting, and record time shifts for station statics
+#  plots traces before and after time shift
+#  saves aligned traces (not generally used) and static corrections, used in pro3 codes
 #  John Vidale, 2/2019
 def pro4statics(eq_file, out_name = 'test', ref_trace = 'N.SZW',
 				dphase = 'PKIKP', dphase2 = 'PKiKP', dphase3 = 'PKIKP', dphase4 = 'PKiKP',

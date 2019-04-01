@@ -1,8 +1,5 @@
 #!/usr/bin/env python
-# input is set of hinet traces
-# this program tapers, filters, selects range and SNR
-# plots against traveltime curves, either raw or reduced against traveltimes
-# This programs deals with a single event.
+# this program only detrends, tapers and decimates
 # John Vidale 2/2019
 
 def pro2_decimate(eq_file, decimate_fac = 5):

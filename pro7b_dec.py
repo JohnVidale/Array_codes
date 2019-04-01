@@ -1,10 +1,6 @@
 #!/usr/bin/env python
-# Slant stack
-# Input is set of hinet traces
-# traces have already been aligned and corrected for near-vertical statics
-#   to have specified phase start at the earthquake origin time
-# This programs deals with a single event.
-# John Vidale 2/2019
+# decimates output of pro6 for quickly read into pro7a
+# John Vidale 3/2019
 
 def pro7dec(eq_file1, eq_file2, decimate_fac = 5):
 

@@ -1,10 +1,9 @@
 #!/usr/bin/env python
-# Slant stack
-# Input is set of hinet traces
-# traces have already been aligned and corrected for near-vertical statics
-#   to have specified phase start at the earthquake origin time
-# This programs deals with a single event.
-# John Vidale 2/2019
+# Read in 2D stacks for two events
+# Compute tdiff, ave_amp, amp_ratio
+# Plot radial and transverse cuts through stack, plus beam sum
+# Write out tdiff, ave_amp, amp_ratio results
+# John Vidale 3/2019
 
 def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.0005,
 			  slowR_lo = -0.1, slowR_hi = 0.1, slowT_lo = -0.1, slowT_hi = 0.1,

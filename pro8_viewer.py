@@ -1,10 +1,5 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Program to show cube of data
-@author: vidale
-"""
-
+# makes a little animation, controlled by mouse, of snapshots of tdiff as a function of slownesses
 import os
 os.environ['PATH'] += os.pathsep + '/usr/local/bin'
 import numpy as np

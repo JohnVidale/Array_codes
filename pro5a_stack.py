@@ -1,9 +1,10 @@
 #!/usr/bin/env python
-# Slant stack
-# Input is set of hinet traces
+# 1D Slant stack for a single event
+# Input is set of selected traces "*sel.mseed"
 # traces have already been aligned and corrected for near-vertical statics
 #   to have specified phase start at the earthquake origin time
-# This programs deals with a single event.
+# plots either traces or envelopes of traces
+# saves 1D stack "_1Dstack.mseed"
 # John Vidale 2/2019
 
 def pro5stack(eq_file, plot_scale_fac = 0.05, slowR_lo = -0.1, slowR_hi = 0.1,

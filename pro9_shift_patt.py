@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+# calculate predicted timing and timeshift of waves scattered from the ICB
 """
 Calculate accurate estimate of expected pattern of time change with lag time and back-azimuth from rotation
 Started on Sun Mar 24 09:48:49 2019

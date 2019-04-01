@@ -1,9 +1,10 @@
 #!/usr/bin/env python
+# reads in raw mseed traces
 # Add three plane waves to test beam resolution
 # This programs deals with a single event.
 # John Vidale 3/2019
 
-def pro3singlet(eq_file, stat_corr = 0,
+def pro3singlet_test(eq_file, stat_corr = 0,
 			dphase = 'PKIKP', dphase2 = 'PKiKP', dphase3 = 'PKIKP', dphase4 = 'PKiKP',
 			start_buff = 10, end_buff = 30,
 			plot_scale_fac = 0.05, qual_threshold = 0, corr_threshold = 0,
