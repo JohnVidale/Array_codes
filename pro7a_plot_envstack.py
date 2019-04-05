@@ -1,15 +1,14 @@
 #!/usr/bin/env python
-# looks at envelope stack differential parameters from pro6
-# Reads in tdiff, ave_amp, amp_ratio computed from a pair of events
-# window by quality signals
+# looks at envelope stack from pro6 from one event
 # plots snapshots at a range of lag times
-# plus plots sections at 4 radial slownesses (0.0, 0.05, 0.01, 0.015)
-# plus plots 1 transverse slowness at 0 slowness
+# plus plots section at radial slowness of 0.0
 # John Vidale 2/2019
 
 def pro7plotstack(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 			  slowR_lo = -0.1, slowR_hi = 0.1, slowT_lo = -0.1, slowT_hi = 0.1,
 			  start_buff = 50, end_buff = 50, snaptime = 8, snaps = 10,
+			  ZslowR_lo = -0.1, ZslowR_hi = 0.1, ZslowT_lo = -0.1, ZslowT_hi = 0.1,
+			  Zstart_buff = 50, Zend_buff = 50, zoom = 0,
 			  plot_dyn_range = 1000, fig_index = 401, skip_T = 1, skip_R = 0):
 
 	import obspy
@@ -17,14 +16,9 @@ def pro7plotstack(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 	from obspy import UTCDateTime
 	from obspy import Stream, Trace
 	from obspy import read
-	from obspy.geodetics import gps2dist_azimuth
 	import numpy as np
 	import os
-	from obspy.taup import TauPyModel
-	import obspy.signal as sign
 	import matplotlib.pyplot as plt
-	model = TauPyModel(model='iasp91')
-	from scipy.signal import hilbert
 	import math
 	import time
 
@@ -60,6 +54,39 @@ def pro7plotstack(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 	stack_Rslows = [(x * slow_delta + slowR_lo) for x in a1R]
 	stack_Tslows = [(x * slow_delta + slowT_lo) for x in a1T]
 	print(str(slowR_n) + ' radial slownesses, ' + str(slowT_n) + ' trans slownesses, ')
+
+	#%% select subset for plotting
+	if zoom == 1:
+		Zst = Stream()
+		for slowR_i in range(slowR_n):  # loop over radial slownesses
+			for slowT_i in range(slowT_n):  # loop over transverse slownesses
+				if ((stack_Rslows[slowR_i] >= ZslowR_lo) and (stack_Rslows[slowR_i] <= ZslowR_hi) and
+					(stack_Tslows[slowT_i] >= ZslowT_lo) and (stack_Tslows[slowT_i] <= ZslowT_hi)):
+					index = slowR_i*slowT_n + slowT_i
+					s_t = t - Zstart_buff
+					e_t = t + Zend_buff
+					Zst     += st[index].trim(starttime=s_t, endtime=e_t)
+							#tr.trim(starttime=s_t,endtime = e_t)
+		st     = Zst
+		nt = len(st[0].data)
+
+		#%% Re-make grid of slownesses
+		slowR_lo   = ZslowR_lo
+		slowR_hi   = ZslowR_hi
+		slowT_lo   = ZslowT_lo
+		slowT_hi   = ZslowT_hi
+		end_buff   = Zend_buff
+		start_buff = Zstart_buff
+		slowR_n = int(1 + (slowR_hi - slowR_lo)/slow_delta)  # number of slownesses
+		slowT_n = int(1 + (slowT_hi - slowT_lo)/slow_delta)  # number of slownesses
+		stack_nt = int(1 + ((end_buff + start_buff)/dt))  # number of time points
+		print('After zoom ' + str(slowT_n) + ' trans slownesses, hi and lo are ' + str(slowT_hi) + '  ' + str(slowT_lo))
+		# In English, stack_slows = range(slow_n) * slow_delta - slow_lo
+		a1R = range(slowR_n)
+		a1T = range(slowT_n)
+		stack_Rslows = [(x * slow_delta + slowR_lo) for x in a1R]
+		stack_Tslows = [(x * slow_delta + slowT_lo) for x in a1T]
+		print('After zoom ' + str(slowR_n) + ' radial slownesses, ' + str(slowT_n) + ' trans slownesses, ')
 
 	#%% Find transverse slowness nearest zero
 	if skip_R != 1:
@@ -297,6 +324,8 @@ def pro7plotstack(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 		c = ax.pcolormesh(x1, y1, stack_slice, cmap=plt.cm.gist_rainbow_r)
 		ax.axis([x1.min(), x1.max(), y1.min(), y1.max()])
 		fig.colorbar(c, ax=ax)
+		circle1 = plt.Circle((0, 0), 0.019, color='black', fill=False)
+		ax.add_artist(circle1)
 		plt.xlabel('T Slowness (s/km)')
 		plt.ylabel('R Slowness (s/km)')
 		plt.title('T-R stack at rel time ' + str(snaptime + snap_num*dt) + '  ' + fname[12:22])

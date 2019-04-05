@@ -84,6 +84,7 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 	stack_Rslows = [(x * slow_delta + slowR_lo) for x in a1R]
 	stack_Tslows = [(x * slow_delta + slowT_lo) for x in a1T]
 	print(str(slowR_n) + ' radial slownesses, ' + str(slowT_n) + ' trans slownesses, ')
+	print('Input trace starttime ' + str(tdiff[0].stats.starttime))
 
 	#%% select subset for plotting
 	if zoom == 1:
@@ -124,7 +125,7 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 		stack_Tslows = [(x * slow_delta + slowT_lo) for x in a1T]
 		print('After zoom ' + str(slowR_n) + ' radial slownesses, ' + str(slowT_n) + ' trans slownesses, ')
 
-	print('Input trace ' + str(tdiff[0].stats.starttime) + 'Output trace ' + str(Ztdiff[0].stats.starttime))
+	print('Output trace starttime ' + str(Ztdiff[0].stats.starttime))
 
 	#%% mask out bad points
 	global_max = 0
@@ -343,8 +344,8 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 				index = slowR_i*slowT_n + slowT_i
 				num_val = tdiff[index].data[it]
 				stack_slice[slowR_i, slowT_i] = num_val
-		stack_slice[0,0] = -0.5
-		stack_slice[0,1] = 0.5
+		stack_slice[0,0] = -0.4
+		stack_slice[0,1] = 0.4
 
 		y1, x1 = np.mgrid[slice(stack_Rslows[0], stack_Rslows[-1] + slow_delta, slow_delta),
 					 slice(stack_Tslows[0], stack_Tslows[-1] + slow_delta, slow_delta)]
@@ -353,7 +354,7 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 		c = ax.pcolormesh(x1, y1, stack_slice, cmap=plt.cm.coolwarm)
 		ax.axis([x1.min(), x1.max(), y1.min(), y1.max()])
 		fig.colorbar(c, ax=ax)
-		circle1 = plt.Circle((0, -0.011), 0.019, color='black', fill=False)
+		circle1 = plt.Circle((0, 0), 0.019, color='black', fill=False)
 		ax.add_artist(circle1)
 		plt.xlabel('T Slowness (s/km)')
 		plt.ylabel('R Slowness (s/km)')
