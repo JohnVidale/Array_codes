@@ -382,7 +382,7 @@ def pro3singlet(eq_file, stat_corr = 0, simple_taper = 0, skip_SNR = 0,
 
 	plt.xlabel('Time (s)')
 	plt.ylabel('Epicentral distance from event (°)')
-	plt.title(dphase + ' for ' + fname[12:22])
+	plt.title(dphase + ' for ' + fname[8:18])
 	plt.show()
 
 	#  Save processed files

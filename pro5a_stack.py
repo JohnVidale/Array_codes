@@ -171,14 +171,14 @@ def pro5stack(eq_file, plot_scale_fac = 0.05, slowR_lo = -0.1, slowR_hi = 0.1,
 				num_val = stack[slow_i].data[it]
 				if num_val < min_allowed:
 					num_val = min_allowed
-				stack_array[slow_i, it] = math.log10(num_val)
+				stack_array[slow_i, it] = math.log10(num_val) - math.log10(min_allowed)
 		y, x = np.mgrid[slice(stack_slows[0], stack_slows[-1] + slow_delta, slow_delta),
 					 slice(ttt[0], ttt[-1] + dt, dt)]  # make underlying x-y grid for plot
 	#	y, x = np.mgrid[ stack_slows , time ]  # make underlying x-y grid for plot
 		plt.close(fig_index)
-		plt.figure(fig_index,figsize=(10,10))
 
-		fig, ax = plt.subplots(1)
+		fig, ax = plt.subplots(1, figsize=(9,4))
+		fig.subplots_adjust(bottom=0.2)
 		c = ax.pcolormesh(x, y, stack_array, cmap=plt.cm.gist_rainbow_r)
 		ax.axis([x.min(), x.max(), y.min(), y.max()])
 		fig.colorbar(c, ax=ax)
@@ -192,7 +192,6 @@ def pro5stack(eq_file, plot_scale_fac = 0.05, slowR_lo = -0.1, slowR_hi = 0.1,
 			else:
 				plt.plot(ttt, stack[slow_i].data*plot_scale_fac / (global_max
 			- stack[slow_i].data.min()) + dist_offset, color = 'black')
-		plt.figure(3,figsize=(10,10))
 		plt.ylim(slowR_lo,slowR_hi)
 		plt.xlim(-start_buff,end_buff)
 	plt.xlabel('Time (s)')

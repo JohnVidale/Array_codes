@@ -486,7 +486,7 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
 
 	plt.xlabel('Time (s)')
 	plt.ylabel('Epicentral distance from event (°)')
-	plt.title(dphase + ' for ' + fname1[2:12] + ' vs ' + fname2[2:12])
+	plt.title(dphase + ' for ' + fname1[8:18] + ' vs ' + fname2[8:18])
 	plt.show()
 
 	#  Save processed files

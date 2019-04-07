@@ -8,7 +8,7 @@
 def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.0005,
 			  slowR_lo = -0.1, slowR_hi = 0.1, slowT_lo = -0.1, slowT_hi = 0.1,
 			  start_buff = 50, end_buff = 50, norm = 0,
-			  plot_dyn_range = 1000, fig_index = 401):
+			  plot_dyn_range = 1000, fig_index = 401, get_stf = 0):
 
 	import obspy
 	import obspy.signal
@@ -162,6 +162,11 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.0
 	centralT_amp   = Stream()
 	centralT_ampr  = Stream()
 	centralT_tdiff = Stream()
+
+	#%% to extract stacked time functions
+	event1_sample = Stream()
+	event2_sample = Stream()
+
 	for slowT_i in range(slowT_n):
 		ii = lowest_Rindex*slowT_n + slowT_i
 		centralT_st1 += st1[ii]
@@ -185,6 +190,13 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.0
 		 + (centralR_st1[slowR_i].stats.starttime - t1))
 		plt.plot(ttt, (centralR_st1[slowR_i].data - np.median(centralR_st1[slowR_i].data))*plot_scale_fac /global_max + dist_offset, color = 'green')
 		plt.plot(ttt, (centralR_st2[slowR_i].data - np.median(centralR_st2[slowR_i].data))*plot_scale_fac /global_max + dist_offset, color = 'red')
+		# extract stacked time functions
+		print('slowness is ' + str(stack_Rslows[slowR_i]))
+		if get_stf != 0:
+			if np.abs(stack_Rslows[slowR_i]- 0.005) < 0.000001: # kludge, not exactly zero when desired
+				print('Made it to the STF lines, slowness is ' + str(stack_Rslows[slowR_i]))
+				event1_sample = centralR_st1[slowR_i].copy()
+				event2_sample = centralR_st2[slowR_i].copy()
 #		plt.plot(ttt, (centralR_amp[slowR_i].data)  *plot_scale_fac/global_max + dist_offset, color = 'purple')
 		plt.plot(ttt, (centralR_tdiff[slowR_i].data)*plot_scale_fac/1 + dist_offset, color = 'black')
 		plt.plot(ttt, (centralR_amp[slowR_i].data)*0.0 + dist_offset, color = 'yellow') # reference lines
@@ -251,10 +263,13 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.0
 	fig, ax = plt.subplots(1)
 	c = ax.pcolormesh(x1, y1, stack_slice, cmap=plt.cm.gist_rainbow_r)
 	ax.axis([x1.min(), x1.max(), y1.min(), y1.max()])
+	circle1 = plt.Circle((0, 0), 0.019, color='black', fill=False)
+	ax.add_artist(circle1)
 	fig.colorbar(c, ax=ax)
-	plt.xlabel('T Slowness (s/km)')
-	plt.ylabel('R Slowness (s/km)')
-	plt.title('T-R average amplitude ' + date_label1 + ' ' + date_label2)
+	plt.xlabel('Transverse Slowness (s/km)')
+	plt.ylabel('Radial Slowness (s/km)')
+	plt.title('Beam amplitude')
+#	plt.title('Beam amplitude ' + date_label1 + ' ' + date_label2)
 	plt.show()
 
 	#  Save processed files
@@ -264,6 +279,15 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.0
 	amp_ave.write(fname,format = 'MSEED')
 	fname = 'Pro_Files/HD' + date_label1 + '_' + date_label2 + '_amp_ratio.mseed'
 	amp_ratio.write(fname,format = 'MSEED')
+
+	if get_stf != 0:
+	# Write out stf
+		event1_sample.taper(0.1)
+		event2_sample.taper(0.1)
+		fname = 'Pro_Files/HD' + date_label1 + '_stf.mseed'
+		event1_sample.write(fname,format = 'MSEED')
+		fname = 'Pro_Files/HD' + date_label2 + '_stf.mseed'
+		event2_sample.write(fname,format = 'MSEED')
 
 	elapsed_time_wc = time.time() - start_time_wc
 	print('This job took ' + str(elapsed_time_wc) + ' seconds')
