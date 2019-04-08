@@ -155,7 +155,7 @@ for ix in x: # make all arrays nan pattern match PKiKP_diff, necessary for gridd
 slowR_pure = slowR[~np.isnan(slowR)]
 slowT_pure = slowT[~np.isnan(slowT)]
 PKiKP_diff_pure = PKiKP_diff[~np.isnan(PKiKP_diff)]
-PKiKP_rot_pure  = PKiKP_rot[ ~np.isnan(PKiKP_rot )]
+PKiKP_rot_pure  = PKiKP_rot[ ~np.isnan(PKiKP_rot )] * (-1)
 
 # project delay and shift onto slowness coordinates
 x = np.linspace(min_slow, max_slow,nslow)
@@ -183,7 +183,7 @@ fig, ax = plt.subplots(1)
 Ti = griddata((slowR_pure, slowT_pure), PKiKP_rot_pure, (X, Y), method='linear')
 #mask = (x*x + y*y > 0.019*0.019)
 #Ti[mask] = np.nan
-plt.pcolormesh(Y, X, Ti, cmap=cm.gist_rainbow)
+plt.pcolormesh(Y, X, Ti, cmap=cm.gist_rainbow_r)
 plt.colorbar()
 plt.scatter(slowT_pure, slowR_pure, c='k', alpha=0.2, marker='.')
 plt.axis('equal')

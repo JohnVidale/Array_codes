@@ -377,12 +377,6 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 			plt.title('T-R plot of time lag at rel time ' + str(snaptime + snap_num*dt) + '  ' + fname1[12:22] + ' ' + fname1[23:33])
 			plt.show()
 
-#%% plot data vs prediction
-	fig, ax = plt.subplots(1)
-	obs = [-0.06, 0.01, 0.12, -0.04, -0.12, -0.20,  0.10, -0.05, -0.20, -0.15,  0.10, -0.12, -0.25]
-	pred = [ 0.1, 0.0, -0.6, 0.3, 0.3, 0.7, -0.5, 0.3, 0.8, 0.7, -0.4, 0.35, 0.4]
-	plt.scatter(pred,obs, c='k', alpha=0.2, marker='.')
-	plt.show()
 	#  Save processed files
 #	fname = 'HD' + date_label + '_slice.mseed'
 #	stack.write(fname,format = 'MSEED')
