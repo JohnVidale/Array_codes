@@ -35,7 +35,8 @@ def pro7dec(eq_file1, eq_file2, decimate_fac = 5):
 	st        = read(fname1)
 	amp_ave   = read(fname2)
 	amp_ratio = read(fname3)
-	print('Read in: ' + str(len(st)) + '  ' + str(len(amp_ave)) + '  ' + str(len(amp_ratio)) + ' traces for st, amp_ave, amp_ratio')
+	print('Read in: ' + str(len(st)) + '  ' + str(len(amp_ave)) + '  ' + str(len(amp_ratio)) + ' traces for st, amp_ave, amp_ratio, time sampling is '
+	   + str(st[0].stats.delta), ' number of time points is ' + str(len(st[0].data)))
 
 	for i in range(len(st)):  # loop over traces
 		st[i].decimate(decimate_fac)
@@ -52,6 +53,7 @@ def pro7dec(eq_file1, eq_file2, decimate_fac = 5):
 	amp_ave.write(fname,format = 'MSEED')
 	fname = 'Pro_Files/HD' + date_label1 + '_' + date_label2 + '_amp_ratio_dec.mseed'
 	amp_ratio.write(fname,format = 'MSEED')
+	print('Wrote out: time sampling is ' + str(st[0].stats.delta) + ' number of time points is ' + str(len(st[0].data)))
 
 	elapsed_time_wc = time.time() - start_time_wc
 	print('This job took ' + str(elapsed_time_wc) + ' seconds')

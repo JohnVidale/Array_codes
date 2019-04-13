@@ -121,7 +121,7 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.0
 	tshift_full    = tshift.copy()  # make array for time shift
 	for slow_i in range(total_slows): # ignore less robust points
 		for it in range(nt1):
-			if ((amp_ratio[slow_i].data[it] < 0.6) or (amp_ratio[slow_i].data[it] > 1.8) or (amp_ave[slow_i].data[it] < (0.20 * global_max))):
+			if ((amp_ratio[slow_i].data[it] < 0.6) or (amp_ratio[slow_i].data[it] > 1.8) or (amp_ave[slow_i].data[it] < (0.10 * global_max))):
 				tshift[slow_i].data[it] = np.nan
 
 	#%% Find transverse slowness nearest zero
@@ -243,7 +243,7 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.0
 	ax.add_artist(circle1)
 	fig.colorbar(c, ax=ax)
 	plt.ylabel('R Slowness (s/km)')
-	plt.title('PKIKPPKIKP time shift')
+	plt.title('PcP time shift')
 #	plt.title('T-R average time shift ' + date_label1 + ' ' + date_label2)
 	plt.show()
 
@@ -271,7 +271,7 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.0
 	fig.colorbar(c, ax=ax)
 	plt.xlabel('Transverse Slowness (s/km)')
 	plt.ylabel('Radial Slowness (s/km)')
-	plt.title('ICS beam amplitude')
+	plt.title('PcP beam amplitude')
 #	plt.title('Beam amplitude ' + date_label1 + ' ' + date_label2)
 	plt.show()
 

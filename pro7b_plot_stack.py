@@ -16,15 +16,22 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 			  plot_dyn_range = 1000, fig_index = 401, skip_T = 1, skip_R = 0, skip_snaps = 0,
 			  decimate_fac = 0, in_dec = 0):
 
-	from obspy import Stream
 	from obspy import read
 	import numpy as np
 	import os
 	import matplotlib.pyplot as plt
 	import time
 	from obspy import UTCDateTime
+	from obspy import Stream
 
 	start_time_wc = time.time()
+
+	if Zstart_buff  > start_buff:
+		print('Zstart_buff of ' + str(Zstart_buff) + 'cannot  be > start_buff of ' + str(start_buff))
+		Zstart_buff = start_buff
+	if Zend_buff    > end_buff:
+		print('Zend_buff of '   + str(Zend_buff)   + 'cannot  be > end_buff of '   + str(end_buff))
+		Zend_buff   = end_buff
 
 	file = open('EvLocs/' + eq_file1, 'r')
 	lines=file.readlines()
@@ -117,7 +124,7 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 		slowR_n = int(1 + (slowR_hi - slowR_lo)/slow_delta)  # number of slownesses
 		slowT_n = int(1 + (slowT_hi - slowT_lo)/slow_delta)  # number of slownesses
 		stack_nt = int(1 + ((end_buff + start_buff)/dt))  # number of time points
-		print('After zoom ' + str(slowT_n) + ' trans slownesses, hi and lo are ' + str(slowT_hi) + '  ' + str(slowT_lo))
+		print('After zoom ' + str(slowT_n) + ' trans slownesses, hi and lo are ' + str(slowT_hi) + '  ' + str(slowT_lo) + ' stack_nt is ' + str(stack_nt))
 		# In English, stack_slows = range(slow_n) * slow_delta - slow_lo
 		a1R = range(slowR_n)
 		a1T = range(slowT_n)
@@ -152,8 +159,6 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 		# Select only stacks with that slowness for Radial plot
 		centralR_st = Stream()
 		for slowR_i in range(slowR_n):
-			crap = slowR_i*slowT_n + lowest_Tindex
-			print(str(crap) + ' is index, ' + str(slowR_i) + ' is current R index, min slowness is ' + str(lowest_Tslow))
 			centralR_st += tdiff[slowR_i*slowT_n + lowest_Tindex]
 
 	#%% Slices near radial slownesses of zero, 0.005, 0.01, 0.015
@@ -223,6 +228,7 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 		stack_array = np.zeros((slowR_n,stack_nt))
 
 		for it in range(stack_nt):  # check points one at a time
+			print(f'{stack_nt:4d} is stack_nt, len centralR_st.data is {len(centralR_st[0].data):4d}, it is {it:4d}')
 			for slowR_i in range(slowR_n):  # for this station, loop over slownesses
 				num_val = centralR_st[slowR_i].data[it]
 				stack_array[slowR_i, it] = num_val
