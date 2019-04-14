@@ -13,7 +13,7 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 			  ZslowR_lo = -0.1, ZslowR_hi = 0.1, ZslowT_lo = -0.1, ZslowT_hi = 0.1,
 			  Zstart_buff = 50, Zend_buff = 50, zoom = 0,
 			  snaptime = 8, snaps = 10, tdiff_clip = -1,
-			  plot_dyn_range = 1000, fig_index = 401, skip_T = 1, skip_R = 0, skip_snaps = 0,
+			  plot_dyn_range = 1000, fig_index = 401, skip_T = 0, skip_R = 0, skip_snaps = 0,
 			  decimate_fac = 0, in_dec = 0):
 
 	from obspy import read
@@ -142,7 +142,7 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 
 	for slow_i in range(len(tdiff)): # ignore less robust points
 		for it in range(nt):
-			if ((amp_ratio[slow_i].data[it] < 0.6) or (amp_ratio[slow_i].data[it] > 1.8) or (amp_ave[slow_i].data[it] < (0.20 * global_max))):
+			if ((amp_ratio[slow_i].data[it] < 0.6) or (amp_ratio[slow_i].data[it] > 1.8) or (amp_ave[slow_i].data[it] < (0.30 * global_max))):
 				tdiff[slow_i].data[it] = np.nan
 
 	#%% Find transverse slowness nearest zero
@@ -228,7 +228,6 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 		stack_array = np.zeros((slowR_n,stack_nt))
 
 		for it in range(stack_nt):  # check points one at a time
-			print(f'{stack_nt:4d} is stack_nt, len centralR_st.data is {len(centralR_st[0].data):4d}, it is {it:4d}')
 			for slowR_i in range(slowR_n):  # for this station, loop over slownesses
 				num_val = centralR_st[slowR_i].data[it]
 				stack_array[slowR_i, it] = num_val
@@ -249,7 +248,7 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 #%%  Transverse-time stacks
 	if skip_T != 1:
 		stack_array = np.zeros((slowT_n,stack_nt))
-
+		'''
 		for it in range(stack_nt):  # check points one at a time
 			for slowT_i in range(slowT_n):  # for this station, loop over slownesses
 				num_val = centralT00_st[slowT_i].data[it]
@@ -267,7 +266,7 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 		plt.ylabel('Slowness (s/km)')
 		plt.title('Time lag at 0.000 s/km radial slowness, ' + fname1[12:22] + ' ' + fname1[23:33])
 		plt.show()
-
+		'''
 		fig_index += 1
 		stack_array = np.zeros((slowT_n,stack_nt))
 
@@ -291,7 +290,7 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 
 		fig_index += 1
 		stack_array = np.zeros((slowT_n,stack_nt))
-
+		'''
 		for it in range(stack_nt):  # check points one at a time
 			for slowT_i in range(slowT_n):  # for this station, loop over slownesses
 				num_val = centralT10_st[slowT_i].data[it]
@@ -330,7 +329,7 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 		plt.ylabel('Slowness (s/km)')
 		plt.title('Time lag at 0.015 s/km radial slowness, ' + fname1[12:22] + ' ' + fname1[23:33])
 		plt.show()
-
+		'''
 #%% R-T stack
 	if skip_snaps == 0:
 		stack_slice = np.zeros((slowR_n,slowT_n))

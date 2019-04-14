@@ -7,7 +7,7 @@
 
 def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.0005,
 			  slowR_lo = -0.1, slowR_hi = 0.1, slowT_lo = -0.1, slowT_hi = 0.1,
-			  start_buff = 50, end_buff = 50, norm = 0,
+			  start_buff = 50, end_buff = 50, norm = 0, freq_corr = 1.2,
 			  plot_dyn_range = 1000, fig_index = 401, get_stf = 0):
 
 	import obspy
@@ -112,7 +112,7 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.0
 		ave_freq = 0.5*(freq1 + freq2)
 		ave_freq_plus = np.append(ave_freq,[1]) # ave_freq one element too short
 #		tshift[slow_i].data     = dphase / ave_freq_plus # 2*pi top and bottom cancels
-		tshift[slow_i].data     = dphase/(2*math.pi)
+		tshift[slow_i].data     = dphase/(2*math.pi*freq_corr)
 
 		local_max = max(abs(amp_ave[slow_i].data))
 		if local_max > global_max:
@@ -121,7 +121,7 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.0
 	tshift_full    = tshift.copy()  # make array for time shift
 	for slow_i in range(total_slows): # ignore less robust points
 		for it in range(nt1):
-			if ((amp_ratio[slow_i].data[it] < 0.6) or (amp_ratio[slow_i].data[it] > 1.8) or (amp_ave[slow_i].data[it] < (0.10 * global_max))):
+			if ((amp_ratio[slow_i].data[it] < 0.6) or (amp_ratio[slow_i].data[it] > 1.8) or (amp_ave[slow_i].data[it] < (0.30 * global_max))):
 				tshift[slow_i].data[it] = np.nan
 
 	#%% Find transverse slowness nearest zero
@@ -228,22 +228,23 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.0
 			index = slowR_i*slowT_n + slowT_i
 			num_val = np.nanmedian(tshift[index].data)
 #			num_val = statistics.median(tshift_full[index].data)
-			stack_slice[slowR_i, slowT_i] = num_val
+			stack_slice[slowR_i, slowT_i] = num_val # adjust for dominant frequency of 1.2 Hz, not 1 Hz
 #	stack_slice[0,0] = -0.25
 #	stack_slice[0,1] =  0.25
-	tdiff_clip = 0.15
+	tdiff_clip = 0.2
 
 	y1, x1 = np.mgrid[slice(stack_Rslows[0], stack_Rslows[-1] + slow_delta, slow_delta),
 				 slice(stack_Tslows[0], stack_Tslows[-1] + slow_delta, slow_delta)]
 
 	fig, ax = plt.subplots(1)
-	c = ax.pcolormesh(x1, y1, stack_slice, cmap=plt.cm.coolwarm, vmin = -tdiff_clip, vmax = tdiff_clip)
+#	c = ax.pcolormesh(x1, y1, stack_slice, cmap=plt.cm.coolwarm, vmin = -tdiff_clip, vmax = tdiff_clip)
+	c = ax.pcolormesh(x1, y1, stack_slice, cmap=plt.cm.bwr, vmin = -tdiff_clip, vmax = tdiff_clip)
 	ax.axis([x1.min(), x1.max(), y1.min(), y1.max()])
 	circle1 = plt.Circle((0, 0), 0.019, color='black', fill=False)
 	ax.add_artist(circle1)
 	fig.colorbar(c, ax=ax)
 	plt.ylabel('R Slowness (s/km)')
-	plt.title('PcP time shift')
+	plt.title('PKIKKIKP time shift')
 #	plt.title('T-R average time shift ' + date_label1 + ' ' + date_label2)
 	plt.show()
 
@@ -271,7 +272,7 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.0
 	fig.colorbar(c, ax=ax)
 	plt.xlabel('Transverse Slowness (s/km)')
 	plt.ylabel('Radial Slowness (s/km)')
-	plt.title('PcP beam amplitude')
+	plt.title('PKIKKIKP beam amplitude')
 #	plt.title('Beam amplitude ' + date_label1 + ' ' + date_label2)
 	plt.show()
 
