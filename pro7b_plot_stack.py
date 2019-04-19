@@ -14,7 +14,7 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 			  Zstart_buff = 50, Zend_buff = 50, zoom = 0,
 			  snaptime = 8, snaps = 10, tdiff_clip = -1,
 			  plot_dyn_range = 1000, fig_index = 401, skip_T = 0, skip_R = 0, skip_snaps = 0,
-			  decimate_fac = 0, in_dec = 0):
+			  decimate_fac = 0, in_dec = 0, ref_phase = 'blank'):
 
 	from obspy import read
 	import numpy as np
@@ -264,7 +264,7 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 		fig.colorbar(c, ax=ax)
 		plt.xlabel('Time (s)')
 		plt.ylabel('Slowness (s/km)')
-		plt.title('Time lag at 0.000 s/km radial slowness, ' + fname1[12:22] + ' ' + fname1[23:33])
+		plt.title(ref_phase + ' Time lag at 0.000 s/km radial slowness, ' + fname1[12:22] + ' ' + fname1[23:33])
 		plt.show()
 		'''
 		fig_index += 1
@@ -285,7 +285,7 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 		fig.colorbar(c, ax=ax)
 		plt.xlabel('Time (s)')
 		plt.ylabel('Slowness (s/km)')
-		plt.title('Time lag at 0.005 s/km radial slowness, ' + fname1[12:22] + ' ' + fname1[23:33])
+		plt.title(ref_phase + ' Time lag at 0.005 s/km radial slowness, ' + fname1[12:22] + ' ' + fname1[23:33])
 		plt.show()
 
 		fig_index += 1
@@ -306,7 +306,7 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 		fig.colorbar(c, ax=ax)
 		plt.xlabel('Time (s)')
 		plt.ylabel('Slowness (s/km)')
-		plt.title('Time lag at 0.010 s/km radial slowness, ' + fname1[12:22] + ' ' + fname1[23:33])
+		plt.title(ref_phase + ' Time lag at 0.010 s/km radial slowness, ' + fname1[12:22] + ' ' + fname1[23:33])
 		plt.show()
 
 		fig_index += 1
@@ -327,7 +327,7 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 		fig.colorbar(c, ax=ax)
 		plt.xlabel('Time (s)')
 		plt.ylabel('Slowness (s/km)')
-		plt.title('Time lag at 0.015 s/km radial slowness, ' + fname1[12:22] + ' ' + fname1[23:33])
+		plt.title(ref_phase + ' Time lag at 0.015 s/km radial slowness, ' + fname1[12:22] + ' ' + fname1[23:33])
 		plt.show()
 		'''
 #%% R-T stack
@@ -353,7 +353,7 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 			ax.add_artist(circle1)
 			plt.xlabel('T Slowness (s/km)')
 			plt.ylabel('R Slowness (s/km)')
-			plt.title('T-R plot of time lag at rel time ' + str(snaptime + snap_num*dt) + '  ' + fname1[12:22] + ' ' + fname1[23:33])
+			plt.title(ref_phase + ' T-R plot of time lag at rel time ' + str(snaptime + snap_num*dt) + '  ' + fname1[12:22] + ' ' + fname1[23:33])
 			plt.show()
 
 #%% R-T stack
@@ -379,7 +379,7 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 			ax.add_artist(circle1)
 			plt.xlabel('T Slowness (s/km)')
 			plt.ylabel('R Slowness (s/km)')
-			plt.title('T-R plot of time lag at rel time ' + str(snaptime + snap_num*dt) + '  ' + fname1[12:22] + ' ' + fname1[23:33])
+			plt.title(ref_phase + ' T-R plot of time lag at rel time ' + str(snaptime + snap_num*dt) + '  ' + fname1[12:22] + ' ' + fname1[23:33])
 			plt.show()
 
 	#  Save processed files

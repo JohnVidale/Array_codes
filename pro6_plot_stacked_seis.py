@@ -7,8 +7,8 @@
 
 def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.0005,
 			  slowR_lo = -0.1, slowR_hi = 0.1, slowT_lo = -0.1, slowT_hi = 0.1,
-			  start_buff = 50, end_buff = 50, norm = 0, freq_corr = 1.2,
-			  plot_dyn_range = 1000, fig_index = 401, get_stf = 0):
+			  start_buff = 50, end_buff = 50, norm = 0, freq_corr = 1.0,
+			  plot_dyn_range = 1000, fig_index = 401, get_stf = 0, ref_phase = 'blank'):
 
 	import obspy
 	import obspy.signal
@@ -205,7 +205,7 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.0
 	# Plot transverse amp and tdiff plots
 	fig_index = 7
 	plt.close(fig_index)
-	plt.figure(fig_index,figsize=(10,10))
+	plt.figure(fig_index,figsize=(30,5))
 	plt.xlim(-start_buff,end_buff)
 	plt.ylim(stack_Tslows[0], stack_Tslows[-1])
 #	for tr in st1good:
@@ -217,8 +217,8 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.0
 		plt.plot(ttt, (centralT_st2[slowT_i].data - np.median(centralT_st2[slowT_i].data))*plot_scale_fac /global_max + dist_offset, color = 'red')
 #		plt.plot(ttt, (centralT_amp[slowT_i].data)  *plot_scale_fac/global_max + dist_offset, color = 'purple')
 		plt.plot(ttt, (centralT_tdiff[slowT_i].data)*plot_scale_fac/1 + dist_offset, color = 'black')
-		plt.plot(ttt, (centralT_amp[slowT_i].data)*0.0 + dist_offset, color = 'yellow') # reference lines
-	plt.title('Seismograms and tdiff at 0 R slowness')
+		plt.plot(ttt, (centralT_amp[slowT_i].data)*0.0 + dist_offset, color = 'lightgray') # reference lines
+	plt.title(ref_phase + ' seismograms and tdiff at 0 R slowness')
 
 #%% R-T tshift averaged over time window
 	fig_index = 8
@@ -231,7 +231,8 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.0
 			stack_slice[slowR_i, slowT_i] = num_val # adjust for dominant frequency of 1.2 Hz, not 1 Hz
 #	stack_slice[0,0] = -0.25
 #	stack_slice[0,1] =  0.25
-	tdiff_clip = 0.2
+#	tdiff_clip = 0.4/1.2
+	tdiff_clip = 0.2  # DO NOT LEAVE COMMENTED OUT!!
 
 	y1, x1 = np.mgrid[slice(stack_Rslows[0], stack_Rslows[-1] + slow_delta, slow_delta),
 				 slice(stack_Tslows[0], stack_Tslows[-1] + slow_delta, slow_delta)]
@@ -244,7 +245,7 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.0
 	ax.add_artist(circle1)
 	fig.colorbar(c, ax=ax)
 	plt.ylabel('R Slowness (s/km)')
-	plt.title('PKIKKIKP time shift')
+	plt.title(ref_phase + ' time shift')
 #	plt.title('T-R average time shift ' + date_label1 + ' ' + date_label2)
 	plt.show()
 
@@ -272,7 +273,7 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.0
 	fig.colorbar(c, ax=ax)
 	plt.xlabel('Transverse Slowness (s/km)')
 	plt.ylabel('Radial Slowness (s/km)')
-	plt.title('PKIKKIKP beam amplitude')
+	plt.title(ref_phase + ' beam amplitude')
 #	plt.title('Beam amplitude ' + date_label1 + ' ' + date_label2)
 	plt.show()
 
