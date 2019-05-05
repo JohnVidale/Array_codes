@@ -383,6 +383,8 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
 				distance = gps2dist_azimuth(stalat,stalon,ev_lat2,ev_lon2)
 				tr.stats.distance=distance[0] # distance in km
 
+	print('Made it to here.')
+	'''  This section causes a crash in Spyder
 	#%%
 	# plot traces
 	fig_index = 3
@@ -400,6 +402,8 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
 			- tr.data.min()) + dist_offset, color = 'green')
 	#plt.title(fname1)
 
+	print('And made it to here?')
+
 	for tr in st2good:
 		dist_offset = tr.stats.distance/(1000*111) # trying for approx degrees
 		ttt = np.arange(len(tr.data)) * tr.stats.delta + (tr.stats.starttime - t2)
@@ -410,6 +414,8 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
 #		ttt = ttt + 0.13 # arbitrary eyeballed shift to make plots 1/2 2/1 symetric
 		plt.plot(ttt, (tr.data - np.median(tr.data))*plot_scale_fac /(tr.data.max()
 			- tr.data.min()) + dist_offset, color = 'red')
+'''
+	print('And made it to here.')
 
 		#%% Plot traveltime curves
 	if plot_tt:

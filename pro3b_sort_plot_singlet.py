@@ -291,6 +291,7 @@ def pro3singlet(eq_file, stat_corr = 0, simple_taper = 0, skip_SNR = 0,
 				distance = gps2dist_azimuth(stalat,stalon,ev_lat,ev_lon)
 				tr.stats.distance=distance[0] # distance in km
 
+	'''  This section causes a crash in Spyder
 	#%%
 	# plot traces
 	plt.close(fig_index)
@@ -305,6 +306,7 @@ def pro3singlet(eq_file, stat_corr = 0, simple_taper = 0, skip_SNR = 0,
 			ttt = ttt - shift
 		plt.plot(ttt, (tr.data - np.median(tr.data))*plot_scale_fac /(tr.data.max()
 			- tr.data.min()) + dist_offset, color = 'black')
+	'''
 
 		#%% Plot traveltime curves
 	if plot_tt:

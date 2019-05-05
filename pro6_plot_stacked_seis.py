@@ -83,6 +83,8 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.0
 	total_slows = slowR_n * slowT_n
 	global_max = 0
 	for slow_i in range(total_slows): # find envelope, phase, tshift, and global max
+		if slow_i % 1000 == 0:
+			print('At line 85, ' +str(slow_i) + ' slowness out of ' + str(total_slows))
 		if len(st1[slow_i].data) == 0: # test for zero-length traces
 				print('%d data has zero length ' % (slow_i))
 
@@ -120,6 +122,8 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.0
 
 	tshift_full    = tshift.copy()  # make array for time shift
 	for slow_i in range(total_slows): # ignore less robust points
+		if slow_i % 1000 == 0:
+			print('At line 124, ' +str(slow_i) + ' slowness out of ' + str(total_slows))
 		for it in range(nt1):
 			if ((amp_ratio[slow_i].data[it] < 0.6) or (amp_ratio[slow_i].data[it] > 1.8) or (amp_ave[slow_i].data[it] < (0.30 * global_max))):
 				tshift[slow_i].data[it] = np.nan
@@ -184,6 +188,7 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.0
 	plt.figure(fig_index,figsize=(10,10))
 	plt.xlim(-start_buff,end_buff)
 	plt.ylim(stack_Rslows[0], stack_Rslows[-1])
+	'''  causes crash?
 	for slowR_i in range(slowR_n):  # for this station, loop over slownesses
 		dist_offset = stack_Rslows[slowR_i] # trying for approx degrees
 		ttt = (np.arange(len(centralR_st1[slowR_i].data)) * centralR_st1[slowR_i].stats.delta
@@ -201,7 +206,6 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.0
 		plt.plot(ttt, (centralR_tdiff[slowR_i].data)*plot_scale_fac/1 + dist_offset, color = 'black')
 		plt.plot(ttt, (centralR_amp[slowR_i].data)*0.0 + dist_offset, color = 'yellow') # reference lines
 	plt.title('Seismograms and tdiff at 0 T slowness')
-
 	# Plot transverse amp and tdiff plots
 	fig_index = 7
 	plt.close(fig_index)
@@ -219,7 +223,7 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.0
 		plt.plot(ttt, (centralT_tdiff[slowT_i].data)*plot_scale_fac/1 + dist_offset, color = 'black')
 		plt.plot(ttt, (centralT_amp[slowT_i].data)*0.0 + dist_offset, color = 'lightgray') # reference lines
 	plt.title(ref_phase + ' seismograms and tdiff at 0 R slowness')
-
+	'''
 #%% R-T tshift averaged over time window
 	fig_index = 8
 	stack_slice = np.zeros((slowR_n,slowT_n))
@@ -237,7 +241,9 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.0
 	y1, x1 = np.mgrid[slice(stack_Rslows[0], stack_Rslows[-1] + slow_delta, slow_delta),
 				 slice(stack_Tslows[0], stack_Tslows[-1] + slow_delta, slow_delta)]
 
-	fig, ax = plt.subplots(1)
+	fig, ax = plt.subplots(1, figsize=(4,6))
+#		fig, ax = plt.subplots(1, figsize=(9,2))
+#		fig.subplots_adjust(bottom=0.3)
 #	c = ax.pcolormesh(x1, y1, stack_slice, cmap=plt.cm.coolwarm, vmin = -tdiff_clip, vmax = tdiff_clip)
 	c = ax.pcolormesh(x1, y1, stack_slice, cmap=plt.cm.bwr, vmin = -tdiff_clip, vmax = tdiff_clip)
 	ax.axis([x1.min(), x1.max(), y1.min(), y1.max()])
@@ -265,8 +271,10 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.0
 	y1, x1 = np.mgrid[slice(stack_Rslows[0], stack_Rslows[-1] + slow_delta, slow_delta),
 				 slice(stack_Tslows[0], stack_Tslows[-1] + slow_delta, slow_delta)]
 
-	fig, ax = plt.subplots(1)
-	c = ax.pcolormesh(x1, y1, stack_slice, cmap=plt.cm.gist_rainbow_r, vmin = 0)
+#	fig, ax = plt.subplots(1)
+	fig, ax = plt.subplots(1, figsize=(5.1,6))
+	c = ax.pcolormesh(x1, y1, stack_slice/smax, cmap=plt.cm.gist_yarg, vmin = 0.5)
+#	c = ax.pcolormesh(x1, y1, stack_slice, cmap=plt.cm.gist_rainbow_r, vmin = 0)
 	ax.axis([x1.min(), x1.max(), y1.min(), y1.max()])
 	circle1 = plt.Circle((0, 0), 0.019, color='black', fill=False)
 	ax.add_artist(circle1)
