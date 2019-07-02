@@ -5,7 +5,7 @@
 # Write out tdiff, ave_amp, amp_ratio results
 # John Vidale 3/2019
 
-def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.0005,
+def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0005,
 			  slowR_lo = -0.1, slowR_hi = 0.1, slowT_lo = -0.1, slowT_hi = 0.1,
 			  start_buff = 50, end_buff = 50, norm = 0, freq_corr = 1.0,
 			  plot_dyn_range = 1000, fig_index = 401, get_stf = 0, ref_phase = 'blank'):
@@ -185,10 +185,9 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.0
 	#%% Plot radial amp and tdiff plots
 	fig_index = 6
 	plt.close(fig_index)
-	plt.figure(fig_index,figsize=(10,10))
+	plt.figure(fig_index,figsize=(30,10))
 	plt.xlim(-start_buff,end_buff)
 	plt.ylim(stack_Rslows[0], stack_Rslows[-1])
-	'''  causes crash?
 	for slowR_i in range(slowR_n):  # for this station, loop over slownesses
 		dist_offset = stack_Rslows[slowR_i] # trying for approx degrees
 		ttt = (np.arange(len(centralR_st1[slowR_i].data)) * centralR_st1[slowR_i].stats.delta
@@ -196,20 +195,18 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.0
 		plt.plot(ttt, (centralR_st1[slowR_i].data - np.median(centralR_st1[slowR_i].data))*plot_scale_fac /global_max + dist_offset, color = 'green')
 		plt.plot(ttt, (centralR_st2[slowR_i].data - np.median(centralR_st2[slowR_i].data))*plot_scale_fac /global_max + dist_offset, color = 'red')
 		# extract stacked time functions
-		print('slowness is ' + str(stack_Rslows[slowR_i]))
 		if get_stf != 0:
 			if np.abs(stack_Rslows[slowR_i]- 0.005) < 0.000001: # kludge, not exactly zero when desired
-				print('Made it to the STF lines, slowness is ' + str(stack_Rslows[slowR_i]))
 				event1_sample = centralR_st1[slowR_i].copy()
 				event2_sample = centralR_st2[slowR_i].copy()
 #		plt.plot(ttt, (centralR_amp[slowR_i].data)  *plot_scale_fac/global_max + dist_offset, color = 'purple')
 		plt.plot(ttt, (centralR_tdiff[slowR_i].data)*plot_scale_fac/1 + dist_offset, color = 'black')
-		plt.plot(ttt, (centralR_amp[slowR_i].data)*0.0 + dist_offset, color = 'yellow') # reference lines
+		plt.plot(ttt, (centralR_amp[slowR_i].data)*0.0 + dist_offset, color = 'lightgray') # reference lines
 	plt.title('Seismograms and tdiff at 0 T slowness')
 	# Plot transverse amp and tdiff plots
 	fig_index = 7
 	plt.close(fig_index)
-	plt.figure(fig_index,figsize=(30,5))
+	plt.figure(fig_index,figsize=(30,10))
 	plt.xlim(-start_buff,end_buff)
 	plt.ylim(stack_Tslows[0], stack_Tslows[-1])
 #	for tr in st1good:
@@ -223,7 +220,6 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.0
 		plt.plot(ttt, (centralT_tdiff[slowT_i].data)*plot_scale_fac/1 + dist_offset, color = 'black')
 		plt.plot(ttt, (centralT_amp[slowT_i].data)*0.0 + dist_offset, color = 'lightgray') # reference lines
 	plt.title(ref_phase + ' seismograms and tdiff at 0 R slowness')
-	'''
 #%% R-T tshift averaged over time window
 	fig_index = 8
 	stack_slice = np.zeros((slowR_n,slowT_n))
@@ -236,19 +232,22 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.0
 #	stack_slice[0,0] = -0.25
 #	stack_slice[0,1] =  0.25
 #	tdiff_clip = 0.4/1.2
-	tdiff_clip = 0.2  # DO NOT LEAVE COMMENTED OUT!!
+	tdiff_clip_max = 0.1  # DO NOT LEAVE COMMENTED OUT!!
+	tdiff_clip_min = -0.2
 
 	y1, x1 = np.mgrid[slice(stack_Rslows[0], stack_Rslows[-1] + slow_delta, slow_delta),
 				 slice(stack_Tslows[0], stack_Tslows[-1] + slow_delta, slow_delta)]
 
-	fig, ax = plt.subplots(1, figsize=(4,6))
+	fig, ax = plt.subplots(1, figsize=(4.8,6))
 #		fig, ax = plt.subplots(1, figsize=(9,2))
 #		fig.subplots_adjust(bottom=0.3)
 #	c = ax.pcolormesh(x1, y1, stack_slice, cmap=plt.cm.coolwarm, vmin = -tdiff_clip, vmax = tdiff_clip)
-	c = ax.pcolormesh(x1, y1, stack_slice, cmap=plt.cm.bwr, vmin = -tdiff_clip, vmax = tdiff_clip)
+	c = ax.pcolormesh(x1, y1, stack_slice, cmap=plt.cm.bwr, vmin = tdiff_clip_min, vmax = tdiff_clip_max)
 	ax.axis([x1.min(), x1.max(), y1.min(), y1.max()])
 	circle1 = plt.Circle((0, 0), 0.019, color='black', fill=False)
 	ax.add_artist(circle1)
+	circle2 = plt.Circle((0, 0), 0.040, color='black', fill=False)
+	ax.add_artist(circle2)  #outer core limit
 	fig.colorbar(c, ax=ax)
 	plt.ylabel('R Slowness (s/km)')
 	plt.title(ref_phase + ' time shift')
@@ -277,7 +276,9 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.0
 #	c = ax.pcolormesh(x1, y1, stack_slice, cmap=plt.cm.gist_rainbow_r, vmin = 0)
 	ax.axis([x1.min(), x1.max(), y1.min(), y1.max()])
 	circle1 = plt.Circle((0, 0), 0.019, color='black', fill=False)
-	ax.add_artist(circle1)
+	ax.add_artist(circle1)  #inner core limit
+	circle2 = plt.Circle((0, 0), 0.040, color='black', fill=False)
+	ax.add_artist(circle2)  #outer core limit
 	fig.colorbar(c, ax=ax)
 	plt.xlabel('Transverse Slowness (s/km)')
 	plt.ylabel('Radial Slowness (s/km)')

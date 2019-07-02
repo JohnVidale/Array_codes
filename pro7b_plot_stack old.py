@@ -66,7 +66,7 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 	amp_ratio = read(fname3)
 	print('Read in: ' + str(len(tdiff)) + '  ' + str(len(amp_ave)) + '  ' + str(len(amp_ratio)) + ' traces for tdiff, amp_ave, amp_ratio')
 
-	for i in range(len(tdiff)):  # loop over traces, probably already decimated in previous step, pro7dec
+	for i in range(len(tdiff)):  # loop over traces
 			if decimate_fac != 0:
 				tdiff[i].decimate(decimate_fac)
 				amp_ave[i].decimate(decimate_fac)
@@ -90,7 +90,7 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 	a1T = range(slowT_n)
 	stack_Rslows = [(x * slow_delta + slowR_lo) for x in a1R]
 	stack_Tslows = [(x * slow_delta + slowT_lo) for x in a1T]
-	print(str(slowR_n) + ' radial slownesses, hi and lo are ' + str(slowR_hi) + '  ' + str(slowR_lo))
+	print(str(slowR_n) + ' radial slownesses, ' + str(slowT_n) + ' trans slownesses, ')
 	print('Input trace starttime ' + str(tdiff[0].stats.starttime))
 
 	#%% select subset for plotting
@@ -145,99 +145,21 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 			if ((amp_ratio[slow_i].data[it] < 0.6) or (amp_ratio[slow_i].data[it] > 1.8) or (amp_ave[slow_i].data[it] < (0.30 * global_max))):
 				tdiff[slow_i].data[it] = np.nan
 
-	#%% Slices near transverse slownesses of -0.015, -0.010, -0.005, zero, 0.005, 0.01, 0.015
+	#%% Find transverse slowness nearest zero
 	if skip_R != 1:
 		lowest_Tslow = 1000000
 		for slow_i in range(slowT_n):
-			if abs(stack_Tslows[slow_i] + 0.015) < lowest_Tslow:
-				lowest_TindexM15 = slow_i
-				lowest_Tslow = abs(stack_Tslows[slow_i] + 0.015)
-
-		print(f'{lowest_TindexM15:4d} is T slow nearest -0.015, difference is {lowest_Tslow:.3f}')
-
-		# Select only stacks with that slowness for Transverse plot
-		centralRM15_st = Stream()
-		for slowR_i in range(slowR_n):
-			centralRM15_st += tdiff[slowR_i*slowT_n + lowest_TindexM15]
-
-		lowest_Tslow = 1000000
-		for slow_i in range(slowT_n):
-			if abs(stack_Tslows[slow_i] + 0.010) < lowest_Tslow:
-				lowest_TindexM10 = slow_i
-				lowest_Tslow = abs(stack_Tslows[slow_i] + 0.010)
-
-		print(f'{lowest_TindexM10:4d} is T slow nearest -0.010, difference is {lowest_Tslow:.3f}')
-
-		# Select only stacks with that slowness for Transverse plot
-		centralRM10_st = Stream()
-		for slowR_i in range(slowR_n):
-			centralRM10_st += tdiff[slowR_i*slowT_n + lowest_TindexM10]
-
-		lowest_Tslow = 1000000
-		for slow_i in range(slowT_n):
-			if abs(stack_Tslows[slow_i] + 0.005) < lowest_Tslow:
-				lowest_TindexM05 = slow_i
-				lowest_Tslow = abs(stack_Tslows[slow_i] + 0.005)
-
-		print(f'{lowest_TindexM05:4d} is T slow nearest -0.005, difference is {lowest_Tslow:.3f}')
-
-		# Select only stacks with that slowness for Transverse plot
-		centralRM05_st = Stream()
-		for slowR_i in range(slowR_n):
-			centralRM05_st += tdiff[slowR_i*slowT_n + lowest_TindexM05]
-
-		lowest_Tslow = 1000000
-		for slow_i in range(slowT_n):
 			if abs(stack_Tslows[slow_i]) < lowest_Tslow:
-				lowest_Tindex00 = slow_i
+				lowest_Tindex = slow_i
 				lowest_Tslow = abs(stack_Tslows[slow_i])
 
-		print(str(slowT_n) + ' T slownesses, ')
-		print(f'{lowest_Tindex00:4d} is T slow nearest 0, difference is {lowest_Tslow:.3f}')
+		print(str(slowT_n) + ' T slownesses, ' + str(lowest_Tindex) + ' min T slow index, min slowness is ' + str(lowest_Tslow))
+		print(str(slowR_n) + ' R slownesses. ' + str(tdiff) + ' is length of tdiff.')
 
-		# Select only stacks with that slowness for Transverse plot
-		centralR00_st = Stream()
+		# Select only stacks with that slowness for Radial plot
+		centralR_st = Stream()
 		for slowR_i in range(slowR_n):
-			centralR00_st += tdiff[slowR_i*slowT_n + lowest_Tindex00]
-
-		lowest_Tslow = 1000000
-		for slow_i in range(slowT_n):
-			if abs(stack_Tslows[slow_i] - 0.005) < lowest_Tslow:
-				lowest_Tindex05 = slow_i
-				lowest_Tslow = abs(stack_Tslows[slow_i] - 0.005)
-
-		print(f'{lowest_Tindex05:4d} is T slow nearest 0.005, difference is {lowest_Tslow:.3f}')
-
-		# Select only stacks with that slowness for Transverse plot
-		centralR05_st = Stream()
-		for slowR_i in range(slowR_n):
-			centralR05_st += tdiff[slowR_i*slowT_n + lowest_Tindex05]
-
-		lowest_Tslow = 1000000
-		for slow_i in range(slowT_n):
-			if abs(stack_Tslows[slow_i] - 0.010) < lowest_Tslow:
-				lowest_Tindex10 = slow_i
-				lowest_Tslow = abs(stack_Tslows[slow_i] - 0.010)
-
-		print(f'{lowest_Tindex10:4d} is T slow nearest 0.010, difference is {lowest_Tslow:.3f}')
-
-		# Select only stacks with that slowness for Transverse plot
-		centralR10_st = Stream()
-		for slowR_i in range(slowR_n):
-			centralR10_st += tdiff[slowR_i*slowT_n + lowest_Tindex10]
-
-		lowest_Tslow = 1000000
-		for slow_i in range(slowT_n):
-			if abs(stack_Tslows[slow_i] - 0.015) < lowest_Tslow:
-				lowest_Tindex15 = slow_i
-				lowest_Tslow = abs(stack_Tslows[slow_i] - 0.015)
-
-		print(f'{lowest_Tindex15:4d} is T slow nearest 0.015, difference is {lowest_Tslow:.3f}')
-
-		# Select only stacks with that slowness for Transverse plot
-		centralR15_st = Stream()
-		for slowR_i in range(slowR_n):
-			centralR15_st += tdiff[slowR_i*slowT_n + lowest_Tindex15]
+			centralR_st += tdiff[slowR_i*slowT_n + lowest_Tindex]
 
 	#%% Slices near radial slownesses of zero, 0.005, 0.01, 0.015
 	if skip_T != 1:
@@ -248,7 +170,7 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 				lowest_Rslow = abs(stack_Rslows[slow_i])
 
 		print(str(slowR_n) + ' R slownesses, ')
-		print(f'{lowest_Rindex00:4d} is R slow nearest 0, difference is {lowest_Rslow:.3f}')
+		print(f'{lowest_Rindex00:4d} is R slow nearest 0, slowness is {lowest_Rslow:.3f}')
 
 		# Select only stacks with that slowness for Radial plot
 		centralT00_st = Stream()
@@ -262,7 +184,7 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 				lowest_Rindex05 = slow_i
 				lowest_Rslow = abs(stack_Rslows[slow_i] - 0.005)
 
-		print(f'{lowest_Rindex05:4d} is R slow nearest 0.005, difference is {lowest_Rslow:.3f}')
+		print(f'{lowest_Rindex05:4d} is R slow nearest 0.005, slowness is {lowest_Rslow + 0.005:.3f}')
 
 		# Select only stacks with that slowness for Radial plot
 		centralT05_st = Stream()
@@ -276,7 +198,7 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 				lowest_Rindex10 = slow_i
 				lowest_Rslow = abs(stack_Rslows[slow_i] - 0.01)
 
-		print(f'{lowest_Rindex10:4d} is R slow nearest 0.010, difference is {lowest_Rslow:.3f}')
+		print(f'{lowest_Rindex10:4d} is R slow nearest 0.010, slowness is {lowest_Rslow + 0.010:.3f}')
 
 		# Select only stacks with that slowness for Radial plot
 		centralT10_st = Stream()
@@ -290,7 +212,7 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 				lowest_Rindex15 = slow_i
 				lowest_Rslow = abs(stack_Rslows[slow_i] - 0.015)
 
-		print(f'{lowest_Rindex15:4d} is R slow nearest 0.015, difference is {lowest_Rslow:.3f}')
+		print(f'{lowest_Rindex15:4d} is R slow nearest 0.015, slowness is {lowest_Rslow + 0.015:.3f}')
 
 		# Select only stacks with that slowness for Radial plot
 		centralT15_st = Stream()
@@ -307,7 +229,7 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 
 		for it in range(stack_nt):  # check points one at a time
 			for slowR_i in range(slowR_n):  # for this station, loop over slownesses
-				num_val = centralRM15_st[slowR_i].data[it]
+				num_val = centralR_st[slowR_i].data[it]
 				stack_array[slowR_i, it] = num_val
 
 		y, x = np.mgrid[slice(stack_Rslows[0], stack_Rslows[-1] + slow_delta, slow_delta),
@@ -319,134 +241,8 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 		ax.axis([x.min(), x.max(), y.min(), y.max()])
 		fig.colorbar(c, ax=ax)
 		plt.xlabel('Time (s)')
-		plt.ylabel('Radial slowness (s/km)')
-		plt.title(ref_phase + ' Time lag at -0.015 s/km transverse slowness, ' + fname1[12:22] + ' ' + fname1[23:33])
-		plt.show()
-
-		fig_index += 1
-		stack_array = np.zeros((slowR_n,stack_nt))
-
-		for it in range(stack_nt):  # check points one at a time
-			for slowR_i in range(slowR_n):  # for this station, loop over slownesses
-				num_val = centralRM10_st[slowR_i].data[it]
-				stack_array[slowR_i, it] = num_val
-
-		y, x = np.mgrid[slice(stack_Rslows[0], stack_Rslows[-1] + slow_delta, slow_delta),
-					 slice(ttt[0], ttt[-1] + dt, dt)]
-
-		fig, ax = plt.subplots(1, figsize=(15,4))
-		c = ax.pcolormesh(x, y, stack_array, cmap=plt.cm.coolwarm, vmin=-tdiff_clip, vmax=tdiff_clip)
-		fig.subplots_adjust(bottom=0.2)
-		ax.axis([x.min(), x.max(), y.min(), y.max()])
-		fig.colorbar(c, ax=ax)
-		plt.xlabel('Time (s)')
-		plt.ylabel('Radial slowness (s/km)')
-		plt.title(ref_phase + ' Time lag at -0.010 s/km transverse slowness, ' + fname1[12:22] + ' ' + fname1[23:33])
-		plt.show()
-
-		fig_index += 1
-		stack_array = np.zeros((slowR_n,stack_nt))
-
-		for it in range(stack_nt):  # check points one at a time
-			for slowR_i in range(slowR_n):  # for this station, loop over slownesses
-				num_val = centralRM05_st[slowR_i].data[it]
-				stack_array[slowR_i, it] = num_val
-
-		y, x = np.mgrid[slice(stack_Rslows[0], stack_Rslows[-1] + slow_delta, slow_delta),
-					 slice(ttt[0], ttt[-1] + dt, dt)]
-
-		fig, ax = plt.subplots(1, figsize=(15,4))
-		c = ax.pcolormesh(x, y, stack_array, cmap=plt.cm.coolwarm, vmin=-tdiff_clip, vmax=tdiff_clip)
-		fig.subplots_adjust(bottom=0.2)
-		ax.axis([x.min(), x.max(), y.min(), y.max()])
-		fig.colorbar(c, ax=ax)
-		plt.xlabel('Time (s)')
-		plt.ylabel('Radial slowness (s/km)')
-		plt.title(ref_phase + ' Time lag at -0.005 s/km transverse slowness, ' + fname1[12:22] + ' ' + fname1[23:33])
-		plt.show()
-
-		fig_index += 1
-		stack_array = np.zeros((slowR_n,stack_nt))
-
-		for it in range(stack_nt):  # check points one at a time
-			for slowR_i in range(slowR_n):  # for this station, loop over slownesses
-				num_val = centralR00_st[slowR_i].data[it]
-				stack_array[slowR_i, it] = num_val
-
-		y, x = np.mgrid[slice(stack_Rslows[0], stack_Rslows[-1] + slow_delta, slow_delta),
-					 slice(ttt[0], ttt[-1] + dt, dt)]
-
-		fig, ax = plt.subplots(1, figsize=(15,4))
-		c = ax.pcolormesh(x, y, stack_array, cmap=plt.cm.coolwarm, vmin=-tdiff_clip, vmax=tdiff_clip)
-		fig.subplots_adjust(bottom=0.2)
-		ax.axis([x.min(), x.max(), y.min(), y.max()])
-		fig.colorbar(c, ax=ax)
-		plt.xlabel('Time (s)')
-		plt.ylabel('Radial slowness (s/km)')
-		plt.title(ref_phase + ' Time lag at 0.000 s/km transverse slowness, ' + fname1[12:22] + ' ' + fname1[23:33])
-		plt.show()
-
-		fig_index += 1
-		stack_array = np.zeros((slowR_n,stack_nt))
-
-		for it in range(stack_nt):  # check points one at a time
-			for slowR_i in range(slowR_n):  # for this station, loop over slownesses
-				num_val = centralR05_st[slowR_i].data[it]
-				stack_array[slowR_i, it] = num_val
-
-		y, x = np.mgrid[slice(stack_Rslows[0], stack_Rslows[-1] + slow_delta, slow_delta),
-					 slice(ttt[0], ttt[-1] + dt, dt)]
-
-		fig, ax = plt.subplots(1, figsize=(15,4))
-		c = ax.pcolormesh(x, y, stack_array, cmap=plt.cm.coolwarm, vmin=-tdiff_clip, vmax=tdiff_clip)
-		fig.subplots_adjust(bottom=0.2)
-		ax.axis([x.min(), x.max(), y.min(), y.max()])
-		fig.colorbar(c, ax=ax)
-		plt.xlabel('Time (s)')
-		plt.ylabel('Radial slowness (s/km)')
-		plt.title(ref_phase + ' Time lag at 0.005 s/km transverse slowness, ' + fname1[12:22] + ' ' + fname1[23:33])
-		plt.show()
-
-		fig_index += 1
-		stack_array = np.zeros((slowR_n,stack_nt))
-
-		for it in range(stack_nt):  # check points one at a time
-			for slowR_i in range(slowR_n):  # for this station, loop over slownesses
-				num_val = centralR10_st[slowR_i].data[it]
-				stack_array[slowR_i, it] = num_val
-
-		y, x = np.mgrid[slice(stack_Rslows[0], stack_Rslows[-1] + slow_delta, slow_delta),
-					 slice(ttt[0], ttt[-1] + dt, dt)]
-
-		fig, ax = plt.subplots(1, figsize=(15,4))
-		c = ax.pcolormesh(x, y, stack_array, cmap=plt.cm.coolwarm, vmin=-tdiff_clip, vmax=tdiff_clip)
-		fig.subplots_adjust(bottom=0.2)
-		ax.axis([x.min(), x.max(), y.min(), y.max()])
-		fig.colorbar(c, ax=ax)
-		plt.xlabel('Time (s)')
-		plt.ylabel('Radial slowness (s/km)')
-		plt.title(ref_phase + ' Time lag at 0.010 s/km transverse slowness, ' + fname1[12:22] + ' ' + fname1[23:33])
-		plt.show()
-
-		fig_index += 1
-		stack_array = np.zeros((slowR_n,stack_nt))
-
-		for it in range(stack_nt):  # check points one at a time
-			for slowR_i in range(slowR_n):  # for this station, loop over slownesses
-				num_val = centralR15_st[slowR_i].data[it]
-				stack_array[slowR_i, it] = num_val
-
-		y, x = np.mgrid[slice(stack_Rslows[0], stack_Rslows[-1] + slow_delta, slow_delta),
-					 slice(ttt[0], ttt[-1] + dt, dt)]
-
-		fig, ax = plt.subplots(1, figsize=(15,4))
-		c = ax.pcolormesh(x, y, stack_array, cmap=plt.cm.coolwarm, vmin=-tdiff_clip, vmax=tdiff_clip)
-		fig.subplots_adjust(bottom=0.2)
-		ax.axis([x.min(), x.max(), y.min(), y.max()])
-		fig.colorbar(c, ax=ax)
-		plt.xlabel('Time (s)')
-		plt.ylabel('Radial slowness (s/km)')
-		plt.title(ref_phase + ' Time lag at 0.015 s/km transverse slowness, ' + fname1[12:22] + ' ' + fname1[23:33])
+		plt.ylabel('Slowness (s/km)')
+		plt.title('Time lag at 0 T slow, ' + fname1[12:22] + ' ' + fname1[23:33])
 		plt.show()
 
 #%%  Transverse-time stacks
@@ -466,7 +262,7 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 		ax.axis([x.min(), x.max(), y.min(), y.max()])
 		fig.colorbar(c, ax=ax)
 		plt.xlabel('Time (s)')
-		plt.ylabel('Transverse slowness (s/km)')
+		plt.ylabel('Slowness (s/km)')
 		plt.title(ref_phase + ' Time lag at 0.000 s/km radial slowness, ' + fname1[12:22] + ' ' + fname1[23:33])
 		plt.show()
 
@@ -487,7 +283,7 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 		ax.axis([x.min(), x.max(), y.min(), y.max()])
 		fig.colorbar(c, ax=ax)
 		plt.xlabel('Time (s)')
-		plt.ylabel('Transverse slowness (s/km)')
+		plt.ylabel('Slowness (s/km)')
 		plt.title(ref_phase + ' Time lag at 0.005 s/km radial slowness, ' + fname1[12:22] + ' ' + fname1[23:33])
 		plt.show()
 
@@ -507,7 +303,7 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 		ax.axis([x.min(), x.max(), y.min(), y.max()])
 		fig.colorbar(c, ax=ax)
 		plt.xlabel('Time (s)')
-		plt.ylabel('Transverse slowness (s/km)')
+		plt.ylabel('Slowness (s/km)')
 		plt.title(ref_phase + ' Time lag at 0.010 s/km radial slowness, ' + fname1[12:22] + ' ' + fname1[23:33])
 		plt.show()
 
@@ -528,7 +324,7 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 		ax.axis([x.min(), x.max(), y.min(), y.max()])
 		fig.colorbar(c, ax=ax)
 		plt.xlabel('Time (s)')
-		plt.ylabel('Transverse slowness (s/km)')
+		plt.ylabel('Slowness (s/km)')
 		plt.title(ref_phase + ' Time lag at 0.015 s/km radial slowness, ' + fname1[12:22] + ' ' + fname1[23:33])
 		plt.show()
 #%% R-T stack

@@ -384,7 +384,6 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
 				tr.stats.distance=distance[0] # distance in km
 
 	print('Made it to here.')
-	'''  This section causes a crash in Spyder
 	#%%
 	# plot traces
 	fig_index = 3
@@ -398,6 +397,7 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
 		if red_plot == 1:
 			shift = red_time + (dist_offset - red_dist) * red_slow
 			ttt = ttt - shift
+#	These lines used to cause a crash in Spyder
 		plt.plot(ttt, (tr.data - np.median(tr.data))*plot_scale_fac /(tr.data.max()
 			- tr.data.min()) + dist_offset, color = 'green')
 	#plt.title(fname1)
@@ -411,10 +411,9 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
 			shift = red_time + (dist_offset - red_dist) * red_slow
 			ttt = ttt - shift
 		ttt = ttt
-#		ttt = ttt + 0.13 # arbitrary eyeballed shift to make plots 1/2 2/1 symetric
+#	These lines used to cause a crash in Spyder
 		plt.plot(ttt, (tr.data - np.median(tr.data))*plot_scale_fac /(tr.data.max()
 			- tr.data.min()) + dist_offset, color = 'red')
-'''
 	print('And made it to here.')
 
 		#%% Plot traveltime curves

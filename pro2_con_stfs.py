@@ -46,6 +46,8 @@ def pro2_convstf(eq_file, conv_file):
 	st        = read(fname_sel)
 	fname     = conv_file
 	con_trace = read(fname)
+	con_trace.taper(0.5)  # added June 10, 2019 to shorten stf
+
 
 	nt = len(st[0].data)
 	dt = st[0].stats.delta
