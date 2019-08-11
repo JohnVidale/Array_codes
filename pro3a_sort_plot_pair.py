@@ -11,8 +11,55 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
 			plot_scale_fac = 0.05,qual_threshold = 0, corr_threshold = 0,
 			freq_min = 1, freq_max = 3, min_dist = 0, max_dist = 180,
 			alt_statics = 0, statics_file = 'nothing', ARRAY = 0, ref_loc = 0):
-# 0 is Hinet, 1 is LASA, 2 is NORSAR
+# ARRAY 0 is Hinet, 1 is LASA, 2 is NORSAR
 
+# Parameters
+#	stat_corr = 1 # apply station static corrections
+#	dphase  = 'PKIKP'       # phase to be aligned
+#	dphase2 = 'PKiKP'      # another phase to have traveltime plotted
+#	dphase3 = 'pPKiKP'        # another phase to have traveltime plotted
+#	dphase4 = 'pPKIKP'        # another phase to have traveltime plotted
+#	start_buff = 50       # plots start Xs before PKIKP
+#	end_buff   = 200       # plots end Xs before PKIKP
+#	plot_scale_fac = 0.5  #  Bigger numbers make each trace amplitude bigger on plot
+#	qual_threshold =  0.2   # minimum SNR
+#	corr_threshold = 0.7  # minimum correlation in measuring shift to use station
+#	max_dist = 180
+#	min_dist = 0
+	#max_dist = 52.5
+	#min_dist = 45
+#	freq_min = 1
+#	freq_max = 3
+
+#%%  Set some more parameters
+	verbose = 0           # more output
+	rel_time = 1          # timing is relative to a chosen phase, otherwise relative to OT
+	taper_frac = .05      #Fraction of window tapered on both ends
+	signal_dur = 5.       # signal length used in SNR calculation
+	plot_tt = 1           # plot the traveltimes?
+	do_decimate = 0         # 0 if no decimation desired
+	#ref_loc = 0  # 1 if selecting stations within ref_rad of ref_lat and ref_lon
+	             # 0 if selecting stations by distance from earthquake
+	if ref_loc == 1:
+		if ARRAY == 0:
+			ref_lat = 36.3  # °N, around middle of Japan
+			ref_lon = 138.5 # °E
+			ref_rad = 1.5   # ° radius (°)
+		elif ARRAY == 1:
+			ref_lat = 46.7  # °N keep only inner rings A-D
+			ref_lon = -106.22   # °E
+			ref_rad = 0.4    # ° radius (°)
+
+	if rel_time == 0: # SNR requirement not implemented for unaligned traces
+		qual_threshold = 0
+
+	# Plot with reduced velocity?
+	red_plot = 0
+	red_dist = 55
+	red_time = 300
+	red_slow = 7.2 # seconds per degree
+
+#%% Import functions
 	from obspy import UTCDateTime
 	from obspy import Stream
 	from obspy import read
@@ -30,11 +77,16 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
 	if not sys.warnoptions:
 	    warnings.simplefilter("ignore")
 
+	print('Running pro3a_sort_plot_pair')
 	start_time_wc = time.time()
 
-	#%% Get saved event info, also used to name files
+#%% Get saved event info, also used to name files
 	#  event 2016-05-28T09:47:00.000 -56.241 -26.935 78
-	file = open('EvLocs/' + eq_file1, 'r')
+	print('Opening ' + eq_file1)
+	if ARRAY == 0:
+		file = open(eq_file1, 'r')
+	elif ARRAY == 1:
+		file = open('EvLocs/' + eq_file1, 'r')
 	lines=file.readlines()
 	split_line = lines[0].split()
 #			ids.append(split_line[0])  ignore label for now
@@ -47,7 +99,11 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
 	print('1st event: date_label ' + date_label1 + ' time ' + str(t1) + ' lat '
 	   + str(ev_lat1) + ' lon ' + str( ev_lon1) + ' depth ' + str(ev_depth1))
 
-	file = open('EvLocs/' + eq_file2, 'r')
+	print('Opening ' + eq_file2)
+	if ARRAY == 0:
+		file = open(eq_file2, 'r')
+	elif ARRAY == 1:
+		file = open('EvLocs/' + eq_file2, 'r')
 	lines=file.readlines()
 	split_line = lines[0].split()
 #			ids.append(split_line[0])  ignore label for now
@@ -60,7 +116,7 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
 	print('2nd event: date_label ' + date_label2 + ' time ' + str(t2) + ' lat '
 	   + str(ev_lat2) + ' lon ' + str( ev_lon2) + ' depth ' + str(ev_depth2))
 
-	#%% Get Hinet, LASA, or NORSAR station location file
+#%% Get station location file
 	if stat_corr == 1:  # load static terms, only applies to Hinet and LASA
 		if ARRAY == 0:
 			if alt_statics == 0: # standard set
@@ -112,44 +168,7 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
 			st_lats.append( split_line[1])
 			st_lons.append( split_line[2])
 
-	#%%
-	verbose = 0           # more output
-	rel_time = 1          # timing is relative to a chosen phase, otherwise relative to OT
-	taper_frac = .05      #Fraction of window tapered on both ends
-	signal_dur = 5.       # signal length used in SNR calculation
-	plot_tt = 1           # plot the traveltimes?
-	do_decimate = 0         # 0 if no decimation desired
-	#ref_loc = 0  # 1 if selecting stations within ref_rad of ref_lat and ref_lon
-	             # 0 if selecting stations by distance from earthquake
-	if ref_loc == 1:
-		if ARRAY == 0:
-			ref_lat = 36.3  # °N, around middle of Japan
-			ref_lon = 138.5 # °E
-			ref_rad = 1.5   # ° radius (°)
-		elif ARRAY == 1:
-			ref_lat = 46.7  # °N keep only inner rings A-D
-			ref_lon = -106.22   # °E
-			ref_rad = 0.4    # ° radius (°)
-
-# Parameters entered on the command line
-#	stat_corr = 1 # apply station static corrections
-#	dphase  = 'PKIKP'       # phase to be aligned
-#	dphase2 = 'PKiKP'      # another phase to have traveltime plotted
-#	dphase3 = 'pPKiKP'        # another phase to have traveltime plotted
-#	dphase4 = 'pPKIKP'        # another phase to have traveltime plotted
-#	start_buff = 50       # plots start Xs before PKIKP
-#	end_buff   = 200       # plots end Xs before PKIKP
-#	plot_scale_fac = 0.5  #  Bigger numbers make each trace amplitude bigger on plot
-#	qual_threshold =  0.2   # minimum SNR
-#	corr_threshold = 0.7  # minimum correlation in measuring shift to use station
-#	max_dist = 180
-#	min_dist = 0
-	#max_dist = 52.5
-	#min_dist = 45
-#	freq_min = 1
-#	freq_max = 3
-
-	#%% Is taper too long compared to noise estimation window?
+#%% Is taper too long compared to noise estimation window?
 	totalt = start_buff + end_buff
 	noise_time_skipped = taper_frac * totalt
 	if simple_taper == 0:
@@ -162,20 +181,15 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
 			print('Taper reset from ' + str(old_taper_frac * totalt) + ' to '
 			   + str(taper_frac * totalt) + ' seconds.')
 
-	if rel_time == 0: # SNR requirement not implemented for unaligned traces
-		qual_threshold = 0
-
-	# Plot with reduced velocity?
-	red_plot = 0
-	red_dist = 55
-	red_time = 300
-	red_slow = 7.2 # seconds per degree
-
-	#%% Load waveforms
+#%% Load waveforms and decimate to 10 sps
 	st1 = Stream()
 	st2 = Stream()
-	fname1     = 'Mseed/HD' + date_label1 + '.mseed'
-	fname2     = 'Mseed/HD' + date_label2 + '.mseed'
+	if ARRAY == 0:
+		fname1     = 'HD' + date_label1 + '.mseed'
+		fname2     = 'HD' + date_label2 + '.mseed'
+	elif ARRAY == 1:
+		fname1     = 'Mseed/HD' + date_label1 + '.mseed'
+		fname2     = 'Mseed/HD' + date_label2 + '.mseed'
 	st1=read(fname1)
 	st2=read(fname2)
 	if do_decimate != 0:
@@ -188,8 +202,7 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
 	print('1st trace starts at ' + str(st1[0].stats.starttime) + ', event at ' + str(t1))
 	print('2nd trace starts at ' + str(st2[0].stats.starttime) + ', event at ' + str(t2))
 
-	#%%
-	# window and adjust start time to align picked times
+#%% Select by distance, window and adjust start time to align picked times
 	st_pickalign1 = Stream()
 	st_pickalign2 = Stream()
 
@@ -199,7 +212,14 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
 			temp_tt = '19' + temp_t[2:]
 			tr.stats.starttime = UTCDateTime(temp_tt)
 		for ii in station_index:
-			if (tr.stats.station == st_names[ii]): # find station in inventory
+			if ARRAY == 0:  # have to chop off last letter, always 'h'
+				this_name = st_names[ii]
+				this_name_truc = this_name[0:5]
+				name_truc_cap  = this_name_truc.upper()
+			elif ARRAY == 1:
+				name_truc_cap = st_names[ii]
+			if (tr.stats.station == name_truc_cap): # find station in inventory
+#			if (tr.stats.station == st_names[ii]): # find station in inventory
 				if stat_corr != 1 or float(st_corr[ii]) > corr_threshold: # if using statics, reject low correlations
 					stalat = float(st_lats[ii])
 					stalon = float(st_lons[ii]) # look up lat & lon again to find distance
@@ -211,8 +231,10 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
 					dist = distance[0]/(1000*111)
 					if ref_loc != 1 and min_dist < dist and dist < max_dist: # select distance range from earthquake
 						try:
+#							print('Phase ' + dphase + ', depth ' + str(ev_depth1) + ' distance ' + str(dist))
 							arrivals = model.get_travel_times(source_depth_in_km=ev_depth1,distance_in_degree=dist,phase_list=[dphase])
 							atime = arrivals[0].time
+#							print(dphase + ' arrival time is ' + str(atime))
 							if stat_corr == 1: # apply static station corrections
 								tr.stats.starttime -= float(st_shift[ii])
 							if rel_time == 1:
@@ -257,7 +279,14 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
 			temp_tt = '19' + temp_t[2:]
 			tr.stats.starttime = UTCDateTime(temp_tt)
 		for ii in station_index:
-			if (tr.stats.station == st_names[ii]): # find station in inventory
+			if ARRAY == 0:  # have to chop off last letter, always 'h'
+				this_name = st_names[ii]
+				this_name_truc = this_name[0:5]
+				name_truc_cap  = this_name_truc.upper()
+			elif ARRAY == 1:
+				name_truc_cap = st_names[ii]
+			if (tr.stats.station == name_truc_cap): # find station in inventory
+#			if (tr.stats.station == st_names[ii]): # find station in inventory
 				if stat_corr != 1 or float(st_corr[ii]) > corr_threshold: # if using statics, reject low correlations
 					stalat = float(st_lats[ii])
 					stalon = float(st_lons[ii])
@@ -320,18 +349,17 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
 			print(st_pickalign1.__str__(extended=True))
 			print(st_pickalign2.__str__(extended=True))
 
-
-	#%%  detrend, taper, filter
+#%%  Detrend, taper, filter
 	st_pickalign1.detrend(type='simple')
 	st_pickalign2.detrend(type='simple')
 	st_pickalign1.taper(taper_frac)
 	st_pickalign2.taper(taper_frac)
-	st_pickalign1.filter('bandpass', freqmin=freq_min, freqmax=freq_max, corners=2, zerophase=True)
-	st_pickalign2.filter('bandpass', freqmin=freq_min, freqmax=freq_max, corners=2, zerophase=True)
+	st_pickalign1.filter('bandpass', freqmin=freq_min, freqmax=freq_max, corners=4, zerophase=True)
+	st_pickalign2.filter('bandpass', freqmin=freq_min, freqmax=freq_max, corners=4, zerophase=True)
 	st_pickalign1.taper(taper_frac)
 	st_pickalign2.taper(taper_frac)
 
-	#%%  Cull further by imposing SNR threshold on both traces
+#%%  Cull further by imposing SNR threshold on both traces
 	st1good = Stream()
 	st2good = Stream()
 	for tr1 in st_pickalign1:
@@ -388,7 +416,7 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
 	# plot traces
 	fig_index = 3
 	plt.close(fig_index)
-	plt.figure(fig_index,figsize=(10,10))
+	plt.figure(fig_index,figsize=(8,8))
 	plt.xlim(-start_buff,end_buff)
 	plt.ylim(min_dist,max_dist)
 	for tr in st1good:
@@ -416,7 +444,7 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
 			- tr.data.min()) + dist_offset, color = 'red')
 	print('And made it to here.')
 
-		#%% Plot traveltime curves
+#%% Plot traveltime curves
 	if plot_tt:
 		# first traveltime curve
 		line_pts = 50
@@ -491,12 +519,19 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
 
 	plt.xlabel('Time (s)')
 	plt.ylabel('Epicentral distance from event (°)')
-	plt.title(dphase + ' for ' + fname1[8:18] + ' vs ' + fname2[8:18])
+	if ARRAY == 0:
+		plt.title(dphase + ' for ' + fname1 + ' vs ' + fname2)
+	elif ARRAY == 1:
+		plt.title(dphase + ' for ' + fname1[8:18] + ' vs ' + fname2[8:18])
 	plt.show()
 
-	#  Save processed files
-	fname1 = 'Pro_Files/HD' + date_label1 + 'sel.mseed'
-	fname2 = 'Pro_Files/HD' + date_label2 + 'sel.mseed'
+#%%  Save processed files
+	if ARRAY == 0:
+		fname1 = 'HD' + date_label1 + 'sel.mseed'
+		fname2 = 'HD' + date_label2 + 'sel.mseed'
+	elif ARRAY == 1:
+		fname1 = 'Pro_Files/HD' + date_label1 + 'sel.mseed'
+		fname2 = 'Pro_Files/HD' + date_label2 + 'sel.mseed'
 	st1good.write(fname1,format = 'MSEED')
 	st2good.write(fname2,format = 'MSEED')
 

@@ -12,6 +12,7 @@ def pro5stack(eq_file, plot_scale_fac = 0.05, slowR_lo = -0.1, slowR_hi = 0.1,
 			  ref_lat = 36.3, ref_lon = 138.5, envelope = 1, plot_dyn_range = 1000,
 			  log_plot = 1, norm = 1, global_norm_plot = 1, color_plot = 1, fig_index = 401, ARRAY = 0):
 
+#%% Import functions
 	import obspy
 	import obspy.signal
 	from obspy import UTCDateTime
@@ -29,12 +30,18 @@ def pro5stack(eq_file, plot_scale_fac = 0.05, slowR_lo = -0.1, slowR_hi = 0.1,
 	import math
 	import time
 
-	import sys # don't show any warnings
-	import warnings
+#	import sys # don't show any warnings
+#	import warnings
 
+	print('Running pro5a_stack')
+
+#%% Get saved event info, also used to name files
 	start_time_wc = time.time()
 
-	file = open('EvLocs/' + eq_file, 'r')
+	if ARRAY == 0:
+		file = open(eq_file, 'r')
+	elif ARRAY == 1:
+		file = open('EvLocs/' + eq_file, 'r')
 	lines=file.readlines()
 	split_line = lines[0].split()
 #			ids.append(split_line[0])  ignore label for now
@@ -47,7 +54,7 @@ def pro5stack(eq_file, plot_scale_fac = 0.05, slowR_lo = -0.1, slowR_hi = 0.1,
 	#if not sys.warnoptions:
 	#    warnings.simplefilter("ignore")
 
-	#%% Get Hinet or LASA station location file
+#%% Get station location file
 	if ARRAY == 0: # Hinet set and center
 		sta_file = '/Users/vidale/Documents/GitHub/Hinet-codes/hinet_sta.txt'
 		ref_lat = 36.3
@@ -75,11 +82,14 @@ def pro5stack(eq_file, plot_scale_fac = 0.05, slowR_lo = -0.1, slowR_hi = 0.1,
 		st_lats.append( split_line[1])
 		st_lons.append( split_line[2])
 
-	#%% Input parameters
-	# #%% Get saved event info, also used to name files
+#%% Name file, read data
 	# date_label = '2018-04-02' # date for filename
-	fname = 'Pro_Files/HD' + date_label + 'sel.mseed'
+	if ARRAY == 0:
+		fname = 'HD' + date_label + 'sel.mseed'
+	elif ARRAY == 1:
+		fname = 'Pro_Files/HD' + date_label + 'sel.mseed'
 	st = Stream()
+	print('reading ' + fname)
 	st = read(fname)
 	print('Read in: ' + str(len(st)) + ' traces')
 	nt = len(st[0].data)
@@ -87,7 +97,7 @@ def pro5stack(eq_file, plot_scale_fac = 0.05, slowR_lo = -0.1, slowR_hi = 0.1,
 	print('First trace has : ' + str(nt) + ' time pts, time sampling of '
 		  + str(dt) + ' and thus duration of ' + str((nt-1)*dt))
 
-	#%% Build Stack arrays
+#%% Build Stack arrays
 	stack = Stream()
 	tr = Trace()
 	tr.stats.delta = dt
@@ -113,11 +123,17 @@ def pro5stack(eq_file, plot_scale_fac = 0.05, slowR_lo = -0.1, slowR_hi = 0.1,
 	#  Only need to compute ref location to event distance once
 	ref_distance = gps2dist_azimuth(ev_lat,ev_lon,ref_lat,ref_lon)
 
-	#%% select by distance, window and adjust start time to align picked times
+#%% Select traces by distance, window and adjust start time to align picked times
 	done = 0
 	for tr in st: # traces one by one, find lat-lon by searching entire inventory.  Inefficient but cheap
 		for ii in station_index:
-			if (tr.stats.station == st_names[ii]): # found station in inventory
+			if ARRAY == 0:  # for hi-net, have to chop off last letter, always 'h'
+				this_name = st_names[ii]
+				this_name_truc = this_name[0:5]
+				name_truc_cap  = this_name_truc.upper()
+			elif ARRAY == 1:
+				name_truc_cap = st_names[ii]
+			if (tr.stats.station == name_truc_cap): # find station in inventory
 				if norm == 1:
 					tr.normalize()
 #					tr.normalize(norm= -len(st)) # mystery command or error
@@ -145,7 +161,7 @@ def pro5stack(eq_file, plot_scale_fac = 0.05, slowR_lo = -0.1, slowR_hi = 0.1,
 				done += 1
 				if done%50 == 0:
 					print('Done stacking ' + str(done) + ' out of ' + str(len(st)) + ' stations.')
-	# plot traces
+#%% Plot traces
 	global_max = 0
 	for slow_i in range(slow_n): # find global max, and if requested, take envelope
 		if len(stack[slow_i].data) == 0:
@@ -155,12 +171,14 @@ def pro5stack(eq_file, plot_scale_fac = 0.05, slowR_lo = -0.1, slowR_hi = 0.1,
 		local_max = max(abs(stack[slow_i].data))
 		if local_max > global_max:
 			global_max = local_max
+	if global_max <= 0:
+		print('global_max ' + str(global_max) + ' slow_n ' + str(slow_n))
 
 	# create time axis (x-axis), use of slow_i here is arbitrary, oops
 	ttt = (np.arange(len(stack[slow_i].data)) * stack[slow_i].stats.delta +
 		 (stack[slow_i].stats.starttime - t)) # in units of seconds
 
-	#%%  Plotting
+	# Plotting
 	if color_plot == 1: # 2D color plot
 		stack_array = np.zeros((slow_n,stack_nt))
 
@@ -184,10 +202,11 @@ def pro5stack(eq_file, plot_scale_fac = 0.05, slowR_lo = -0.1, slowR_hi = 0.1,
 
 		fig, ax = plt.subplots(1, figsize=(9,2))
 		fig.subplots_adjust(bottom=0.3)
-		c = ax.pcolormesh(x, y, stack_array, cmap=plt.cm.gist_yarg)
-#		c = ax.pcolormesh(x, y, stack_array, cmap=plt.cm.gist_rainbow_r)
+#		c = ax.pcolormesh(x, y, stack_array, cmap=plt.cm.gist_yarg)
+		c = ax.pcolormesh(x, y, stack_array, cmap=plt.cm.gist_rainbow_r)
 		ax.axis([x.min(), x.max(), y.min(), y.max()])
 		fig.colorbar(c, ax=ax)
+		plt.figure(fig_index,figsize=(6,8))
 		plt.close(fig_index)
 	else: # line plot
 		for slow_i in range(slow_n):
@@ -202,11 +221,15 @@ def pro5stack(eq_file, plot_scale_fac = 0.05, slowR_lo = -0.1, slowR_hi = 0.1,
 		plt.xlim(-start_buff,end_buff)
 	plt.xlabel('Time (s)')
 	plt.ylabel('Slowness (s/km)')
-	plt.title(fname[12:22])
+	plt.title(fname[2:12])
 	plt.show()
 
-	#  Save processed files
-	fname = 'Pro_Files/HD' + date_label + '_1dstack.mseed'
+#%% Save processed files
+	print('Stack has ' + str(len(stack)) + ' traces')
+	if ARRAY == 0:
+		fname = 'HD' + date_label + '_1dstack.mseed'
+	elif ARRAY == 1:
+		fname = 'Pro_Files/HD' + date_label + '_1dstack.mseed'
 	stack.write(fname,format = 'MSEED')
 
 	elapsed_time_wc = time.time() - start_time_wc

@@ -14,7 +14,7 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 			  Zstart_buff = 50, Zend_buff = 50, zoom = 0,
 			  snaptime = 8, snaps = 10, tdiff_clip = -1,
 			  plot_dyn_range = 1000, fig_index = 401, skip_T = 0, skip_R = 0, skip_snaps = 0,
-			  decimate_fac = 0, in_dec = 0, ref_phase = 'blank'):
+			  decimate_fac = 0, in_dec = 0, ref_phase = 'blank', ARRAY = 0):
 
 	from obspy import read
 	import numpy as np
@@ -23,6 +23,8 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 	import time
 	from obspy import UTCDateTime
 	from obspy import Stream
+
+	print('Running pro7b_plot_stack')
 
 	start_time_wc = time.time()
 
@@ -33,14 +35,20 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 		print('Zend_buff of '   + str(Zend_buff)   + 'cannot  be > end_buff of '   + str(end_buff))
 		Zend_buff   = end_buff
 
-	file = open('EvLocs/' + eq_file1, 'r')
+	if ARRAY == 0:
+		file = open(eq_file1, 'r')
+	elif ARRAY == 1:
+		file = open('EvLocs/' + eq_file1, 'r')
 	lines=file.readlines()
 	split_line = lines[0].split()
 #			ids.append(split_line[0])  ignore label for now
 	t1           = UTCDateTime(split_line[1])
 	date_label1  = split_line[1][0:10]
 
-	file = open('EvLocs/' + eq_file2, 'r')
+	if ARRAY == 0:
+		file = open(eq_file2, 'r')
+	elif ARRAY == 1:
+		file = open('EvLocs/' + eq_file2, 'r')
 	lines=file.readlines()
 	split_line = lines[0].split()
 #			ids.append(split_line[0])  ignore label for now
@@ -49,14 +57,24 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 	#%% Input parameters
 	# #%% Get saved event info, also used to name files
 	# date_label = '2018-04-02' # date for filename
-	if in_dec == 0:
-		fname1 = 'Pro_files/HD' + date_label1 + '_' + date_label2 + '_tshift.mseed'
-		fname2 = 'Pro_files/HD' + date_label1 + '_' + date_label2 + '_amp_ave.mseed'
-		fname3 = 'Pro_files/HD' + date_label1 + '_' + date_label2 + '_amp_ratio.mseed'
-	else:
-		fname1 = 'Pro_files/HD' + date_label1 + '_' + date_label2 + '_tshift_dec.mseed'
-		fname2 = 'Pro_files/HD' + date_label1 + '_' + date_label2 + '_amp_ave_dec.mseed'
-		fname3 = 'Pro_files/HD' + date_label1 + '_' + date_label2 + '_amp_ratio_dec.mseed'
+	if ARRAY == 0:
+		if in_dec == 0:
+			fname1 = 'HD' + date_label1 + '_' + date_label2 + '_tshift.mseed'
+			fname2 = 'HD' + date_label1 + '_' + date_label2 + '_amp_ave.mseed'
+			fname3 = 'HD' + date_label1 + '_' + date_label2 + '_amp_ratio.mseed'
+		else:
+			fname1 = 'HD' + date_label1 + '_' + date_label2 + '_tshift_dec.mseed'
+			fname2 = 'HD' + date_label1 + '_' + date_label2 + '_amp_ave_dec.mseed'
+			fname3 = 'HD' + date_label1 + '_' + date_label2 + '_amp_ratio_dec.mseed'
+	elif ARRAY == 1:
+		if in_dec == 0:
+			fname1 = 'Pro_files/HD' + date_label1 + '_' + date_label2 + '_tshift.mseed'
+			fname2 = 'Pro_files/HD' + date_label1 + '_' + date_label2 + '_amp_ave.mseed'
+			fname3 = 'Pro_files/HD' + date_label1 + '_' + date_label2 + '_amp_ratio.mseed'
+		else:
+			fname1 = 'Pro_files/HD' + date_label1 + '_' + date_label2 + '_tshift_dec.mseed'
+			fname2 = 'Pro_files/HD' + date_label1 + '_' + date_label2 + '_amp_ave_dec.mseed'
+			fname3 = 'Pro_files/HD' + date_label1 + '_' + date_label2 + '_amp_ratio_dec.mseed'
 
 	tdiff     = Stream()
 	amp_ave   = Stream()

@@ -15,6 +15,7 @@ def pro3singlet(eq_file, stat_corr = 0, simple_taper = 0, skip_SNR = 0,
 			verbose = 0):
 # 0 is Hinet, 1 is LASA, 2 is NORSAR
 
+#%% Import functions
 	from obspy import UTCDateTime
 	from obspy import Stream
 	from obspy import read
@@ -32,11 +33,16 @@ def pro3singlet(eq_file, stat_corr = 0, simple_taper = 0, skip_SNR = 0,
 	if not sys.warnoptions:
 	    warnings.simplefilter("ignore")
 
+	print('Running pro3b_sort_plot_singlet')
 	start_time_wc = time.time()
 
-	#%% input event data with 1-line file of format
+#%% Get saved event info, also used to name files
+	#  input event data with 1-line file of format
 	#  event 2016-05-28T09:47:00.000 -56.241 -26.935 78
-	file = open('EvLocs/' + eq_file, 'r')
+	if ARRAY == 0:
+		file = open(eq_file, 'r')
+	elif ARRAY == 1:
+		file = open('EvLocs/' + eq_file, 'r')
 	lines=file.readlines()
 	split_line = lines[0].split()
 #			ids.append(split_line[0])  ignore label for now
@@ -48,7 +54,7 @@ def pro3singlet(eq_file, stat_corr = 0, simple_taper = 0, skip_SNR = 0,
 	ev_depth    = float(      split_line[4])
 	print('date_label ' + date_label + ' time ' + str(t) + ' lat ' + str(ev_lat) + ' lon ' + str( ev_lon) + ' depth ' + str(ev_depth))
 
-	#%% Get Hinet, LASA, or NORSAR station location file
+#%% Get station location file
 	if stat_corr == 1:  # load static terms, only applies to Hinet and LASA
 		if ARRAY == 0:
 			if alt_statics == 0: # standard set
@@ -100,30 +106,20 @@ def pro3singlet(eq_file, stat_corr = 0, simple_taper = 0, skip_SNR = 0,
 			st_lats.append( split_line[1])
 			st_lons.append( split_line[2])
 
-	#%%
+#%%  Set some parameters
 	fig_index = 101
 #	stat_corr = 1 # apply station static corrections
-#	verbose  = 0           # more output
 	rel_time = 1          # timing is relative to a chosen phase, otherwise relative to OT
 #	dphase  = 'PKIKP'       # phase to be aligned
 #	dphase2 = 'PKiKP'      # another phase to have traveltime plotted
 #	dphase3 = 'PKP'        # another phase to have traveltime plotted
 #	dphase4 = 'pP'        # another phase to have traveltime plotted
-#	start_buff = 200       # plots start Xs before dphase
-#	end_buff   = 500       # plots end Xs before dphase
 	taper_frac = .05      #Fraction of window tapered on both ends
 	signal_dur = 10.       # signal length used in SNR calculation
 #	plot_scale_fac = 0.5    #  Bigger numbers make each trace amplitude bigger on plot
 #	qual_threshold =  2 # minimum SNR
 #	corr_threshold = 0.7  # minimum correlation in measuring shift to use station
 	plot_tt = 1           # plot the traveltimes?
-#	do_decimate = 0         # 0 if no decimation desired
-#	max_dist = 165
-#	min_dist = 147
-	#max_dist = 157.5
-	#min_dist = 154
-#	freq_min = 0.25
-#	freq_max = 1
 #	ref_loc = 0  # 1 if selecting stations within ref_rad of ref_lat and ref_lon
 	             # 0 if selecting stations by distance from earthquake
 	if ref_loc == 1:
@@ -136,7 +132,7 @@ def pro3singlet(eq_file, stat_corr = 0, simple_taper = 0, skip_SNR = 0,
 			ref_lon = -106.22   # °E
 			ref_rad = 0.4    # ° radius (°)
 
-	#%% Is taper too long compared to noise estimation window?
+#%% Is taper too long compared to noise estimation window?
 	totalt = start_buff + end_buff
 	noise_time_skipped = taper_frac * totalt
 	if simple_taper == 0:
@@ -146,6 +142,8 @@ def pro3singlet(eq_file, stat_corr = 0, simple_taper = 0, skip_SNR = 0,
 			   str(start_buff - noise_time_skipped) + '. May not work well.')
 			old_taper_frac = taper_frac
 			taper_frac = 0.5*start_buff/totalt
+			if start_buff < 0:
+					taper_frac = 0.05 # pick random minimal window if there is no leader
 			print('Taper reset from ' + str(old_taper_frac * totalt) + ' to '
 			   + str(taper_frac * totalt) + ' seconds.')
 
@@ -165,9 +163,12 @@ def pro3singlet(eq_file, stat_corr = 0, simple_taper = 0, skip_SNR = 0,
 #	ev_depth = 559
 #	t        = UTCDateTime('2018-04-02T13:40:34.840')
 
-	#%% Load waveforms and decimate to 10 sps
+#%% Load waveforms and decimate to 10 sps
 	st = Stream()
-	fname     = 'Mseed/HD' + date_label + '.mseed'
+	if ARRAY == 0:
+		fname     = 'HD' + date_label + '.mseed'
+	elif ARRAY == 1:
+		fname     = 'Mseed/HD' + date_label + '.mseed'
 	st=read(fname)
 	if do_decimate != 0:
 		st.decimate(do_decimate)
@@ -180,20 +181,32 @@ def pro3singlet(eq_file, stat_corr = 0, simple_taper = 0, skip_SNR = 0,
 	dt = st[0].stats.delta
 	print('First trace has : ' + str(nt) + ' time pts, time sampling of '
 		  + str(dt) + ' and thus duration of ' + str((nt-1)*dt))
-#	print(f'Sta lat-lon {stalat:.4f}  {stalon:.4f}')
+	#	print(f'Sta lat-lon {stalat:.4f}  {stalon:.4f}')
 
-
-	#%%
-	# select by distance, window and adjust start time to align picked times
+#%% Select by distance, window and adjust start time to align picked times
 	st_pickalign = Stream()
 
+	tra_located   = 0
+	tra_in_range  = 0
+	tra_sta_found = 0
+#	for ii in station_index:
+#		print('Station name of index ' + str(ii) + ' is ' + str(st_names[ii])) # enumerate stations
+#	for tr in st: # traces one by one, find lat-lon by searching entire inventory.  Inefficient
+#		print('Station name of tr ' + str(tr.stats.station)) # enumerate stations
 	for tr in st: # traces one by one, find lat-lon by searching entire inventory.  Inefficient
 		if float(year) < 1970: # fix the damn 1969 -> 2069 bug in Gibbon's LASA data
 			temp_t = str(tr.stats.starttime)
 			temp_tt = '19' + temp_t[2:]
 			tr.stats.starttime = UTCDateTime(temp_tt)
 		for ii in station_index:
-			if (tr.stats.station == st_names[ii]): # find station in inventory
+			if ARRAY == 0:  # have to chop off last letter, always 'h'
+				this_name = st_names[ii]
+				this_name_truc = this_name[0:5]
+				name_truc_cap  = this_name_truc.upper()
+			elif ARRAY == 1:
+				name_truc_cap = st_names[ii]
+			if (tr.stats.station == name_truc_cap): # find station in inventory
+				tra_sta_found += 1
 				if stat_corr != 1 or float(st_corr[ii]) > corr_threshold: # if using statics, reject low correlations
 					stalat = float(st_lats[ii])
 					stalon = float(st_lons[ii]) # look up lat & lon again to find distance
@@ -203,25 +216,28 @@ def pro3singlet(eq_file, stat_corr = 0, simple_taper = 0, skip_SNR = 0,
 					distance = gps2dist_azimuth(stalat,stalon,ev_lat,ev_lon) # Get traveltimes again, hard to store
 					tr.stats.distance=distance[0] # distance in km
 					dist = distance[0]/(1000*111)
-					if ref_loc != 1 and min_dist < dist and dist < max_dist: # select distance range from earthquake
-						try:
-							arrivals = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree=dist,phase_list=[dphase])
-							atime = arrivals[0].time
-							if stat_corr == 1: # apply static station corrections
-								tr.stats.starttime -= float(st_shift[ii])
-							if rel_time == 1:
-								s_t = t + atime - start_buff
-								e_t = t + atime + end_buff
-							else:
-								s_t = t - start_buff
-								e_t = t + end_buff
-							tr.trim(starttime=s_t,endtime = e_t)
-							# deduct theoretical traveltime and start_buf from starttime
-							if rel_time == 1:
-								tr.stats.starttime -= atime
-							st_pickalign += tr
-						except:
-							pass
+					if ref_loc != 1:
+						tra_located += 1
+						if min_dist < dist and dist < max_dist: # select distance range from earthquake
+							tra_in_range += 1
+							try:
+								arrivals = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree=dist,phase_list=[dphase])
+								atime = arrivals[0].time
+								if stat_corr == 1: # apply static station corrections
+									tr.stats.starttime -= float(st_shift[ii])
+								if rel_time == 1:
+									s_t = t + atime - start_buff
+									e_t = t + atime + end_buff
+								else:
+									s_t = t - start_buff
+									e_t = t + end_buff
+								tr.trim(starttime=s_t,endtime = e_t)
+								# deduct theoretical traveltime and start_buf from starttime
+								if rel_time == 1:
+									tr.stats.starttime -= atime
+								st_pickalign += tr
+							except:
+								pass
 					elif ref_loc == 1:
 						if ref_dist < ref_rad: # alternatively, select based on distance from ref location
 							try:
@@ -243,22 +259,22 @@ def pro3singlet(eq_file, stat_corr = 0, simple_taper = 0, skip_SNR = 0,
 							except:
 								pass
 	print('After alignment + range and correlation selection - event: ' + str(len(st_pickalign)) + ' traces')
+	print('Traces found: ' + str(tra_sta_found) + ' traces with range examined: ' + str(tra_located) + ' traces in range: ' + str(tra_in_range))
 
-	#%%
 	#print(st) # at length
 	if verbose:
 		print(st.__str__(extended=True))
 		if rel_time == 1:
 			print(st_pickalign.__str__(extended=True))
 
-
-	#%%  detrend, taper, filter
+#%%  Detrend, taper, filter
 	st_pickalign.detrend(type='simple')
+	print('taper_frac is ' + str(taper_frac))
 	st_pickalign.taper(taper_frac)
-	st_pickalign.filter('bandpass', freqmin=freq_min, freqmax=freq_max, corners=2, zerophase=True)
+	st_pickalign.filter('bandpass', freqmin=freq_min, freqmax=freq_max, corners=4, zerophase=True)
 	st_pickalign.taper(taper_frac)
 
-	#%%  Cull further by imposing SNR threshold on both traces
+#%%  Cull further by imposing SNR threshold on both traces
 	if skip_SNR == 1:
 		stgood = st_pickalign.copy()
 	else:
@@ -291,8 +307,8 @@ def pro3singlet(eq_file, stat_corr = 0, simple_taper = 0, skip_SNR = 0,
 				distance = gps2dist_azimuth(stalat,stalon,ev_lat,ev_lon)
 				tr.stats.distance=distance[0] # distance in km
 
-	'''  This section causes a crash in Spyder
-	#%%
+#%%  This section causes a crash in Spyder
+	'''
 	# plot traces
 	plt.close(fig_index)
 	plt.figure(fig_index,figsize=(10,10))
@@ -307,8 +323,7 @@ def pro3singlet(eq_file, stat_corr = 0, simple_taper = 0, skip_SNR = 0,
 		plt.plot(ttt, (tr.data - np.median(tr.data))*plot_scale_fac /(tr.data.max()
 			- tr.data.min()) + dist_offset, color = 'black')
 	'''
-
-		#%% Plot traveltime curves
+#%% Plot traveltime curves
 	if plot_tt:
 		# first traveltime curve
 		line_pts = 50
@@ -384,11 +399,18 @@ def pro3singlet(eq_file, stat_corr = 0, simple_taper = 0, skip_SNR = 0,
 
 	plt.xlabel('Time (s)')
 	plt.ylabel('Epicentral distance from event (°)')
-	plt.title(dphase + ' for ' + fname[8:18])
+	if ARRAY == 0:
+		plt.title(dphase + ' for ' + fname)
+	elif ARRAY == 1:
+		plt.title(dphase + ' for ' + fname[8:18])
 	plt.show()
 
-	#  Save processed files
-	fname3 = 'Pro_Files/HD' + date_label + 'sel.mseed'
+#%%  Save processed files
+	if ARRAY == 0:
+		fname3 = 'HD' + date_label + 'sel.mseed'
+	elif ARRAY == 1:
+		fname3 = 'Pro_Files/HD' + date_label + 'sel.mseed'
+
 	stgood.write(fname3,format = 'MSEED')
 
 	elapsed_time_wc = time.time() - start_time_wc

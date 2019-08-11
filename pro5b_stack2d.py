@@ -25,9 +25,13 @@ def pro5stack2d(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 	import sys # don't show any warnings
 	import warnings
 
+	print('Running pro5b_stack2d')
 	start_time_wc = time.time()
 
-	file = open('EvLocs/' + eq_file, 'r')
+	if ARRAY == 0:
+		file = open(eq_file, 'r')
+	elif ARRAY == 1:
+		file = open('EvLocs/' + eq_file, 'r')
 	lines=file.readlines()
 	split_line = lines[0].split()
 #			ids.append(split_line[0])  ignore label for now
@@ -40,7 +44,7 @@ def pro5stack2d(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 	if not sys.warnoptions:
 	    warnings.simplefilter("ignore")
 
-	#%% Get Hinet or LASA station location file
+#%% Get location file
 	if ARRAY == 0: # Hinet set
 		sta_file = '/Users/vidale/Documents/GitHub/Hinet-codes/hinet_sta.txt'
 		ref_lat = 36.3
@@ -64,10 +68,12 @@ def pro5stack2d(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 		st_lats.append( split_line[1])
 		st_lons.append( split_line[2])
 
-	#%% Input parameters
-	# #%% Get saved event info, also used to name files
+#%% Input parameters
 	# date_label = '2018-04-02' # date for filename
-	fname = 'Pro_Files/HD' + date_label + 'sel.mseed'
+	if ARRAY == 0:
+		fname = 'HD' + date_label + 'sel.mseed'
+	elif ARRAY == 1:
+		fname = 'Pro_Files/HD' + date_label + 'sel.mseed'
 	st = Stream()
 	st = read(fname)
 	print('Read in: ' + str(len(st)) + ' traces')
@@ -87,7 +93,7 @@ def pro5stack2d(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 	stack_Tslows = [(x * slow_delta + slowT_lo) for x in a1T]
 	print(str(slowR_n) + ' radial slownesses, ' + str(slowT_n) + ' trans slownesses, ')
 
-	#%% Build empty Stack array
+#%% Build empty Stack array
 	stack = Stream()
 	tr = Trace()
 	tr.stats.delta = dt
@@ -110,11 +116,18 @@ def pro5stack2d(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 	ref_back_az = ref_dist_az[2]
 #	print(f'Ref location {ref_lat:.4f} , {ref_lon:.4f}, event location {ev_lat:.4f}  {ev_lon:.4f} ref_back_az  {ref_back_az:.1f}°')
 
-	#%% select by distance, window and adjust start time to align picked times
+#%% select by distance, window and adjust start time to align picked times
 	done = 0
 	for tr in st: # traces one by one, find lat-lon by searching entire inventory.  Inefficient but cheap
 		for ii in station_index:
-			if (tr.stats.station == st_names[ii]): # found station in inventory
+			if ARRAY == 0:  # have to chop off last letter, always 'h'
+				this_name = st_names[ii]
+				this_name_truc = this_name[0:5]
+				name_truc_cap  = this_name_truc.upper()
+			elif ARRAY == 1:
+				name_truc_cap = st_names[ii]
+			if (tr.stats.station == name_truc_cap): # find station in inventory
+#			if (tr.stats.station == st_names[ii]): # found station in inventory
 				if norm == 1:
 					tr.normalize() # trace divided abs(max of trace)
 				stalat = float(st_lats[ii])
@@ -145,7 +158,7 @@ def pro5stack2d(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 				done += 1
 				if done%20 == 0:
 					print('Done stacking ' + str(done) + ' out of ' + str(len(st)) + ' stations.')
-	# take envelope, decimate envelope
+#%% take envelope, decimate envelope
 	stack_raw = stack.copy()
 	for slowR_i in range(slowR_n):  # loop over radial slownesses
 		for slowT_i in range(slowT_n):  # loop over transverse slownesses
@@ -154,10 +167,16 @@ def pro5stack2d(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 			if decimate_fac != 0:
 				stack[indx].decimate(decimate_fac)
 
-	#  Save processed files
-	fname = 'Pro_Files/HD' + date_label + '_2dstack_env.mseed'
+#%%  Save processed files
+	if ARRAY == 0:
+		fname = 'HD' + date_label + '_2dstack_env.mseed'
+	elif ARRAY == 1:
+		fname = 'Pro_Files/HD' + date_label + '_2dstack_env.mseed'
 	stack.write(fname,format = 'MSEED')
-	fname = 'Pro_Files/HD' + date_label + '_2dstack.mseed'
+	if ARRAY == 0:
+		fname = 'HD' + date_label + '_2dstack.mseed'
+	elif ARRAY == 1:
+		fname = 'Pro_Files/HD' + date_label + '_2dstack.mseed'
 	stack_raw.write(fname,format = 'MSEED')
 
 	elapsed_time_wc = time.time() - start_time_wc

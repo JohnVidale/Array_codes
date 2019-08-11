@@ -22,7 +22,8 @@ from obspy.taup import TauPyModel
 model = TauPyModel(model='iasp91')
 from scipy.interpolate import griddata
 
-source = 1  # 0 Amchitka, 1 is Northern NZ, 2 is southern NZ
+source = 0  # 0 Amchitka, 1 is Northern NZ, 2 is southern NZ
+mark_long = 1 # 1 will make longitudes of 0, 90, 180, and 270 plain, lat of 45 a divot
 LASA_lat =   46.7    # °N
 LASA_lon = -106.22   # °E
 Am_lat = 51.416
@@ -117,6 +118,9 @@ for ix in x:
 			arrival = model.get_travel_times(source_depth_in_km=depth,
 									 distance_in_degree = dd2[ii]*2, phase_list=['PKiKP'])
 			tt2[ii] = 0.5 * arrival[0].time # twice the  distance, half the traveltime for one half PKiKP
+			if mark_long == 1: # just to mark longitude visible, gives wrong answer
+				if xlon[ii] == 0 or xlon[ii] == 90 or xlon[ii] == 180 or xlon[ii] == 270 or xlat[ii] == 45:
+					tt2[ii] = tt2[ii] + 10
 			rayp[ii] = arrival[0].ray_param  # ray parameter
 			 # radial and transverse slowness of scattered arrival
 			slowR[ii] = (rayp[ii] / 6370) * math.cos((math.pi/180)*(baz[ii] - s_bazi))
@@ -134,7 +138,7 @@ first_arrival = np.nanmin(PKiKP_data)
 print(f'first arrival {first_arrival:.0f}')
 PKiKP_diff = PKiKP_data - first_arrival
 
-for ix in x: # numerically differentiate to find change in scattered arrival time for 5° rotation
+for ix in x: # numerically differentiate to find change in scattered arrival time
 	for iy in y:
 		ii  = iy + ix*ny
 		if ix == 0:

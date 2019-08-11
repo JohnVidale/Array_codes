@@ -2,7 +2,7 @@
 # decimates output of pro6 for quickly read into pro7a
 # John Vidale 3/2019
 
-def pro7dec(eq_file1, eq_file2, decimate_fac = 5):
+def pro7dec(eq_file1, eq_file2, decimate_fac = 5, ARRAY = 0):
 
 	from obspy import Stream
 	from obspy import read
@@ -11,13 +11,19 @@ def pro7dec(eq_file1, eq_file2, decimate_fac = 5):
 
 	start_time_wc = time.time()
 
-	file = open('EvLocs/' + eq_file1, 'r')
+	if ARRAY == 0:
+		file = open(eq_file1, 'r')
+	elif ARRAY == 1:
+		file = open('EvLocs/' + eq_file1, 'r')
 	lines=file.readlines()
 	split_line = lines[0].split()
 #			ids.append(split_line[0])  ignore label for now
 	date_label1  = split_line[1][0:10]
 
-	file = open('EvLocs/' + eq_file2, 'r')
+	if ARRAY == 0:
+		file = open(eq_file2, 'r')
+	elif ARRAY == 1:
+		file = open('EvLocs/' + eq_file2, 'r')
 	lines=file.readlines()
 	split_line = lines[0].split()
 #			ids.append(split_line[0])  ignore label for now
@@ -26,9 +32,14 @@ def pro7dec(eq_file1, eq_file2, decimate_fac = 5):
 	#%% Input parameters
 	# #%% Get saved event info, also used to name files
 	# date_label = '2018-04-02' # date for filename
-	fname1 = 'Pro_files/HD' + date_label1 + '_' + date_label2 + '_tshift.mseed'
-	fname2 = 'Pro_files/HD' + date_label1 + '_' + date_label2 + '_amp_ave.mseed'
-	fname3 = 'Pro_files/HD' + date_label1 + '_' + date_label2 + '_amp_ratio.mseed'
+	if ARRAY == 0:
+		fname1 = 'HD' + date_label1 + '_' + date_label2 + '_tshift.mseed'
+		fname2 = 'HD' + date_label1 + '_' + date_label2 + '_amp_ave.mseed'
+		fname3 = 'HD' + date_label1 + '_' + date_label2 + '_amp_ratio.mseed'
+	elif ARRAY == 1:
+		fname1 = 'Pro_files/HD' + date_label1 + '_' + date_label2 + '_tshift.mseed'
+		fname2 = 'Pro_files/HD' + date_label1 + '_' + date_label2 + '_amp_ave.mseed'
+		fname3 = 'Pro_files/HD' + date_label1 + '_' + date_label2 + '_amp_ratio.mseed'
 	st        = Stream()
 	amp_ave   = Stream()
 	amp_ratio = Stream()
@@ -47,12 +58,24 @@ def pro7dec(eq_file1, eq_file2, decimate_fac = 5):
 	print('Decimation took ' + str(elapsed_time_wc) + ' seconds')
 
 	#  Save processed files
-	fname = 'Pro_Files/HD' + date_label1 + '_' + date_label2 + '_tshift_dec.mseed'
+	if ARRAY == 0:
+		fname = 'HD' + date_label1 + '_' + date_label2 + '_tshift_dec.mseed'
+	elif ARRAY == 1:
+		fname = 'Pro_Files/HD' + date_label1 + '_' + date_label2 + '_tshift_dec.mseed'
 	st.write(fname,format = 'MSEED')
-	fname = 'Pro_Files/HD' + date_label1 + '_' + date_label2 + '_amp_ave_dec.mseed'
+
+	if ARRAY == 0:
+		fname = 'HD' + date_label1 + '_' + date_label2 + '_amp_ave_dec.mseed'
+	elif ARRAY == 1:
+		fname = 'Pro_Files/HD' + date_label1 + '_' + date_label2 + '_amp_ave_dec.mseed'
 	amp_ave.write(fname,format = 'MSEED')
-	fname = 'Pro_Files/HD' + date_label1 + '_' + date_label2 + '_amp_ratio_dec.mseed'
+
+	if ARRAY == 0:
+		fname = 'HD' + date_label1 + '_' + date_label2 + '_amp_ratio_dec.mseed'
+	elif ARRAY == 1:
+		fname = 'Pro_Files/HD' + date_label1 + '_' + date_label2 + '_amp_ratio_dec.mseed'
 	amp_ratio.write(fname,format = 'MSEED')
+
 	print('Wrote out: time sampling is ' + str(st[0].stats.delta) + ' number of time points is ' + str(len(st[0].data)))
 
 	elapsed_time_wc = time.time() - start_time_wc

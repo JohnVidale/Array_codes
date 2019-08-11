@@ -121,7 +121,7 @@ def pro4statics(eq_file, out_name = 'test', ref_trace = 'N.SZW',
 					try:
 						tr_ref_tt = arrivals[0].time # arrival time
 					except:
-						print("Station " + tr.stats.station + ' at distance ' + str(tr_ref.stats.distance) + ' and depth ' + str(ev_depth))
+						print('Station ' + tr.stats.station + ' at distance ' + str(tr_ref.stats.distance) + ' and depth ' + str(ev_depth))
 						sys.exit("No arrival time for " + dphase)
 
 	stgood = Stream()

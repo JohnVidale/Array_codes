@@ -14,7 +14,7 @@ def pro1get(eq_file):
 #	print(os.environ)
 
 	#%% Get Hinet station location file
-	sta_file = '/Users/vidale/Documents/PyCode/Codes/Hinet_station/hinet_list'
+	sta_file = '/Users/vidale/Documents/GitHub/Hinet-codes/hinet_sta.txt'
 	with open(sta_file, 'r') as file:
 		lines = file.readlines()
 	# Load station coords into arrays
@@ -74,7 +74,7 @@ def pro1get(eq_file):
 		for station in stations:
 			hinet.win32.extract_sac(data, ctable, suffix='sac', filter_by_name=station, outdir=outdir, with_pz=False)
 	#		with open(ctable, 'r') as file:
-			with open('/Users/vidale/Documents/PyCode/Codes/Hinet_station/hinet_station_list.txt', 'r') as file:
+			with open('/Users/vidale/Documents/GitHub/Hinet-codes/hinet_station_list_full.txt', 'r') as file:
 				while True:
 					line = file.readline()
 	#				print('line is ' + line + ' in station ' + station)
@@ -107,13 +107,13 @@ def pro1get(eq_file):
 					continue
 
 				if float(header[c][12]) == 1.023e-7:
-					default_resp = '/Users/vidale/Documents/PyCode/Codes/Hinet_station/RESP.TYPE3.txt'
+					default_resp = '/Users/vidale/Documents/GitHub/Hinet-codes/RESP.TYPE3.txt'
 					sensitivity_line = 345
 				elif float(header[c][12]) == 1.000e-7:
-					default_resp = '/Users/vidale/Documents/PyCode/Codes/Hinet_station/RESP.TYPE2.txt'
+					default_resp = '/Users/vidale/Documents/GitHub/Hinet-codes/RESP.TYPE2.txt'
 					sensitivity_line = 345
 				elif float(header[c][12]) == 1.192e-7:
-					default_resp = '/Users/vidale/Documents/PyCode/Codes/Hinet_station/RESP.TYPE1.txt'
+					default_resp = '/Users/vidale/Documents/GitHub/Hinet-codes/RESP.TYPE1.txt'
 					sensitivity_line = 404
 
 				gain = header[c][7]

@@ -1,5 +1,5 @@
 ##!/usr/bin/env python
-##  code to align traces by shifting, and record time shifts for station statics
+##  code to compare time shifts, largely written by Bill Savron
 ##  John Vidale, 2/2019
 #
 #import sys # don't show any warnings
@@ -16,7 +16,7 @@ def clean_station_name(name):
 #%% Get Hinet station location file
 
 file_label = '2s.txt'
-sta_file = '/Users/vidale/Documents/PyCode/Codes/Hinet_station/hinet_list'
+sta_file = '/Users/vidale/Documents/GitHub/Hinet-codes/hinet_sta.txt'
 with open(sta_file, 'r') as file:
 	lines = file.readlines()
 # Load station coords into arrays
@@ -42,7 +42,7 @@ for ii in station_index:
 #stations['n.agwh']['lat']
 #Out[3]: '43.0842'
 
-shift_file1 = '/Users/vidale/Documents/PyCode/Hinet/Statics/HA2016-05-28pro4_PKIKP.txt'
+shift_file1 = '/Users/vidale/Documents/PyCode/Hinet/Statics/HA2016-05-28pro4_PKIKP.statics'
 with open(shift_file1, 'r') as file:
 	lines = file.readlines()
 
@@ -52,7 +52,7 @@ for line in lines:
 	statics[name] = {'dist1': float(split_line[1]), 'shift1': float(split_line[4]), 'corr1': float(split_line[5])}
 	sta_master[name].update(statics[name])
 
-shift_file2 = '/Users/vidale/Documents/PyCode/Hinet/Statics/HA2011-12-11pro4_PKIKP.txt'
+shift_file2 = '/Users/vidale/Documents/PyCode/Hinet/Statics/HA2011-12-11pro4_PKIKP.statics'
 with open(shift_file2, 'r') as file:
 	lines = file.readlines()
 
@@ -62,7 +62,7 @@ for line in lines:
 	statics[name] = {'dist2': float(split_line[1]), 'shift2': float(split_line[4]), 'corr2': float(split_line[5])}
 	sta_master[name].update(statics[name])
 
-shift_file3 = '/Users/vidale/Documents/PyCode/Hinet/Statics/HA2018-04-02pro4_PKIKP.txt'
+shift_file3 = '/Users/vidale/Documents/PyCode/Hinet/Statics/HA2018-04-02pro4_PKIKP.statics'
 with open(shift_file3, 'r') as file:
 	lines = file.readlines()
 

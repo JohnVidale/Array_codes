@@ -8,7 +8,8 @@
 def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0005,
 			  slowR_lo = -0.1, slowR_hi = 0.1, slowT_lo = -0.1, slowT_hi = 0.1,
 			  start_buff = 50, end_buff = 50, norm = 0, freq_corr = 1.0,
-			  plot_dyn_range = 1000, fig_index = 401, get_stf = 0, ref_phase = 'blank'):
+			  plot_dyn_range = 1000, fig_index = 401, get_stf = 0, ref_phase = 'blank',
+			  ARRAY = 0):
 
 	import obspy
 	import obspy.signal
@@ -27,25 +28,38 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0
 	import time
 	import statistics
 
+#%% Get info
+	#%% get locations
+	print('Running pro6_plot_stacked_seis')
 	start_time_wc = time.time()
 
-	file = open('EvLocs/' + eq_file1, 'r')
+	if ARRAY == 0:
+		file = open(eq_file1, 'r')
+	elif ARRAY == 1:
+		file = open('EvLocs/' + eq_file1, 'r')
 	lines=file.readlines()
 	split_line = lines[0].split()
 	t1           = UTCDateTime(split_line[1])
 	date_label1  = split_line[1][0:10]
 
-	file = open('EvLocs/' + eq_file2, 'r')
+	if ARRAY == 0:
+		file = open(eq_file2, 'r')
+	elif ARRAY == 1:
+		file = open('EvLocs/' + eq_file2, 'r')
 	lines=file.readlines()
 	split_line = lines[0].split()
 	t2           = UTCDateTime(split_line[1])
 	date_label2  = split_line[1][0:10]
 
-	#%% Input parameters
+	#%% read files
 	# #%% Get saved event info, also used to name files
 	# date_label = '2018-04-02' # date for filename
-	fname1 = 'Pro_Files/HD' + date_label1 + '_2dstack.mseed'
-	fname2 = 'Pro_Files/HD' + date_label2 + '_2dstack.mseed'
+	if ARRAY == 0:
+		fname1 = 'HD' + date_label1 + '_2dstack.mseed'
+		fname2 = 'HD' + date_label2 + '_2dstack.mseed'
+	elif ARRAY == 1:
+		fname1 = 'Pro_Files/HD' + date_label1 + '_2dstack.mseed'
+		fname2 = 'Pro_Files/HD' + date_label2 + '_2dstack.mseed'
 	st1 = Stream()
 	st2 = Stream()
 	st1 = read(fname1)
@@ -79,12 +93,12 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0
 	stack_Tslows = [(x * slow_delta + slowT_lo) for x in a1T]
 	print(str(slowR_n) + ' radial slownesses, ' + str(slowT_n) + ' trans slownesses, ')
 
-#%%
+#%%  Loop over slowness
 	total_slows = slowR_n * slowT_n
 	global_max = 0
 	for slow_i in range(total_slows): # find envelope, phase, tshift, and global max
-		if slow_i % 1000 == 0:
-			print('At line 85, ' +str(slow_i) + ' slowness out of ' + str(total_slows))
+		if slow_i % 200 == 0:
+			print('At line 101, ' +str(slow_i) + ' slowness out of ' + str(total_slows))
 		if len(st1[slow_i].data) == 0: # test for zero-length traces
 				print('%d data has zero length ' % (slow_i))
 
@@ -119,21 +133,21 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0
 		local_max = max(abs(amp_ave[slow_i].data))
 		if local_max > global_max:
 			global_max = local_max
-
-	tshift_full    = tshift.copy()  # make array for time shift
+#%% Extract slices
+	tshift_full = tshift.copy()  # make array for time shift
 	for slow_i in range(total_slows): # ignore less robust points
-		if slow_i % 1000 == 0:
-			print('At line 124, ' +str(slow_i) + ' slowness out of ' + str(total_slows))
+		if slow_i % 200 == 0:
+			print('At line 140, ' +str(slow_i) + ' slowness out of ' + str(total_slows))
 		for it in range(nt1):
 			if ((amp_ratio[slow_i].data[it] < 0.6) or (amp_ratio[slow_i].data[it] > 1.8) or (amp_ave[slow_i].data[it] < (0.30 * global_max))):
 				tshift[slow_i].data[it] = np.nan
-
 	#%% Find transverse slowness nearest zero
 	lowest_Tslow = 1000000
 	for slow_i in range(slowT_n):
 		if abs(stack_Tslows[slow_i]) < lowest_Tslow:
 			lowest_Tindex = slow_i
 			lowest_Tslow = abs(stack_Tslows[slow_i])
+	print('Made it to line 152!')
 
 	print(str(slowT_n) + ' T slownesses, ' + str(lowest_Tindex) + ' min T slow, min is ' + str(lowest_Tslow))
 
@@ -181,11 +195,12 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0
 
 	#%% compute timing time series
 	ttt = (np.arange(len(st1[0].data)) * st1[0].stats.delta - start_buff) # in units of seconds
+	print('Made it to here!')
 
-	#%% Plot radial amp and tdiff plots
+#%% Plot radial amp and tdiff plots
 	fig_index = 6
 	plt.close(fig_index)
-	plt.figure(fig_index,figsize=(30,10))
+#	plt.figure(fig_index,figsize=(30,10))
 	plt.xlim(-start_buff,end_buff)
 	plt.ylim(stack_Rslows[0], stack_Rslows[-1])
 	for slowR_i in range(slowR_n):  # for this station, loop over slownesses
@@ -206,7 +221,7 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0
 	# Plot transverse amp and tdiff plots
 	fig_index = 7
 	plt.close(fig_index)
-	plt.figure(fig_index,figsize=(30,10))
+#	plt.figure(fig_index,figsize=(30,10))
 	plt.xlim(-start_buff,end_buff)
 	plt.ylim(stack_Tslows[0], stack_Tslows[-1])
 #	for tr in st1good:
@@ -286,16 +301,25 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0
 #	plt.title('Beam amplitude ' + date_label1 + ' ' + date_label2)
 	plt.show()
 
-	#  Save processed files
-	fname = 'Pro_Files/HD' + date_label1 + '_' + date_label2 + '_tshift.mseed'
+#%%  Save processed files
+	if ARRAY == 0:
+		fname = 'HD' + date_label1 + '_' + date_label2 + '_tshift.mseed'
+	elif ARRAY == 1:
+		fname = 'Pro_Files/HD' + date_label1 + '_' + date_label2 + '_tshift.mseed'
 	tshift_full.write(fname,format = 'MSEED')
-	fname = 'Pro_Files/HD' + date_label1 + '_' + date_label2 + '_amp_ave.mseed'
+	if ARRAY == 0:
+		fname = 'HD' + date_label1 + '_' + date_label2 + '_amp_ave.mseed'
+	elif ARRAY == 1:
+		fname = 'Pro_Files/HD' + date_label1 + '_' + date_label2 + '_amp_ave.mseed'
 	amp_ave.write(fname,format = 'MSEED')
-	fname = 'Pro_Files/HD' + date_label1 + '_' + date_label2 + '_amp_ratio.mseed'
+	if ARRAY == 0:
+		fname = 'HD' + date_label1 + '_' + date_label2 + '_amp_ratio.mseed'
+	elif ARRAY == 1:
+		fname = 'Pro_Files/HD' + date_label1 + '_' + date_label2 + '_amp_ratio.mseed'
 	amp_ratio.write(fname,format = 'MSEED')
 
+#%% Option to write out stf
 	if get_stf != 0:
-	# Write out stf
 		event1_sample.taper(0.1)
 		event2_sample.taper(0.1)
 		fname = 'Pro_Files/HD' + date_label1 + '_stf.mseed'

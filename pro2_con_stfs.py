@@ -1,6 +1,6 @@
 #!/usr/bin/env python
-# this program only detrends, tapers and decimates
-# John Vidale 2/2019
+# this program convolves a time function with an mseed file
+# John Vidale 6/2019
 
 def pro2_convstf(eq_file, conv_file):
 
@@ -18,6 +18,7 @@ def pro2_convstf(eq_file, conv_file):
 	if not sys.warnoptions:
 	    warnings.simplefilter('ignore')
 
+	print('Running pro2_con_stfs')
 	start_time_wc = time.time()
 
 	#%%
@@ -65,10 +66,10 @@ def pro2_convstf(eq_file, conv_file):
 	done = 0
 
 	for tr in st: # traces one by one, find lat-lon by searching entire inventory.  Inefficient but cheap
-		print('con_trace data has length ' + str(len(con_trace[0].data)))
-		print('Tr data has length ' + str(len(tr.data)) + 'con_trace data has length ' + str(len(con_trace[0].data)))
+#		print('con_trace data has length ' + str(len(con_trace[0].data)))
+#		print('Tr data has length ' + str(len(tr.data)) + ' con_trace data has length ' + str(len(con_trace[0].data)))
 		tr.data = np.convolve(tr.data, con_trace[0].data)
-		print('Now, Tr data has length ' + str(len(tr.data)))
+#		print('Now, Tr data has length ' + str(len(tr.data)))
 		st_out += tr
 		done += 1
 		if done%50 == 0:
