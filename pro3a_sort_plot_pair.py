@@ -8,30 +8,25 @@
 def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
 			 dphase = 'PKIKP', dphase2 = 'PKiKP', dphase3 = 'PKIKP', dphase4 = 'PKiKP',
 			start_buff = 200, end_buff = 500,
-			plot_scale_fac = 0.05,qual_threshold = 0, corr_threshold = 0,
+			plot_scale_fac = 0.05, qual_threshold = 0, corr_threshold = 0.5,
 			freq_min = 1, freq_max = 3, min_dist = 0, max_dist = 180,
 			alt_statics = 0, statics_file = 'nothing', ARRAY = 0, ref_loc = 0):
-# ARRAY 0 is Hinet, 1 is LASA, 2 is NORSAR
 
 # Parameters
+#	ARRAY 0 is Hinet, 1 is LASA, 2 is NORSAR
+#	start_buff = 50       # plots start Xs before PKIKP
+#	end_buff   = 200       # plots end Xs after PKIKP
+#	plot_scale_fac = 0.5  #  Bigger numbers make each trace amplitude bigger on plot
 #	stat_corr = 1 # apply station static corrections
+#	qual_threshold =  0.2   # minimum SNR
+#	corr_threshold = 0.7  # minimum correlation in measuring shift to use station in static construction
+
 #	dphase  = 'PKIKP'       # phase to be aligned
 #	dphase2 = 'PKiKP'      # another phase to have traveltime plotted
 #	dphase3 = 'pPKiKP'        # another phase to have traveltime plotted
 #	dphase4 = 'pPKIKP'        # another phase to have traveltime plotted
-#	start_buff = 50       # plots start Xs before PKIKP
-#	end_buff   = 200       # plots end Xs before PKIKP
-#	plot_scale_fac = 0.5  #  Bigger numbers make each trace amplitude bigger on plot
-#	qual_threshold =  0.2   # minimum SNR
-#	corr_threshold = 0.7  # minimum correlation in measuring shift to use station
-#	max_dist = 180
-#	min_dist = 0
-	#max_dist = 52.5
-	#min_dist = 45
-#	freq_min = 1
-#	freq_max = 3
 
-#%%  Set some more parameters
+#%%  Set some parameters
 	verbose = 0           # more output
 	rel_time = 1          # timing is relative to a chosen phase, otherwise relative to OT
 	taper_frac = .05      #Fraction of window tapered on both ends
@@ -120,12 +115,12 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
 	if stat_corr == 1:  # load static terms, only applies to Hinet and LASA
 		if ARRAY == 0:
 			if alt_statics == 0: # standard set
-				sta_file = '/Users/vidale/Documents/GitHub/Hinet-codes/hinet_sta_statics.txt'
+				sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/hinet_sta_statics.txt'
 			else: # custom set made by this event for this event
-				sta_file = ('/Users/vidale/Documents/PyCode/Hinet/Statics/' + 'HA' +
+				sta_file = ('/Users/vidale/Documents/GitHub/Array_codes/Files/' + 'HA' +
 				   date_label1[:10] + 'pro4_' + dphase + '.statics')
 		elif ARRAY == 1:
-			sta_file = '/Users/vidale/Documents/GitHub/Hinet-codes/L_sta_statics.txt'
+			sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/L_sta_statics.txt'
 		with open(sta_file, 'r') as file:
 			lines = file.readlines()
 		print(str(len(lines)) + ' stations read from ' + sta_file)
@@ -148,11 +143,11 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
 			st_corr.append(split_line[5])
 	else: # no static terms, always true for LASA or NORSAR
 		if ARRAY == 0: # Hinet set
-			sta_file = '/Users/vidale/Documents/GitHub/Hinet-codes/hinet_sta.txt'
+			sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/hinet_sta.txt'
 		elif ARRAY == 1: #         LASA set
-			sta_file = '/Users/vidale/Documents/GitHub/Hinet-codes/LASA_sta.txt'
+			sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/LASA_sta.txt'
 		else: #         NORSAR set
-			sta_file = '/Users/vidale/Documents/GitHub/Hinet-codes/NORSAR_sta.txt'
+			sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/NORSAR_sta.txt'
 		with open(sta_file, 'r') as file:
 			lines = file.readlines()
 		print(str(len(lines)) + ' stations read from ' + sta_file)

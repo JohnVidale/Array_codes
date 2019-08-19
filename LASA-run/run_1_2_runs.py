@@ -8,7 +8,7 @@
 import os
 
 os.environ['PATH'] += os.pathsep + '/usr/local/bin'
-os.chdir('/Users/vidale/Documents/GitHub/Hinet-codes')
+os.chdir('/Users/vidale/Documents/GitHub/Array_codes')
 
 #%% Import functions
 from pro3a_sort_plot_pair    import pro3pair

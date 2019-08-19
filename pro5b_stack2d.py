@@ -46,11 +46,11 @@ def pro5stack2d(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 
 #%% Get location file
 	if ARRAY == 0: # Hinet set
-		sta_file = '/Users/vidale/Documents/GitHub/Hinet-codes/hinet_sta.txt'
+		sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/hinet_sta.txt'
 		ref_lat = 36.3
 		ref_lon = 138.5
 	else:         # LASA set
-		sta_file = '/Users/vidale/Documents/GitHub/Hinet-codes/LASA_sta.txt'
+		sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/LASA_sta.txt'
 		ref_lat = 46.69
 		ref_lon = -106.22
 	with open(sta_file, 'r') as file:

@@ -9,7 +9,7 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0
 			  slowR_lo = -0.1, slowR_hi = 0.1, slowT_lo = -0.1, slowT_hi = 0.1,
 			  start_buff = 50, end_buff = 50, norm = 0, freq_corr = 1.0,
 			  plot_dyn_range = 1000, fig_index = 401, get_stf = 0, ref_phase = 'blank',
-			  ARRAY = 0):
+			  ARRAY = 0, min_rat = 0.6, max_rat = 1.8, min_amp = 0.3):
 
 	import obspy
 	import obspy.signal
@@ -139,7 +139,7 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0
 		if slow_i % 200 == 0:
 			print('At line 140, ' +str(slow_i) + ' slowness out of ' + str(total_slows))
 		for it in range(nt1):
-			if ((amp_ratio[slow_i].data[it] < 0.6) or (amp_ratio[slow_i].data[it] > 1.8) or (amp_ave[slow_i].data[it] < (0.30 * global_max))):
+			if ((amp_ratio[slow_i].data[it] < min_rat) or (amp_ratio[slow_i].data[it] > max_rat) or (amp_ave[slow_i].data[it] < (min_amp * global_max))):
 				tshift[slow_i].data[it] = np.nan
 	#%% Find transverse slowness nearest zero
 	lowest_Tslow = 1000000
@@ -147,7 +147,6 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0
 		if abs(stack_Tslows[slow_i]) < lowest_Tslow:
 			lowest_Tindex = slow_i
 			lowest_Tslow = abs(stack_Tslows[slow_i])
-	print('Made it to line 152!')
 
 	print(str(slowT_n) + ' T slownesses, ' + str(lowest_Tindex) + ' min T slow, min is ' + str(lowest_Tslow))
 
@@ -195,15 +194,14 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0
 
 	#%% compute timing time series
 	ttt = (np.arange(len(st1[0].data)) * st1[0].stats.delta - start_buff) # in units of seconds
-	print('Made it to here!')
 
-#%% Plot radial amp and tdiff plots
+#%% Plot radial amp and tdiff vs time plots
 	fig_index = 6
-	plt.close(fig_index)
-#	plt.figure(fig_index,figsize=(30,10))
+#	plt.close(fig_index)
+	plt.figure(fig_index,figsize=(30,10))
 	plt.xlim(-start_buff,end_buff)
 	plt.ylim(stack_Rslows[0], stack_Rslows[-1])
-	for slowR_i in range(slowR_n):  # for this station, loop over slownesses
+	for slowR_i in range(slowR_n):  # loop over radial slownesses
 		dist_offset = stack_Rslows[slowR_i] # trying for approx degrees
 		ttt = (np.arange(len(centralR_st1[slowR_i].data)) * centralR_st1[slowR_i].stats.delta
 		 + (centralR_st1[slowR_i].stats.starttime - t1))
@@ -218,14 +216,14 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0
 		plt.plot(ttt, (centralR_tdiff[slowR_i].data)*plot_scale_fac/1 + dist_offset, color = 'black')
 		plt.plot(ttt, (centralR_amp[slowR_i].data)*0.0 + dist_offset, color = 'lightgray') # reference lines
 	plt.title('Seismograms and tdiff at 0 T slowness')
-	# Plot transverse amp and tdiff plots
+	# Plot transverse amp and tdiff vs time plots
 	fig_index = 7
-	plt.close(fig_index)
-#	plt.figure(fig_index,figsize=(30,10))
+#	plt.close(fig_index)
+	plt.figure(fig_index,figsize=(30,10))
 	plt.xlim(-start_buff,end_buff)
 	plt.ylim(stack_Tslows[0], stack_Tslows[-1])
-#	for tr in st1good:
-	for slowT_i in range(slowT_n):  # for this station, loop over slownesses
+
+	for slowT_i in range(slowT_n):  # loop over transverse slownesses
 		dist_offset = stack_Tslows[slowT_i] # trying for approx degrees
 		ttt = (np.arange(len(centralT_st1[slowT_i].data)) * centralT_st1[slowT_i].stats.delta
 		 + (centralT_st1[slowT_i].stats.starttime - t1))
@@ -247,7 +245,7 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0
 #	stack_slice[0,0] = -0.25
 #	stack_slice[0,1] =  0.25
 #	tdiff_clip = 0.4/1.2
-	tdiff_clip_max = 0.1  # DO NOT LEAVE COMMENTED OUT!!
+	tdiff_clip_max =  0.1  # DO NOT LEAVE COMMENTED OUT!!
 	tdiff_clip_min = -0.2
 
 	y1, x1 = np.mgrid[slice(stack_Rslows[0], stack_Rslows[-1] + slow_delta, slow_delta),
