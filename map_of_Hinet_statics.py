@@ -14,7 +14,8 @@ import matplotlib.pyplot as plt
 from pylab import *
 
 #%% Get Hinet station location file
-sta_file = '/Users/vidale/Documents/PyCode/Codes/Hinet_station/hinet_master_list.txt'
+#sta_file = '/Users/vidale/Documents/PyCode/Codes/Hinet_station/hinet_master_list.txt'
+sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/hinet_master_list.txt'
 with open(sta_file, 'r') as file:
 	lines = file.readlines()
 print(str(len(lines)) + ' lines read from hinet_master_list')

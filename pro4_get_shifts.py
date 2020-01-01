@@ -1,12 +1,13 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #  reads in "*sel.mseed" for a pair of events
 #  align traces by shifting, and record time shifts for station statics
 #  plots traces before and after time shift
 #  saves aligned traces (not generally used) and static corrections, used in pro3 codes
 #  John Vidale, 2/2019
-def pro4statics(eq_file, out_name = 'test', ref_trace = 'N.SZW',
+def pro4statics(eq_file, ref_trace = 'N.SZW',
 				dphase = 'PKIKP', dphase2 = 'PKiKP', dphase3 = 'PKIKP', dphase4 = 'PKiKP',
-				start_corr_win = -1, end_corr_win = 3, plot_scale_fac = 0.05,qual_threshold = 0, corr_threshold = 0,
+				start_corr_win = -1, end_corr_win = 3, plot_scale_fac = 0.05,
+				qual_threshold = 0, corr_threshold = 0,
 				max_time_shift = 2, min_dist = 150, max_dist = 164, ARRAY = 0):
 
 	from obspy import UTCDateTime
@@ -26,17 +27,17 @@ def pro4statics(eq_file, out_name = 'test', ref_trace = 'N.SZW',
 
 	if not sys.warnoptions:
 	    warnings.simplefilter("ignore")
-	#%% Get Hinet station location file
-#	sta_file = '/Users/vidale/Documents/PyCode/Codes/Hinet_station/hinet_list'
-	if ARRAY == 0: # Hinet set
-		sta_file = '/Users/vidale/Documents/GitHub/Hinet-codes/hinet_sta.txt'
-	elif ARRAY == 1: #         LASA set
-		sta_file = '/Users/vidale/Documents/GitHub/Hinet-codes/LASA_sta.txt'
+	#%% Get station location file
+	if   ARRAY == 0: # Hinet set
+		sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/hinet_sta.txt'
+	elif ARRAY == 1: # LASA set
+		sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/LASA_sta.txt'
 	with open(sta_file, 'r') as file:
 		lines = file.readlines()
 	print('Station file has ' + str(len(lines)) + ' lines.')
 	# Load station coords into arrays
-	station_index = range(343)
+		# old line: station_index = range(343)
+	station_index = range(len(lines))
 	st_lats  = []
 	st_lons  = []
 	st_deps  = []
@@ -66,7 +67,7 @@ def pro4statics(eq_file, out_name = 'test', ref_trace = 'N.SZW',
 	#start_corr_win = 2       # plots start Xs before PKiKP
 	#end_corr_win   = 7       # plots end Xs before PKiKP
 	#max_time_shift = 2       # searches up to this time shift for alignment
-	start_plot_win = -10       # plots start Xs before PKiKP
+	start_plot_win = 0       # plots start Xs before PKiKP
 	end_plot_win   = 20       # plots end Xs before PKiKP
 	#corr_threshold = 0.  # threshold that correlation is good enough to keep trace
 	#max_dist = 151
@@ -83,7 +84,7 @@ def pro4statics(eq_file, out_name = 'test', ref_trace = 'N.SZW',
 	file = open(eq_file, 'r')
 	lines=file.readlines()
 	split_line = lines[0].split()
-#			ids.append(split_line[0])  ignore label for now
+#			ids.append(split_line[0])  ignore label, now "event"
 	t           = UTCDateTime(split_line[1])
 	date_label  = split_line[1][0:10]
 	ev_lat      = float(      split_line[2])
@@ -93,10 +94,12 @@ def pro4statics(eq_file, out_name = 'test', ref_trace = 'N.SZW',
 	print('Date label ' + date_label + ' lat ' + str(ev_lat) + ' lon ' + str(ev_lon))
 
 	st = Stream()
-	fname     = 'HD' + date_label + 'sel.mseed'
+#	fname     = 'HD' + date_label + '.mseed'
+	fname     = 'HD' + date_label + 'sel.mseed'  # sel file has windowing, shift?, filtering
 
 	print('fname ' + fname)
 
+	os.chdir('/Users/vidale/Documents/PyCode/LASA/Pro_Files/')
 	os.system('pwd')
 	st=read(fname)
 	print('Read in: ' + str(len(st)) + ' traces')
@@ -108,14 +111,19 @@ def pro4statics(eq_file, out_name = 'test', ref_trace = 'N.SZW',
 		if (tr.stats.station == ref_trace): # found it
 			tr_ref = tr.copy()
 			for ii in station_index: # find station in inventory
-				this_name = st_names[ii]
+				this_name = st_names[ii] # disabled convoluted patch for long Hinet names
 				this_name_truc = this_name[0:5]
 				name_truc_cap  = this_name_truc.upper()
-				if (tr.stats.station == name_truc_cap):# found it
+#				print(tr.stats.station + ' tr.stats.station ' +st_names[ii] + ' st_names[ii] ' + ref_trace + ' ref_trace ' + name_truc_cap + ' name_truc_cap ' + this_name + ' this_name ' + this_name_truc + ' this_name_truc')
+#				if (tr.stats.station == name_truc_cap):# found it
+				if (tr.stats.station == st_names[ii]):# found it
+					print(tr.stats.station + ' tr.stats.station ' +st_names[ii] + ' st_names[ii] ')
+#					sys.exit()
 					stalon = float(st_lons[ii]) # look up lat & lon again to find distance
 					stalat = float(st_lats[ii])
 					distance = gps2dist_azimuth(stalat,stalon,ev_lat,ev_lon)
 					tr_ref.stats.distance=distance[0]/(1000.*111) # distance in meters
+					print('depth ' + str(ev_depth) + ' distance ' + str(tr_ref.stats.distance) + ' phase ' + dphase)
 					arrivals = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree
 										=tr_ref.stats.distance,phase_list=[dphase])
 					try:
@@ -123,12 +131,11 @@ def pro4statics(eq_file, out_name = 'test', ref_trace = 'N.SZW',
 					except:
 						print('Station ' + tr.stats.station + ' at distance ' + str(tr_ref.stats.distance) + ' and depth ' + str(ev_depth))
 						sys.exit("No arrival time for " + dphase)
+#	sys.exit()
 
 	stgood = Stream()
 	st2 = st.copy()  # hard to measure timing of traces without adjusting entire thing
-	print('st2 has: ' + str(len(st)) + ' traces')
-
-	print('t (origin time)' + str(t))
+	print('st2 has: ' + str(len(st)) + ' traces' + ' t (origin time) ' + str(t))
 
 	#  get station lat-lon, compute distance for plot
 	good_corr = 0
@@ -143,16 +150,18 @@ def pro4statics(eq_file, out_name = 'test', ref_trace = 'N.SZW',
 				this_name = name_truc_cap
 				actual_trace = tr.stats.station.upper
 			if (actual_trace == tested_name): # found it
-				tr_time = tr.stats.starttime
+				tr_time = tr.stats.starttime  # tr_time apparently not used, a relic
 				stalon = float(st_lons[ii]) # look up lat & lon to find distance
 				stalat = float(st_lats[ii])
 				distance = gps2dist_azimuth(stalat,stalon,ev_lat,ev_lon)
 				tr.stats.distance=distance[0]/(1000.*111) # distance for phase time and plotting
 				arrivals = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree
 									=tr.stats.distance,phase_list=[dphase])
+				print('made it to here!!')
 				try:
 					dt, coeff = xcorr_pick_correction(t, tr_ref, t, tr,
 							start_corr_win, end_corr_win, max_time_shift, plot=plot_flag)
+					print('also made it to here!!')
 					if dt > max_time_shift:
 						print('Hey!  Excess shift: %.3f' % dt)
 						print('Station ' + tr.stats.station + ' corr is ' + str(coeff))
@@ -176,6 +185,7 @@ def pro4statics(eq_file, out_name = 'test', ref_trace = 'N.SZW',
 						bad_corr += 1
 				except:
 					print('No arrival time for ' + tr.stats.station + ' at distance ' + str(tr.stats.distance))
+		sys.exit()
 
 	##		# store shift to write out
 	##			if coeff > corr_threshold:
@@ -370,11 +380,14 @@ def pro4statics(eq_file, out_name = 'test', ref_trace = 'N.SZW',
 	#  Save aligned traces
 	fname_sfile = 'HA' + date_label[:10] + 'pro4_' + dphase + '.mseed'
 	fname_stats = 'HA' + date_label[:10] + 'pro4_' + dphase + '.statics'
+
+	fname_sfile = '/Users/vidale/Documents/Github/Array_codes/Files/' + fname_sfile
+	fname_stats = '/Users/vidale/Documents/Github/Array_codes/Files/' + fname_stats
+
 	stgood.write(fname_sfile,format = 'MSEED')
 
 	#  Save station static correction files
 	#fname_stats = 'Statics' + etime[:10] + dphase + ref_trace + '.txt'
-	fname_stats = '/Users/vidale/Documents/PyCode/Hinet/Statics/' + fname_stats
 	stats_file = open(fname_stats, 'w')
 	len_file1 = len(sta_names)
 	for j in range(0,len_file1):

@@ -284,9 +284,9 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0
 				 slice(stack_Tslows[0], stack_Tslows[-1] + slow_delta, slow_delta)]
 
 #	fig, ax = plt.subplots(1)
-	fig, ax = plt.subplots(1, figsize=(5.1,6))
-	c = ax.pcolormesh(x1, y1, stack_slice/smax, cmap=plt.cm.gist_yarg, vmin = 0.5)
-#	c = ax.pcolormesh(x1, y1, stack_slice, cmap=plt.cm.gist_rainbow_r, vmin = 0)
+	fig, ax = plt.subplots(1, figsize=(7,6))
+#	c = ax.pcolormesh(x1, y1, stack_slice/smax, cmap=plt.cm.gist_yarg, vmin = 0.5)
+	c = ax.pcolormesh(x1, y1, stack_slice, cmap=plt.cm.gist_rainbow_r, vmin = 0)
 	ax.axis([x1.min(), x1.max(), y1.min(), y1.max()])
 	circle1 = plt.Circle((0, 0), 0.019, color='black', fill=False)
 	ax.add_artist(circle1)  #inner core limit

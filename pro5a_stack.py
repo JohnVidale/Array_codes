@@ -56,15 +56,15 @@ def pro5stack(eq_file, plot_scale_fac = 0.05, slowR_lo = -0.1, slowR_hi = 0.1,
 
 #%% Get station location file
 	if ARRAY == 0: # Hinet set and center
-		sta_file = '/Users/vidale/Documents/GitHub/Hinet-codes/hinet_sta.txt'
+		sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/hinet_sta.txt'
 		ref_lat = 36.3
 		ref_lon = 138.5
 	elif ARRAY == 1: # LASA set and center
-		sta_file = '/Users/vidale/Documents/GitHub/Hinet-codes/LASA_sta.txt'
+		sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/LASA_sta.txt'
 		ref_lat = 46.69
 		ref_lon = -106.22
 	else:         # NORSAR set and center if 2
-		sta_file = '/Users/vidale/Documents/GitHub/Hinet-codes/NORSAR_sta.txt'
+		sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/NORSAR_sta.txt'
 		ref_lat = 61
 		ref_lon = 11
 	with open(sta_file, 'r') as file:
@@ -203,7 +203,8 @@ def pro5stack(eq_file, plot_scale_fac = 0.05, slowR_lo = -0.1, slowR_hi = 0.1,
 		fig, ax = plt.subplots(1, figsize=(9,2))
 		fig.subplots_adjust(bottom=0.3)
 #		c = ax.pcolormesh(x, y, stack_array, cmap=plt.cm.gist_yarg)
-		c = ax.pcolormesh(x, y, stack_array, cmap=plt.cm.gist_rainbow_r)
+#		c = ax.pcolormesh(x, y, stack_array, cmap=plt.cm.gist_rainbow_r)
+		c = ax.pcolormesh(x, y, stack_array, cmap=plt.cm.binary)
 		ax.axis([x.min(), x.max(), y.min(), y.max()])
 		fig.colorbar(c, ax=ax)
 		plt.figure(fig_index,figsize=(6,8))
@@ -221,7 +222,7 @@ def pro5stack(eq_file, plot_scale_fac = 0.05, slowR_lo = -0.1, slowR_hi = 0.1,
 		plt.xlim(-start_buff,end_buff)
 	plt.xlabel('Time (s)')
 	plt.ylabel('Slowness (s/km)')
-	plt.title(fname[2:12])
+	plt.title(date_label)
 	plt.show()
 
 #%% Save processed files

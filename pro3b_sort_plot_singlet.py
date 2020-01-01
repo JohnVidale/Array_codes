@@ -5,14 +5,14 @@
 # writes out "*sel.mseed" file
 # John Vidale 2/2019
 
-def pro3singlet(eq_file, stat_corr = 0, simple_taper = 0, skip_SNR = 0,
+def pro3singlet(eq_file, stat_corr = 0, rel_time = 1, simple_taper = 0, skip_SNR = 0,
 			dphase = 'PKIKP', dphase2 = 'PKiKP', dphase3 = 'PKIKP', dphase4 = 'PKiKP',
 			start_buff = 10, end_buff = 30,
 			plot_scale_fac = 0.05, qual_threshold = 0, corr_threshold = 0,
 			freq_min = 0.25, freq_max = 1,
 			min_dist = 0, max_dist = 180, do_decimate = 0,
 			alt_statics = 0, statics_file = 'nothing', ARRAY = 0, ref_loc = 0,
-			verbose = 0):
+			verbose = 0, fig_index = 101):
 # 0 is Hinet, 1 is LASA, 2 is NORSAR
 
 #%% Import functions
@@ -27,11 +27,11 @@ def pro3singlet(eq_file, stat_corr = 0, simple_taper = 0, skip_SNR = 0,
 	import time
 	model = TauPyModel(model='iasp91')
 
-	import sys # don't show any warnings
-	import warnings
-
-	if not sys.warnoptions:
-	    warnings.simplefilter("ignore")
+#	import sys # don't show any warnings
+#	import warnings
+#
+#	if not sys.warnoptions:
+#	    warnings.simplefilter("ignore")
 
 	print('Running pro3b_sort_plot_singlet')
 	start_time_wc = time.time()
@@ -58,12 +58,12 @@ def pro3singlet(eq_file, stat_corr = 0, simple_taper = 0, skip_SNR = 0,
 	if stat_corr == 1:  # load static terms, only applies to Hinet and LASA
 		if ARRAY == 0:
 			if alt_statics == 0: # standard set
-				sta_file = '/Users/vidale/Documents/GitHub/Hinet-codes/hinet_sta_statics.txt'
+				sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/hinet_sta_statics.txt'
 			else: # custom set made by this event for this event
-				sta_file = ('/Users/vidale/Documents/PyCode/Hinet/Statics/' + 'HA' +
+				sta_file = ('/Users/vidale/Documents/PyCode/Hinet/Array_codes/Files/' + 'HA' +
 				   date_label[:10] + 'pro4_' + dphase + '.statics')
 		elif ARRAY == 1:
-			sta_file = '/Users/vidale/Documents/GitHub/Hinet-codes/L_sta_statics.txt'
+			sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/L_sta_statics.txt'
 		with open(sta_file, 'r') as file:
 			lines = file.readlines()
 		print(str(len(lines)) + ' stations read from ' + sta_file)
@@ -86,11 +86,11 @@ def pro3singlet(eq_file, stat_corr = 0, simple_taper = 0, skip_SNR = 0,
 			st_corr.append(split_line[5])
 	else: # no static terms, always true for LASA or NORSAR
 		if ARRAY == 0: # Hinet set
-			sta_file = '/Users/vidale/Documents/GitHub/Hinet-codes/hinet_sta.txt'
+			sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/hinet_sta.txt'
 		elif ARRAY == 1: #         LASA set
-			sta_file = '/Users/vidale/Documents/GitHub/Hinet-codes/LASA_sta.txt'
+			sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/LASA_sta.txt'
 		else: #         NORSAR set
-			sta_file = '/Users/vidale/Documents/GitHub/Hinet-codes/NORSAR_sta.txt'
+			sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/NORSAR_sta.txt'
 		with open(sta_file, 'r') as file:
 			lines = file.readlines()
 		print(str(len(lines)) + ' stations read from ' + sta_file)
@@ -107,9 +107,9 @@ def pro3singlet(eq_file, stat_corr = 0, simple_taper = 0, skip_SNR = 0,
 			st_lons.append( split_line[2])
 
 #%%  Set some parameters
-	fig_index = 101
+#	fig_index = 101
 #	stat_corr = 1 # apply station static corrections
-	rel_time = 1          # timing is relative to a chosen phase, otherwise relative to OT
+#	rel_time = 1          # timing is relative to a chosen phase, otherwise relative to OT
 #	dphase  = 'PKIKP'       # phase to be aligned
 #	dphase2 = 'PKiKP'      # another phase to have traveltime plotted
 #	dphase3 = 'PKP'        # another phase to have traveltime plotted
@@ -308,7 +308,6 @@ def pro3singlet(eq_file, stat_corr = 0, simple_taper = 0, skip_SNR = 0,
 				tr.stats.distance=distance[0] # distance in km
 
 #%%  This section causes a crash in Spyder
-	'''
 	# plot traces
 	plt.close(fig_index)
 	plt.figure(fig_index,figsize=(10,10))
@@ -322,7 +321,6 @@ def pro3singlet(eq_file, stat_corr = 0, simple_taper = 0, skip_SNR = 0,
 			ttt = ttt - shift
 		plt.plot(ttt, (tr.data - np.median(tr.data))*plot_scale_fac /(tr.data.max()
 			- tr.data.min()) + dist_offset, color = 'black')
-	'''
 #%% Plot traveltime curves
 	if plot_tt:
 		# first traveltime curve

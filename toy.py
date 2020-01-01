@@ -50,13 +50,13 @@ dlat = 10
 dlon = 10
 min_slow = -0.02
 max_slow =  0.02
-nslow    =  21
+nslow    =  51
 
 # test obspy routines
 distance = gps2dist_azimuth(LASA_lat,LASA_lon,s_lat,s_lon) # Get traveltimes again, hard to store
-dist   = distance[0] # distance in m
+dist= distance[0] # distance in m
 s_bazi = distance[1] # azimuth A->B in degrees
-az2    = distance[2] # azimuth B->A in degrees)
+az2 = distance[2] # azimuth B->A in degrees)
 dist = distance[0]/(1000*111)
 arrival = model.get_travel_times(source_depth_in_km=depth,
 								 distance_in_degree=dist,phase_list=['PKiKP'])
@@ -171,6 +171,7 @@ y = np.linspace(min_slow, max_slow,nslow)
 X, Y = np.meshgrid(x,y)
 
 # plot delay time vs slownesses
+#plt.figure(7)
 fig, ax = plt.subplots(1)
 Ti = griddata((slowR_pure, slowT_pure), PKiKP_diff_pure, (X, Y), method='linear')
 #plt.pcolormesh(Y, X, Ti, cmap=cm.gist_rainbow)
@@ -185,39 +186,6 @@ plt.xlabel('Transverse slowness (s/km)')
 plt.ylabel('Radial slowness (s/km)')
 plt.title('Scattered wave arrival time (after PKiKP, s)')
 
-# plot shift vs slownesses
-fig, ax = plt.subplots(1)
-Ti = griddata((slowR_pure, slowT_pure), PKiKP_rot_pure, (X, Y), method='linear')
-#mask = (x*x + y*y > 0.019*0.019)
-#Ti[mask] = np.nan
-#plt.pcolormesh(Y, X, Ti, cmap=cm.gist_rainbow_r)
-plt.pcolormesh(Y, X, Ti, cmap=cm.coolwarm)
-plt.colorbar()
-plt.scatter(slowT_pure, slowR_pure, c='k', alpha=0.2, marker='.')
-plt.axis('equal')
-circle1 = plt.Circle((0, 0), 0.019, color='black', fill=False)
-ax.add_artist(circle1)
-plt.xlabel('Transverse slowness (s/km)')
-plt.ylabel('Radial slowness (s/km)')
-plt.title('Time shift of scattered arrival (s/° rotation)')
-
-#%% more primitive plot projected onto slowness rectangle rather than sphere
-#x = np.linspace(min_slow, max_slow,nslow)
-#y = np.linspace(min_slow, max_slow,nslow)
-#X, Y = np.meshgrid(x,y)
-#mask = (x*x + y*y > 0.019*0.019)
-##mask = (math.sqrt((x*x) + (y*y))>0.019)
-#Ti = griddata((slowR, slowT), PKiKP_rot, (X, Y), method='nearest')
-#Ti[mask] = np.nan
-#plt.pcolormesh(Y, X, Ti, cmap=cm.gist_rainbow)
-#plt.colorbar()
-#plt.scatter(slowT, slowR, c='k', alpha=0.2, marker='.')
-#plt.axis('equal')
-#plt.xlabel('Transverse slowness (s/km)')
-#plt.ylabel('Radial slowness (s/km)')
-#plt.title('Time shift from 1° rotation (s)')
-
-# arrival relative to first arrival
 fig, ax = plt.subplots(1)
 grid1 = PKiKP_diff.reshape((nx, ny))
 
@@ -233,77 +201,3 @@ ax.add_artist(circle1)
 plt.xlabel('°E of lon = 0,180')
 plt.ylabel('°N of lon = 90,270')
 plt.title('Relative arrival time (s)')
-
-# time shift from 1° rotation
-fig, ax = plt.subplots(1)
-grid2 = PKiKP_rot.reshape((nx, ny))
-plt.pcolormesh(X1, X2, grid2, cmap=cm.gist_rainbow)
-plt.colorbar()
-plt.axis('equal')
-circle1 = plt.Circle((0, 0), 75, color='black', fill=False)
-ax.add_artist(circle1)
-plt.xlabel('°E of lon = 0,180')
-plt.ylabel('°N of lon = 90,270')
-plt.title('Time shift from 1° rotation (s)')
-
-# ray parameter
-fig, ax = plt.subplots(1)
-grid3 = rayp.reshape((nx, ny))
-plt.pcolormesh(X1, X2, grid3, cmap=cm.gist_rainbow)
-plt.colorbar()
-plt.axis('equal')
-circle1 = plt.Circle((0, 0), 75, color='black', fill=False)
-ax.add_artist(circle1)
-plt.xlabel('°E of lon = 0,180')
-plt.ylabel('°N of lon = 90,270')
-plt.title('Ray parameter')
-
-# back azimuth
-fig, ax = plt.subplots(1)
-grid4 = baz.reshape((nx, ny))
-plt.pcolormesh(X1, X2, grid4, cmap=cm.gist_rainbow)
-plt.colorbar()
-plt.axis('equal')
-circle1 = plt.Circle((0, 0), 75, color='black', fill=False)
-ax.add_artist(circle1)
-plt.xlabel('°E of lon = 0,180')
-plt.ylabel('°N of lon = 90,270')
-plt.title('Back azimuth')
-
-# radial slowness
-fig, ax = plt.subplots(1)
-grid5 = slowR.reshape((nx, ny))
-plt.pcolormesh(X1, X2, grid5, cmap=cm.gist_rainbow)
-plt.colorbar()
-plt.axis('equal')
-circle1 = plt.Circle((0, 0), 75, color='black', fill=False)
-ax.add_artist(circle1)
-plt.xlabel('°E of lon = 0,180')
-plt.ylabel('°N of lon = 90,270')
-plt.title('Radial slowness')
-
-# transverse slowness
-fig, ax = plt.subplots(1)
-grid6 = slowT.reshape((nx, ny))
-plt.pcolormesh(X1, X2, grid6, cmap=cm.gist_rainbow)
-plt.colorbar()
-plt.axis('equal')
-#circle1 = plt.Circle((0, 0), 75, color='black', fill=False)
-#ax.add_artist(circle1)
-plt.xlabel('°E of lon = 0,180')
-plt.ylabel('°N of lon = 90,270')
-plt.title('Tranverse slowness')
-
-plt.show()
-
-# flawed lat-lon plot
-#plt.figure(2)
-#color_map = plt.imshow(grid1, extent=(xlon[0], xlon[-1], xlat[0], xlat[-1]),
-#           interpolation='nearest', cmap=cm.gist_rainbow, origin = 'lower')
-#color_map.set_cmap = cm.gist_rainbow
-#plt.colorbar()
-#
-#plt.xlabel('longitude (°)')
-#plt.ylabel('latitude (°)')
-#plt.title('scatterer to receiver, Relative arrival time (s)')
-#plt.show()

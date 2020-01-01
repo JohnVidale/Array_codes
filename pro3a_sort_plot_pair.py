@@ -6,8 +6,8 @@
 # John Vidale 2/2019
 
 def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
-			 dphase = 'PKIKP', dphase2 = 'PKiKP', dphase3 = 'PKIKP', dphase4 = 'PKiKP',
-			start_buff = 200, end_buff = 500,
+			dphase = 'PKIKP', dphase2 = 'PKiKP', dphase3 = 'PKIKP', dphase4 = 'PKiKP',
+			rel_time = 1, start_buff = 200, end_buff = 500,
 			plot_scale_fac = 0.05, qual_threshold = 0, corr_threshold = 0.5,
 			freq_min = 1, freq_max = 3, min_dist = 0, max_dist = 180,
 			alt_statics = 0, statics_file = 'nothing', ARRAY = 0, ref_loc = 0):
@@ -28,7 +28,7 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
 
 #%%  Set some parameters
 	verbose = 0           # more output
-	rel_time = 1          # timing is relative to a chosen phase, otherwise relative to OT
+#	rel_time = 1          # timing is relative to a chosen phase, otherwise relative to OT
 	taper_frac = .05      #Fraction of window tapered on both ends
 	signal_dur = 5.       # signal length used in SNR calculation
 	plot_tt = 1           # plot the traveltimes?
