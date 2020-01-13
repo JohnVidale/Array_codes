@@ -18,13 +18,13 @@ shiftC = [ 0.0, 0.1, -0.3, -0.3,  0.2]
 shiftB = [ 0.0, 0.0, -0.2,  0.0,  0.2]
 shiftA = [ 0.0, 0.0,  0.0,  0.0,  0.0] # only A == 1 element exists
 
-# eye-averaged from my correlation times
-#shiftF = [ 10.0,-0.3, -1.0, -0.6, -0.6] # 0 doesn't exist
-#shiftE = [ 10.0, 0.0, -0.5, -0.6, -0.2]
-#shiftD = [ 10.0, 0.3, -0.4, -0.2, -0.1]
-#shiftC = [ 10.0, 0.1, -0.3, -0.3,  0.2]
-#shiftB = [ 10.0, 0.0, -0.2,  0.0, -0.6]
-#shiftA = [ 0.05, 0.0,  0.0,  0.0,  0.0] # only A == 1 element exists
+# test to see effect on beam, not yet implemented
+TshiftF = [ 0.0, 0.0,  0.0, 0.0, 0.0] # 0 doesn't exist in station numbering
+TshiftE = [ 0.0, 0.0,  0.0, 0.0, 0.0]
+TshiftD = [ 0.0, 0.0,  0.0, 0.0, 0.0]
+TshiftC = [ 0.0, 0.0,  0.0, 0.0, 0.0]
+TshiftB = [ 0.0, 0.0,  0.0, 0.0, 0.0]
+TshiftA = [ 0.0, 0.0,  0.0, 0.0, 0.0] # only A == 1 element exists
 
 sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/L_sta_statics.txt'
 with open(sta_file, 'r') as file:

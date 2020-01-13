@@ -550,7 +550,7 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 		plt.ylabel('Transverse slowness (s/km)')
 		plt.title(ref_phase + ' Time lag at 0.015 s/km radial slowness, ' + fname1[12:22] + ' ' + fname1[23:33])
 		plt.show()
-#%% R-T stack
+#%% R-T stack time difference
 	if skip_snaps == 0:
 		stack_slice = np.zeros((slowR_n,slowT_n))
 		for snap_num in range(snaps):
@@ -566,7 +566,7 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 						 slice(stack_Tslows[0], stack_Tslows[-1] + slow_delta, slow_delta)]
 
 			fig, ax = plt.subplots(1)
-			c = ax.pcolormesh(x1, y1, stack_slice, cmap=plt.cm.gist_rainbow_r, vmin=-tdiff_clip, vmax=tdiff_clip)
+			c = ax.pcolormesh(x1, y1, stack_slice, cmap=plt.cm.coolwarm, vmin=-tdiff_clip, vmax=tdiff_clip)
 			ax.axis([x1.min(), x1.max(), y1.min(), y1.max()])
 			fig.colorbar(c, ax=ax)
 			circle1 = plt.Circle((0, 0), 0.019, color='black', fill=False)
@@ -576,7 +576,7 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 			plt.title(ref_phase + ' T-R plot of time lag at rel time ' + str(snaptime + snap_num*dt) + '  ' + fname1[12:22] + ' ' + fname1[23:33])
 			plt.show()
 
-#%% R-T stack
+#%% R-T stack amplitude
 	if skip_snaps == 0:
 		stack_slice = np.zeros((slowR_n,slowT_n))
 		for snap_num in range(snaps):

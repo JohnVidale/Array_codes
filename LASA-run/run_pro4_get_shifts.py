@@ -22,9 +22,10 @@ freq_max = 1.
 min_dist = 163.9
 max_dist = 165.5
 simple_taper = 1
+stat_corr = 1
 
 #%% --LASA Cull seismic section event 1
-pro3singlet(ARRAY = ARRAY, stat_corr = 1, rel_time = 1, eq_file = eq_file, simple_taper = simple_taper,
+pro3singlet(ARRAY = ARRAY, stat_corr = stat_corr, rel_time = 1, eq_file = eq_file, simple_taper = simple_taper,
 			start_buff = start_buff, end_buff = end_buff,
 			plot_scale_fac = 0.1, skip_SNR = 1,
 			dphase = ref_phase, dphase2 = 'PKiKP', dphase3 = 'PKIKP', dphase4 = 'PKiKP',
@@ -41,7 +42,7 @@ pro4statics(eq_file = eq_file, ref_trace = 'A041z',
 
 #%% -- HiNet version
 #os.chdir('/Users/vidale/Documents/PyCode/Hinet/Biggies/SSI_2016-05-28')
-#pro4statics(eq_file = 'event.txt', stat_corr = 1, ref_trace = 'N.SZW',
+#pro4statics(eq_file = 'event.txt', stat_corr = stat_corr, ref_trace = 'N.SZW',
 #			dphase = 'PKIKP', dphase2 = 'PKiKP', dphase3 = 'PKIKP', dphase4 = 'PKiKP',
 #			start_corr_win = -1, end_corr_win = 3, plot_scale_fac = 0.05,
 #			qual_threshold = 0, corr_threshold = 0, max_time_shift = 2)
@@ -49,7 +50,7 @@ pro4statics(eq_file = eq_file, ref_trace = 'A041z',
 #%% --LASA PKIKP relative to origin time rather than predicted PKIKP time
 #start_buff = -1200
 #end_buff   = 1230
-#pro3singlet(ARRAY = ARRAY, stat_corr = 1, rel_time = 0, eq_file = eq_file, simple_taper = simple_taper,
+#pro3singlet(ARRAY = ARRAY, stat_corr = stat_corr, rel_time = 0, eq_file = eq_file, simple_taper = simple_taper,
 #			start_buff = start_buff, end_buff = end_buff,
 #			plot_scale_fac = 0.1, skip_SNR = 1,
 #			dphase = ref_phase, dphase2 = 'PKiKP', dphase3 = 'PKIKP', dphase4 = 'PKiKP',
