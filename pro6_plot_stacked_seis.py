@@ -7,7 +7,7 @@
 
 def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0005,
 			  slowR_lo = -0.1, slowR_hi = 0.1, slowT_lo = -0.1, slowT_hi = 0.1,
-			  start_buff = 50, end_buff = 50, norm = 0, freq_corr = 1.0,
+			  start_buff = -50, end_buff = 50, norm = 0, freq_corr = 1.0,
 			  plot_dyn_range = 1000, fig_index = 401, get_stf = 0, ref_phase = 'blank',
 			  ARRAY = 0, min_rat = 0.6, max_rat = 1.8, min_amp = 0.3):
 
@@ -193,13 +193,13 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0
 		centralT_tdiff += tshift[ii]
 
 	#%% compute timing time series
-	ttt = (np.arange(len(st1[0].data)) * st1[0].stats.delta - start_buff) # in units of seconds
+	ttt = (np.arange(len(st1[0].data)) * st1[0].stats.delta + start_buff) # in units of seconds
 
 #%% Plot radial amp and tdiff vs time plots
 	fig_index = 6
 #	plt.close(fig_index)
 	plt.figure(fig_index,figsize=(30,10))
-	plt.xlim(-start_buff,end_buff)
+	plt.xlim(start_buff,end_buff)
 	plt.ylim(stack_Rslows[0], stack_Rslows[-1])
 	for slowR_i in range(slowR_n):  # loop over radial slownesses
 		dist_offset = stack_Rslows[slowR_i] # trying for approx degrees
@@ -220,7 +220,7 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0
 	fig_index = 7
 #	plt.close(fig_index)
 	plt.figure(fig_index,figsize=(30,10))
-	plt.xlim(-start_buff,end_buff)
+	plt.xlim(start_buff,end_buff)
 	plt.ylim(stack_Tslows[0], stack_Tslows[-1])
 
 	for slowT_i in range(slowT_n):  # loop over transverse slownesses

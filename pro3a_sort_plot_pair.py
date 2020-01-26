@@ -7,14 +7,14 @@
 
 def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
 			dphase = 'PKIKP', dphase2 = 'PKiKP', dphase3 = 'PKIKP', dphase4 = 'PKiKP',
-			rel_time = 1, start_buff = 200, end_buff = 500,
+			rel_time = 1, start_buff = -200, end_buff = 500,
 			plot_scale_fac = 0.05, qual_threshold = 0, corr_threshold = 0.5,
 			freq_min = 1, freq_max = 3, min_dist = 0, max_dist = 180,
 			alt_statics = 0, statics_file = 'nothing', ARRAY = 0, ref_loc = 0):
 
 # Parameters
 #	ARRAY 0 is Hinet, 1 is LASA, 2 is NORSAR
-#	start_buff = 50       # plots start Xs before PKIKP
+#	start_buff = -50       # plots start Xs after PKIKP
 #	end_buff   = 200       # plots end Xs after PKIKP
 #	plot_scale_fac = 0.5  #  Bigger numbers make each trace amplitude bigger on plot
 #	stat_corr = 1 # apply station static corrections
@@ -164,15 +164,15 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
 			st_lons.append( split_line[2])
 
 #%% Is taper too long compared to noise estimation window?
-	totalt = start_buff + end_buff
+	totalt = end_buff - start_buff
 	noise_time_skipped = taper_frac * totalt
 	if simple_taper == 0:
-		if noise_time_skipped >= 0.5 * start_buff:
+		if noise_time_skipped >= 0.5 * (-start_buff):
 			print('Specified taper of ' + str(taper_frac * totalt) +
 			   ' is not big enough compared to available noise estimation window ' +
-			   str(start_buff - noise_time_skipped) + '. May not work well.')
+			   str(-start_buff - noise_time_skipped) + '. May not work well.')
 			old_taper_frac = taper_frac
-			taper_frac = 0.5*start_buff/totalt
+			taper_frac = -0.5*start_buff/totalt
 			print('Taper reset from ' + str(old_taper_frac * totalt) + ' to '
 			   + str(taper_frac * totalt) + ' seconds.')
 
@@ -233,10 +233,10 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
 							if stat_corr == 1: # apply static station corrections
 								tr.stats.starttime -= float(st_shift[ii])
 							if rel_time == 1:
-								s_t = t1 + atime - start_buff
+								s_t = t1 + atime + start_buff
 								e_t = t1 + atime + end_buff
 							else:
-								s_t = t1 - start_buff
+								s_t = t1 + start_buff
 								e_t = t1 + end_buff
 							tr.trim(starttime=s_t,endtime = e_t)
 							# deduct theoretical traveltime and start_buf from starttime
@@ -253,10 +253,10 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
 								if stat_corr == 1: # apply static station corrections
 									tr.stats.starttime -= float(st_shift[ii])
 								if rel_time == 1:
-									s_t = t1 + atime - start_buff
+									s_t = t1 + atime + start_buff
 									e_t = t1 + atime + end_buff
 								else:
-									s_t = t1 - start_buff
+									s_t = t1 + start_buff
 									e_t = t1 + end_buff
 								tr.trim(starttime=s_t,endtime = e_t)
 								# deduct theoretical traveltime and start_buf from starttime
@@ -298,10 +298,10 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
 							if stat_corr == 1: # apply static station corrections
 								tr.stats.starttime -= float(st_shift[ii])
 							if rel_time == 1:
-								s_t = t2 + atime - start_buff
+								s_t = t2 + atime + start_buff
 								e_t = t2 + atime + end_buff
 							else:
-								s_t = t2 - start_buff
+								s_t = t2 + start_buff
 								e_t = t2 + end_buff
 							tr.trim(starttime=s_t,endtime = e_t)
 							# deduct theoretical traveltime and start_buf from starttime
@@ -318,10 +318,10 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
 								if stat_corr == 1: # apply static station corrections
 									tr.stats.starttime -= float(st_shift[ii])
 								if rel_time == 1:
-									s_t = t2 + atime - start_buff
+									s_t = t2 + atime + start_buff
 									e_t = t2 + atime + end_buff
 								else:
-									s_t = t2 - start_buff
+									s_t = t2 + start_buff
 									e_t = t2 + end_buff
 								tr.trim(starttime=s_t,endtime = e_t)
 								# deduct theoretical traveltime and start_buf from starttime
@@ -368,15 +368,15 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
 					# estimate median noise
 					t_noise1_start  = int(len(tr1.data) * taper_frac)
 					t_noise2_start  = int(len(tr2.data) * taper_frac)
-					t_noise1_end    = int(len(tr1.data) * start_buff/(start_buff + end_buff))
-					t_noise2_end    = int(len(tr2.data) * start_buff/(start_buff + end_buff))
+					t_noise1_end    = int(len(tr1.data) * (-start_buff)/(end_buff - start_buff))
+					t_noise2_end    = int(len(tr2.data) * (-start_buff)/(end_buff - start_buff))
 					noise1          = np.median(abs(tr1.data[t_noise1_start:t_noise1_end]))
 					noise2          = np.median(abs(tr2.data[t_noise2_start:t_noise2_end]))
 		# estimate median signal
-					t_signal1_start = int(len(tr1.data) * start_buff/(start_buff + end_buff))
-					t_signal2_start = int(len(tr2.data) * start_buff/(start_buff + end_buff))
-					t_signal1_end   = t_signal1_start + int(len(tr1.data) * signal_dur/(start_buff + end_buff))
-					t_signal2_end   = t_signal2_start + int(len(tr2.data) * signal_dur/(start_buff + end_buff))
+					t_signal1_start = int(len(tr1.data) * (-start_buff)/(end_buff - start_buff))
+					t_signal2_start = int(len(tr2.data) * (-start_buff)/(end_buff - start_buff))
+					t_signal1_end   = t_signal1_start + int(len(tr1.data) * signal_dur/(end_buff - start_buff))
+					t_signal2_end   = t_signal2_start + int(len(tr2.data) * signal_dur/(end_buff - start_buff))
 					signal1         = np.median(abs(tr1.data[t_signal1_start:t_signal1_end]))
 					signal2         = np.median(abs(tr2.data[t_signal2_start:t_signal2_end]))
 		#			test SNR
@@ -412,7 +412,7 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
 	fig_index = 3
 	plt.close(fig_index)
 	plt.figure(fig_index,figsize=(8,8))
-	plt.xlim(-start_buff,end_buff)
+	plt.xlim(start_buff,end_buff)
 	plt.ylim(min_dist,max_dist)
 	for tr in st1good:
 		dist_offset = tr.stats.distance/(1000*111) # trying for approx degrees

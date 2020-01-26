@@ -3,11 +3,12 @@
 # this program tapers, filters, selects range and SNR
 # plots against traveltime curves, either raw or reduced against traveltimes
 # writes out "*sel.mseed" file
+# plot lines are blue, orange, yellow, purple for phases 1 through 4
 # John Vidale 2/2019
 
 def pro3singlet(eq_file, stat_corr = 0, rel_time = 1, simple_taper = 0, skip_SNR = 0,
 			dphase = 'PKIKP', dphase2 = 'PKiKP', dphase3 = 'PKIKP', dphase4 = 'PKiKP',
-			start_buff = 10, end_buff = 30,
+			start_buff = -10, end_buff = 30,
 			plot_scale_fac = 0.05, qual_threshold = 0, corr_threshold = 0,
 			freq_min = 0.25, freq_max = 1,
 			min_dist = 0, max_dist = 180, do_decimate = 0,
@@ -133,16 +134,16 @@ def pro3singlet(eq_file, stat_corr = 0, rel_time = 1, simple_taper = 0, skip_SNR
 			ref_rad = 0.4    # ° radius (°)
 
 #%% Is taper too long compared to noise estimation window?
-	totalt = start_buff + end_buff
+	totalt = end_buff - start_buff
 	noise_time_skipped = taper_frac * totalt
 	if simple_taper == 0:
-		if noise_time_skipped >= 0.5 * start_buff:
+		if noise_time_skipped >= -0.5 * start_buff:
 			print('Specified taper of ' + str(taper_frac * totalt) +
 			   ' is not big enough compared to available noise estimation window ' +
-			   str(start_buff - noise_time_skipped) + '. May not work well.')
+			   str(-start_buff - noise_time_skipped) + '. May not work well.')
 			old_taper_frac = taper_frac
-			taper_frac = 0.5*start_buff/totalt
-			if start_buff < 0:
+			taper_frac = -0.5*start_buff/totalt
+			if start_buff > 0:
 					taper_frac = 0.05 # pick random minimal window if there is no leader
 			print('Taper reset from ' + str(old_taper_frac * totalt) + ' to '
 			   + str(taper_frac * totalt) + ' seconds.')
@@ -226,10 +227,10 @@ def pro3singlet(eq_file, stat_corr = 0, rel_time = 1, simple_taper = 0, skip_SNR
 								if stat_corr == 1: # apply static station corrections
 									tr.stats.starttime -= float(st_shift[ii])
 								if rel_time == 1:
-									s_t = t + atime - start_buff
+									s_t = t + atime + start_buff
 									e_t = t + atime + end_buff
 								else:
-									s_t = t - start_buff
+									s_t = t + start_buff
 									e_t = t + end_buff
 								tr.trim(starttime=s_t,endtime = e_t)
 								# deduct theoretical traveltime and start_buf from starttime
@@ -246,10 +247,10 @@ def pro3singlet(eq_file, stat_corr = 0, rel_time = 1, simple_taper = 0, skip_SNR
 								if stat_corr == 1: # apply static station corrections
 									tr.stats.starttime -= float(st_shift[ii])
 								if rel_time == 1:
-									s_t = t + atime - start_buff
+									s_t = t + atime + start_buff
 									e_t = t + atime + end_buff
 								else:
-									s_t = t - start_buff
+									s_t = t + start_buff
 									e_t = t + end_buff
 								tr.trim(starttime=s_t,endtime = e_t)
 								# deduct theoretical traveltime and start_buf from starttime
@@ -282,11 +283,11 @@ def pro3singlet(eq_file, stat_corr = 0, rel_time = 1, simple_taper = 0, skip_SNR
 		for tr in st_pickalign:
 		# estimate median noise
 			t_noise_start  = int(len(tr.data) * taper_frac)
-			t_noise_end    = int(len(tr.data) * start_buff/(start_buff + end_buff))
+			t_noise_end    = int(len(tr.data) * start_buff/(start_buff-end_buff))
 			noise          = np.median(abs(tr.data[t_noise_start:t_noise_end]))
 		# estimate median signal
-			t_signal_start = int(len(tr.data) * start_buff/(start_buff + end_buff))
-			t_signal_end   = t_signal_start + int(len(tr.data) * signal_dur/(start_buff + end_buff))
+			t_signal_start = int(len(tr.data) * start_buff/(start_buff-end_buff))
+			t_signal_end   = t_signal_start + int(len(tr.data) * signal_dur/(end_buff - start_buff))
 			signal         = np.median(abs(tr.data[t_signal_start:t_signal_end]))
 		#			test SNR
 			SNR = signal/noise;
@@ -311,7 +312,7 @@ def pro3singlet(eq_file, stat_corr = 0, rel_time = 1, simple_taper = 0, skip_SNR
 	# plot traces
 	plt.close(fig_index)
 	plt.figure(fig_index,figsize=(10,10))
-	plt.xlim(-start_buff,end_buff)
+	plt.xlim(start_buff,end_buff)
 	plt.ylim(min_dist,max_dist)
 	for tr in stgood:
 		dist_offset = tr.stats.distance/(1000*111) # trying for approx degrees

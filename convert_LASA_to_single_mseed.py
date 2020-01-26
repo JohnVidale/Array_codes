@@ -8,10 +8,10 @@ Created on Tue Feb 19 14:39:33 2019
 from obspy import Stream
 from obspy import read
 import os
-os.chdir('/Users/vidale/Documents/PyCode/LASA')
+os.chdir('/Users/vidale/Documents/PyCode/LASA/Raw_Processed')
 
 #records_file71 = '/Users/vidale/Documents/PyCode/LASA/E71.stations' # get list of files for '71 explosion
-records_file = '/Users/vidale/Documents/PyCode/LASA/stations9'
+records_file = '/Users/vidale/Documents/PyCode/LASA/Raw_Processed/stations12'
 with open(records_file, 'r') as file:
 	lines = file.readlines()
 
@@ -22,7 +22,7 @@ stfull = Stream()
 
 station_index = range(len(lines))
 for ii in station_index:
-	st = read('c740108_2147/' + lines[ii].rstrip())
+	st = read('c701217_1605/' + lines[ii].rstrip())
 	stfull += st
 
 #nt = len(st71[0].data)
@@ -34,6 +34,5 @@ print('This event: ' + str(len(stfull)) + ' traces.')
 #if do_decimate != 0:
 #	st1.decimate(do_decimate)
 
-fname = 'event9.mseed'
+fname = 'event12.mseed'
 stfull.write(fname,format = 'MSEED')
-

@@ -9,7 +9,7 @@
 
 def pro5stack2d(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 			  slowR_lo = -0.1, slowR_hi = 0.1, slowT_lo = -0.1, slowT_hi = 0.1,
-			  start_buff = 50, end_buff = 50, norm = 1, global_norm_plot = 1,
+			  start_buff = -50, end_buff = 50, norm = 1, global_norm_plot = 1,
 			  ARRAY = 0, NS = 0, decimate_fac = 0):
 
 	from obspy import UTCDateTime
@@ -85,7 +85,7 @@ def pro5stack2d(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 	#%% Make grid of slownesses
 	slowR_n = int(1 + (slowR_hi - slowR_lo)/slow_delta)  # number of slownesses
 	slowT_n = int(1 + (slowT_hi - slowT_lo)/slow_delta)  # number of slownesses
-	stack_nt = int(1 + ((end_buff + start_buff)/dt))  # number of time points
+	stack_nt = int(1 + ((end_buff - start_buff)/dt))  # number of time points
 	# In English, stack_slows = range(slow_n) * slow_delta - slow_lo
 	a1R = range(slowR_n)
 	a1T = range(slowT_n)
@@ -97,7 +97,7 @@ def pro5stack2d(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 	stack = Stream()
 	tr = Trace()
 	tr.stats.delta = dt
-	tr.stats.starttime = t - start_buff
+	tr.stats.starttime = t + start_buff
 	tr.stats.npts = stack_nt
 	tr.stats.network = 'stack'
 	tr.stats.channel = 'BHZ'
@@ -148,7 +148,7 @@ def pro5stack2d(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 					for slowT_i in range(slowT_n):  # loop over transverse slownesses
 						time_lag  = del_distR * stack_Rslows[slowR_i]  # time shift due to radial slowness
 						time_lag += del_distT * stack_Tslows[slowT_i]  # time shift due to transverse slowness
-						time_correction = ((t-tr.stats.starttime) + (time_lag - start_buff))/dt
+						time_correction = ((t-tr.stats.starttime) + (time_lag + start_buff))/dt
 						indx = int(slowR_i*slowT_n + slowT_i)
 						for it in range(stack_nt):  # check points one at a time
 							it_in = int(it + time_correction)

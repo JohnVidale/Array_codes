@@ -9,7 +9,7 @@
 
 def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.0005,
 			  slowR_lo = -0.1, slowR_hi = 0.1, slowT_lo = -0.1, slowT_hi = 0.1,
-			  start_buff = 50, end_buff = 50,
+			  start_buff = -50, end_buff = 50,
 			  ZslowR_lo = -0.1, ZslowR_hi = 0.1, ZslowT_lo = -0.1, ZslowT_hi = 0.1,
 			  Zstart_buff = 50, Zend_buff = 50, zoom = 0,
 			  snaptime = 8, snaps = 10, tdiff_clip = -1,
@@ -29,9 +29,9 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 
 	start_time_wc = time.time()
 
-	if Zstart_buff  > start_buff:
-		print('Zstart_buff of ' + str(Zstart_buff) + 'cannot  be > start_buff of ' + str(start_buff))
-		Zstart_buff = start_buff
+	if Zstart_buff  > -start_buff:
+		print('Zstart_buff of ' + str(Zstart_buff) + 'cannot  be > -start_buff of ' + str(-start_buff))
+		Zstart_buff = -start_buff
 	if Zend_buff    > end_buff:
 		print('Zend_buff of '   + str(Zend_buff)   + 'cannot  be > end_buff of '   + str(end_buff))
 		Zend_buff   = end_buff
@@ -102,7 +102,7 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 	#%% Make grid of slownesses
 	slowR_n = int(1 + (slowR_hi - slowR_lo)/slow_delta)  # number of slownesses
 	slowT_n = int(1 + (slowT_hi - slowT_lo)/slow_delta)  # number of slownesses
-	stack_nt = int(1 + ((end_buff + start_buff)/dt))  # number of time points
+	stack_nt = int(1 + ((end_buff - start_buff)/dt))  # number of time points
 	print(str(slowT_n) + ' trans slownesses, hi and lo are ' + str(slowT_hi) + '  ' + str(slowT_lo))
 	# In English, stack_slows = range(slow_n) * slow_delta - slow_lo
 	a1R = range(slowR_n)
@@ -139,10 +139,10 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 		slowT_lo   = ZslowT_lo
 		slowT_hi   = ZslowT_hi
 		end_buff   = Zend_buff
-		start_buff = Zstart_buff
+		start_buff = -Zstart_buff
 		slowR_n = int(1 + (slowR_hi - slowR_lo)/slow_delta)  # number of slownesses
 		slowT_n = int(1 + (slowT_hi - slowT_lo)/slow_delta)  # number of slownesses
-		stack_nt = int(1 + ((end_buff + start_buff)/dt))  # number of time points
+		stack_nt = int(1 + ((end_buff - start_buff)/dt))  # number of time points
 		print('After zoom ' + str(slowT_n) + ' trans slownesses, hi and lo are ' + str(slowT_hi) + '  ' + str(slowT_lo) + ' stack_nt is ' + str(stack_nt))
 		# In English, stack_slows = range(slow_n) * slow_delta - slow_lo
 		a1R = range(slowR_n)
@@ -317,7 +317,7 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 			centralT15_st += tdiff[lowest_Rindex15*slowT_n + slowT_i]
 #%%
 	#%% compute timing time series
-	ttt = (np.arange(len(tdiff[0].data)) * tdiff[0].stats.delta - start_buff) # in units of seconds
+	ttt = (np.arange(len(tdiff[0].data)) * tdiff[0].stats.delta + start_buff) # in units of seconds
 
 #%%  Plotting
 # Regular radial-time stack
@@ -555,7 +555,7 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 		stack_slice = np.zeros((slowR_n,slowT_n))
 		for snap_num in range(snaps):
 			fig_index += 1
-			it = int((snaptime + start_buff)/dt) + snap_num
+			it = int((snaptime - start_buff)/dt) + snap_num
 			for slowR_i in range(slowR_n):  # loop over radial slownesses
 				for slowT_i in range(slowT_n):  # loop over transverse slownesses
 					index = slowR_i*slowT_n + slowT_i
@@ -581,7 +581,7 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 		stack_slice = np.zeros((slowR_n,slowT_n))
 		for snap_num in range(snaps):
 			fig_index += 1
-			it = int((snaptime + start_buff)/dt) + snap_num
+			it = int((snaptime - start_buff)/dt) + snap_num
 			for slowR_i in range(slowR_n):  # loop over radial slownesses
 				for slowT_i in range(slowT_n):  # loop over transverse slownesses
 					index = slowR_i*slowT_n + slowT_i

@@ -8,7 +8,7 @@
 # John Vidale 2/2019
 
 def pro5stack(eq_file, plot_scale_fac = 0.05, slowR_lo = -0.1, slowR_hi = 0.1,
-			  slow_delta = 0.0005, start_buff = 50, end_buff = 50,
+			  slow_delta = 0.0005, start_buff = -50, end_buff = 50,
 			  ref_lat = 36.3, ref_lon = 138.5, envelope = 1, plot_dyn_range = 1000,
 			  log_plot = 1, norm = 1, global_norm_plot = 1, color_plot = 1, fig_index = 401, ARRAY = 0):
 
@@ -104,12 +104,12 @@ def pro5stack(eq_file, plot_scale_fac = 0.05, slowR_lo = -0.1, slowR_hi = 0.1,
 	tr.stats.network = 'stack'
 	tr.stats.channel = 'BHZ'
 	slow_n = int(1 + (slowR_hi - slowR_lo)/slow_delta)  # number of slownesses
-	stack_nt = int(1 + ((end_buff + start_buff)/dt))  # number of time points
+	stack_nt = int(1 + ((end_buff - start_buff)/dt))  # number of time points
 	# In English, stack_slows = range(slow_n) * slow_delta - slowR_lo
 	a1 = range(slow_n)
 	stack_slows = [(x * slow_delta + slowR_lo) for x in a1]
 	print(str(slow_n) + ' slownesses.')
-	tr.stats.starttime = t - start_buff
+	tr.stats.starttime = t + start_buff
 	tr.data = np.zeros(stack_nt)
 	done = 0
 	for stack_one in stack_slows:
@@ -151,8 +151,8 @@ def pro5stack(eq_file, plot_scale_fac = 0.05, slowR_lo = -0.1, slowR_hi = 0.1,
 				for slow_i in range(slow_n):  # for this station, loop over slownesses
 					time_lag = -del_dist * stack_slows[slow_i]  # time shift due to slowness, flipped to match 2D
 #					start_offset = tr.stats.starttime - t
-#					time_correction = (-start_buff - (start_offset + time_lag))/dt
-					time_correction = ((t-tr.stats.starttime) + (time_lag - start_buff))/dt
+#					time_correction = (start_buff - (start_offset + time_lag))/dt
+					time_correction = ((t-tr.stats.starttime) + (time_lag + start_buff))/dt
 	#				print('Time lag ' + str(time_lag) + ' for slowness ' + str(stack_slows[slow_i]) + ' and distance ' + str(del_dist) + ' time sample correction is ' + str(time_correction))
 					for it in range(stack_nt):  # check points one at a time
 						it_in = int(it + time_correction)
@@ -219,7 +219,7 @@ def pro5stack(eq_file, plot_scale_fac = 0.05, slowR_lo = -0.1, slowR_hi = 0.1,
 				plt.plot(ttt, stack[slow_i].data*plot_scale_fac / (global_max
 			- stack[slow_i].data.min()) + dist_offset, color = 'black')
 		plt.ylim(slowR_lo,slowR_hi)
-		plt.xlim(-start_buff,end_buff)
+		plt.xlim(start_buff,end_buff)
 	plt.xlabel('Time (s)')
 	plt.ylabel('Slowness (s/km)')
 	plt.title(date_label)
