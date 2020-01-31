@@ -24,6 +24,23 @@ def pro7plotstack(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 
 	print('Running pro7a_plot_envstack')
 
+	plt.figure(1)
+	plt.plot([1, 2, 3, 4])
+	plt.ylabel('some numbers')
+	plt.show()
+
+	fig_index += 1
+	plt.figure(fig_index)
+	plt.plot([1, 2, 3, 4, 5, 1])
+	plt.ylabel('some numbers')
+	plt.show()
+
+	fig_index += 1
+	plt.figure(fig_index)
+	plt.plot([1, 2, 3, 4, 5, 1, 3, 4])
+	plt.ylabel('some numbers')
+	plt.show()
+
 	start_time_wc = time.time()
 
 	if ARRAY == 0:
@@ -202,7 +219,8 @@ def pro7plotstack(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 		y, x = np.mgrid[slice(stack_Rslows[0], stack_Rslows[-1] + slow_delta, slow_delta),
 					 slice(ttt[0], ttt[-1] + dt, dt)]
 
-		fig, ax = plt.subplots(1,figsize=(10,3))
+		fig, ax = plt.subplots(1)
+#		print('Figure is set to ' + str(fig))
 		c = ax.pcolormesh(x, y, stack_array, cmap=plt.cm.gist_rainbow_r)
 		ax.axis([x.min(), x.max(), y.min(), y.max()])
 		fig.colorbar(c, ax=ax)
@@ -227,7 +245,8 @@ def pro7plotstack(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 		y, x = np.mgrid[slice(stack_Tslows[0], stack_Tslows[-1] + slow_delta, slow_delta),
 					 slice(ttt[0], ttt[-1] + dt, dt)]
 
-		fig, ax = plt.subplots(1,figsize=(10,3))
+		fig, ax = plt.subplots(1)
+#		print('Figure is set to ' + str(fig))
 		c = ax.pcolormesh(x, y, stack_array, cmap=plt.cm.gist_rainbow_r)
 		ax.axis([x.min(), x.max(), y.min(), y.max()])
 		fig.colorbar(c, ax=ax)
@@ -251,7 +270,8 @@ def pro7plotstack(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 		y, x = np.mgrid[slice(stack_Tslows[0], stack_Tslows[-1] + slow_delta, slow_delta),
 					 slice(ttt[0], ttt[-1] + dt, dt)]
 
-		fig, ax = plt.subplots(1,figsize=(10,3))
+		fig, ax = plt.subplots(1)
+#		print('Figure is set to ' + str(fig))
 		c = ax.pcolormesh(x, y, stack_array, cmap=plt.cm.gist_rainbow_r)
 		ax.axis([x.min(), x.max(), y.min(), y.max()])
 		fig.colorbar(c, ax=ax)
@@ -275,7 +295,8 @@ def pro7plotstack(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 		y, x = np.mgrid[slice(stack_Tslows[0], stack_Tslows[-1] + slow_delta, slow_delta),
 					 slice(ttt[0], ttt[-1] + dt, dt)]
 
-		fig, ax = plt.subplots(1,figsize=(10,3))
+		fig, ax = plt.subplots(1)
+#		print('Figure is set to ' + str(fig))
 		c = ax.pcolormesh(x, y, stack_array, cmap=plt.cm.gist_rainbow_r)
 		ax.axis([x.min(), x.max(), y.min(), y.max()])
 		fig.colorbar(c, ax=ax)
@@ -299,7 +320,8 @@ def pro7plotstack(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 		y, x = np.mgrid[slice(stack_Tslows[0], stack_Tslows[-1] + slow_delta, slow_delta),
 					 slice(ttt[0], ttt[-1] + dt, dt)]
 
-		fig, ax = plt.subplots(1,figsize=(10,3))
+		fig, ax = plt.subplots(1)
+#		print('Figure is set to ' + str(fig))
 		c = ax.pcolormesh(x, y, stack_array, cmap=plt.cm.gist_rainbow_r)
 		ax.axis([x.min(), x.max(), y.min(), y.max()])
 		fig.colorbar(c, ax=ax)
@@ -326,9 +348,11 @@ def pro7plotstack(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 		y1, x1 = np.mgrid[slice(stack_Rslows[0], stack_Rslows[-1] + slow_delta, slow_delta),
 					 slice(stack_Tslows[0], stack_Tslows[-1] + slow_delta, slow_delta)]
 
-		fig, ax = plt.subplots(1)
+#		fig, ax = plt.subplots(1)
+		fig, ax = plt.subplots(1,figsize=(15,5))
 		c = ax.pcolormesh(x1, y1, stack_slice, cmap=plt.cm.gist_rainbow_r)
 		ax.axis([x1.min(), x1.max(), y1.min(), y1.max()])
+#		plt.figure(fig_index,figsize=(5,5))
 		fig.colorbar(c, ax=ax)
 		circle1 = plt.Circle((0, 0), 0.019, color='black', fill=False)
 		ax.add_artist(circle1)
@@ -337,10 +361,15 @@ def pro7plotstack(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 		plt.title('T-R stack at rel time ' + str(snaptime + snap_num*dt) + '  ' + fname[12:22])
 		plt.show()
 
+	fig_index += 1
+	plt.figure(fig_index)
+	plt.plot([1, 2, 3, 4, 5, 1, 3, 4])
+	plt.ylabel('some numbers')
+	plt.show()
+
 	#  Save processed files
 #	fname = 'HD' + date_label + '_slice.mseed'
 #	stack.write(fname,format = 'MSEED')
-
 	elapsed_time_wc = time.time() - start_time_wc
 	print('This job took ' + str(elapsed_time_wc) + ' seconds')
 	os.system('say "Done"')

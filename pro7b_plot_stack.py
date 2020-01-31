@@ -332,7 +332,7 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 		y, x = np.mgrid[slice(stack_Rslows[0], stack_Rslows[-1] + slow_delta, slow_delta),
 					 slice(ttt[0], ttt[-1] + dt, dt)]
 
-		fig, ax = plt.subplots(1, figsize=(15,4))
+		fig, ax = plt.subplots(1, figsize=(10,3))
 		c = ax.pcolormesh(x, y, stack_array, cmap=plt.cm.coolwarm, vmin=-tdiff_clip, vmax=tdiff_clip)
 		fig.subplots_adjust(bottom=0.2)
 		ax.axis([x.min(), x.max(), y.min(), y.max()])
@@ -353,7 +353,7 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 		y, x = np.mgrid[slice(stack_Rslows[0], stack_Rslows[-1] + slow_delta, slow_delta),
 					 slice(ttt[0], ttt[-1] + dt, dt)]
 
-		fig, ax = plt.subplots(1, figsize=(15,4))
+		fig, ax = plt.subplots(1, figsize=(10,3))
 		c = ax.pcolormesh(x, y, stack_array, cmap=plt.cm.coolwarm, vmin=-tdiff_clip, vmax=tdiff_clip)
 		fig.subplots_adjust(bottom=0.2)
 		ax.axis([x.min(), x.max(), y.min(), y.max()])
@@ -374,7 +374,7 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 		y, x = np.mgrid[slice(stack_Rslows[0], stack_Rslows[-1] + slow_delta, slow_delta),
 					 slice(ttt[0], ttt[-1] + dt, dt)]
 
-		fig, ax = plt.subplots(1, figsize=(15,4))
+		fig, ax = plt.subplots(1, figsize=(10,3))
 		c = ax.pcolormesh(x, y, stack_array, cmap=plt.cm.coolwarm, vmin=-tdiff_clip, vmax=tdiff_clip)
 		fig.subplots_adjust(bottom=0.2)
 		ax.axis([x.min(), x.max(), y.min(), y.max()])
@@ -395,7 +395,7 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 		y, x = np.mgrid[slice(stack_Rslows[0], stack_Rslows[-1] + slow_delta, slow_delta),
 					 slice(ttt[0], ttt[-1] + dt, dt)]
 
-		fig, ax = plt.subplots(1, figsize=(15,4))
+		fig, ax = plt.subplots(1, figsize=(10,3))
 		c = ax.pcolormesh(x, y, stack_array, cmap=plt.cm.coolwarm, vmin=-tdiff_clip, vmax=tdiff_clip)
 		fig.subplots_adjust(bottom=0.2)
 		ax.axis([x.min(), x.max(), y.min(), y.max()])
@@ -416,7 +416,7 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 		y, x = np.mgrid[slice(stack_Rslows[0], stack_Rslows[-1] + slow_delta, slow_delta),
 					 slice(ttt[0], ttt[-1] + dt, dt)]
 
-		fig, ax = plt.subplots(1, figsize=(15,4))
+		fig, ax = plt.subplots(1, figsize=(10,3))
 		c = ax.pcolormesh(x, y, stack_array, cmap=plt.cm.coolwarm, vmin=-tdiff_clip, vmax=tdiff_clip)
 		fig.subplots_adjust(bottom=0.2)
 		ax.axis([x.min(), x.max(), y.min(), y.max()])
@@ -437,7 +437,7 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 		y, x = np.mgrid[slice(stack_Rslows[0], stack_Rslows[-1] + slow_delta, slow_delta),
 					 slice(ttt[0], ttt[-1] + dt, dt)]
 
-		fig, ax = plt.subplots(1, figsize=(15,4))
+		fig, ax = plt.subplots(1, figsize=(10,3))
 		c = ax.pcolormesh(x, y, stack_array, cmap=plt.cm.coolwarm, vmin=-tdiff_clip, vmax=tdiff_clip)
 		fig.subplots_adjust(bottom=0.2)
 		ax.axis([x.min(), x.max(), y.min(), y.max()])
@@ -458,7 +458,7 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 		y, x = np.mgrid[slice(stack_Rslows[0], stack_Rslows[-1] + slow_delta, slow_delta),
 					 slice(ttt[0], ttt[-1] + dt, dt)]
 
-		fig, ax = plt.subplots(1, figsize=(15,4))
+		fig, ax = plt.subplots(1, figsize=(10,3))
 		c = ax.pcolormesh(x, y, stack_array, cmap=plt.cm.coolwarm, vmin=-tdiff_clip, vmax=tdiff_clip)
 		fig.subplots_adjust(bottom=0.2)
 		ax.axis([x.min(), x.max(), y.min(), y.max()])
@@ -479,7 +479,7 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 		y, x = np.mgrid[slice(stack_Tslows[0], stack_Tslows[-1] + slow_delta, slow_delta),
 					 slice(ttt[0], ttt[-1] + dt, dt)]
 
-		fig, ax = plt.subplots(1, figsize=(15,4))
+		fig, ax = plt.subplots(1, figsize=(10,3))
 		fig.subplots_adjust(bottom=0.2)
 		c = ax.pcolormesh(x, y, stack_array, cmap=plt.cm.coolwarm, vmin=-tdiff_clip, vmax=tdiff_clip)
 		ax.axis([x.min(), x.max(), y.min(), y.max()])
@@ -500,7 +500,7 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 		y, x = np.mgrid[slice(stack_Tslows[0], stack_Tslows[-1] + slow_delta, slow_delta),
 					 slice(ttt[0], ttt[-1] + dt, dt)]
 
-		fig, ax = plt.subplots(1, figsize=(15,4))
+		fig, ax = plt.subplots(1, figsize=(10,3))
 		fig.subplots_adjust(bottom=0.2)
 		c = ax.pcolormesh(x, y, stack_array, cmap=plt.cm.coolwarm, vmin=-tdiff_clip, vmax=tdiff_clip)
 		ax.axis([x.min(), x.max(), y.min(), y.max()])
@@ -520,7 +520,7 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 		y, x = np.mgrid[slice(stack_Tslows[0], stack_Tslows[-1] + slow_delta, slow_delta),
 					 slice(ttt[0], ttt[-1] + dt, dt)]
 
-		fig, ax = plt.subplots(1, figsize=(15,4))
+		fig, ax = plt.subplots(1, figsize=(10,3))
 		fig.subplots_adjust(bottom=0.2)
 		c = ax.pcolormesh(x, y, stack_array, cmap=plt.cm.coolwarm, vmin=-tdiff_clip, vmax=tdiff_clip)
 		ax.axis([x.min(), x.max(), y.min(), y.max()])
@@ -541,7 +541,7 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 		y, x = np.mgrid[slice(stack_Tslows[0], stack_Tslows[-1] + slow_delta, slow_delta),
 					 slice(ttt[0], ttt[-1] + dt, dt)]
 
-		fig, ax = plt.subplots(1, figsize=(15,4))
+		fig, ax = plt.subplots(1, figsize=(10,3))
 		fig.subplots_adjust(bottom=0.2)
 		c = ax.pcolormesh(x, y, stack_array, cmap=plt.cm.coolwarm, vmin=-tdiff_clip, vmax=tdiff_clip)
 		ax.axis([x.min(), x.max(), y.min(), y.max()])
@@ -599,7 +599,7 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 			ax.add_artist(circle1)
 			plt.xlabel('T Slowness (s/km)')
 			plt.ylabel('R Slowness (s/km)')
-			plt.title(ref_phase + ' T-R plot of time lag at rel time ' + str(snaptime + snap_num*dt) + '  ' + fname1[12:22] + ' ' + fname1[23:33])
+			plt.title(ref_phase + ' T-R plot of amplitude at rel time ' + str(snaptime + snap_num*dt) + '  ' + fname1[12:22] + ' ' + fname1[23:33])
 			plt.show()
 
 	#  Save processed files

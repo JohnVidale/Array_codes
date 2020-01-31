@@ -27,15 +27,15 @@ eq_file1   = 'event1.txt'
 eq_file2   = 'event2.txt'
 
 # PKiKP
-start_buff = -1000
+start_buff = 1000
 end_buff   = 1200
 
 # PKKP
-#start_buff = -1875
+#start_buff = 1875
 #end_buff   = 1890
 
 # P'P'
-#start_buff = -2370
+#start_buff = 2370
 #end_buff   = 2395
 
 # Full array
@@ -68,7 +68,7 @@ decimate_fac   =  5
 simple_taper   =  1
 skip_SNR       =  1
 snaptime = 1064
-snaps = 5
+snaps = 1
 freq_corr = 1.2
 ref_phase = 'PKIKKIKP'
 stat_corr = 1
@@ -108,7 +108,7 @@ stat_corr = 1
 pro7plotstack2(eq_file1 = eq_file1, eq_file2 = eq_file2, plot_scale_fac = 0.05,
 			slowR_lo = slowR_lo, slowR_hi = slowR_hi, slowT_lo = slowT_lo, slowT_hi = slowT_hi, slow_delta = slow_delta,
 			zoom = 0, ZslowR_lo = -0.03, ZslowR_hi = 0.03, ZslowT_lo = -0.03, ZslowT_hi = 0.03, Zstart_buff = 5, Zend_buff = 15,
-			start_buff = start_buff, end_buff = end_buff, skip_T = 1, skip_R = 1, skip_snaps = 0, tdiff_clip = 0.2,
+			start_buff = start_buff, end_buff = end_buff, skip_T = 0, skip_R = 0, skip_snaps = 1, tdiff_clip = 0.2,
 			fig_index = 301, plot_dyn_range = 100, snaptime = snaptime, snaps=snaps, decimate_fac = 1, in_dec = 1,
 			ref_phase = ref_phase, ARRAY = ARRAY)
 
@@ -156,14 +156,14 @@ pro7plotstack2(eq_file1 = eq_file1, eq_file2 = eq_file2, plot_scale_fac = 0.05,
 #			ARRAY = ARRAY, decimate_fac = decimate_fac, NS = 0)
 
 #%% --2D envelop stack results for individual events
-#pro7plotstack(eq_file = eq_file1, plot_scale_fac = 0.05,
-#			slowR_lo = slowR_lo, slowR_hi = slowR_hi, slowT_lo = slowT_lo, slowT_hi = slowT_hi, slow_delta = slow_delta,
-#			start_buff = start_buff, end_buff = end_buff, skip_T = 0, skip_R = 0,
-#			zoom = 0, ZslowR_lo = -0.03, ZslowR_hi = 0.03, ZslowT_lo = -0.03, ZslowT_hi = 0.03, Zstart_buff = 0, Zend_buff = 200,
-#			fig_index = 401, plot_dyn_range = 50, snaptime = snaptime, snaps=1, ARRAY = ARRAY)
+pro7plotstack(eq_file = eq_file1, plot_scale_fac = 0.05,
+			slowR_lo = slowR_lo, slowR_hi = slowR_hi, slowT_lo = slowT_lo, slowT_hi = slowT_hi, slow_delta = slow_delta,
+			start_buff = start_buff, end_buff = end_buff, skip_T = 0, skip_R = 0,
+			zoom = 0, ZslowR_lo = -0.03, ZslowR_hi = 0.03, ZslowT_lo = -0.03, ZslowT_hi = 0.03, Zstart_buff = 0, Zend_buff = 200,
+			fig_index = 401, plot_dyn_range = 50, snaptime = snaptime, snaps=1, ARRAY = ARRAY)
 
-#pro7plotstack(eq_file = eq_file2, plot_scale_fac = 0.05,
-#			slowR_lo = slowR_lo, slowR_hi = slowR_hi, slowT_lo = slowT_lo, slowT_hi = slowT_hi, slow_delta = slow_delta,
-#			start_buff = start_buff, end_buff = end_buff, skip_T = 0, skip_R = 0,
-#			zoom = 0, ZslowR_lo = -0.03, ZslowR_hi = 0.03, ZslowT_lo = -0.03, ZslowT_hi = 0.03, Zstart_buff = 0, Zend_buff = 200,
-#			fig_index = 402, plot_dyn_range = 50, snaptime = snaptime, snaps=1, ARRAY = ARRAY)
+pro7plotstack(eq_file = eq_file2, plot_scale_fac = 0.05,
+			slowR_lo = slowR_lo, slowR_hi = slowR_hi, slowT_lo = slowT_lo, slowT_hi = slowT_hi, slow_delta = slow_delta,
+			start_buff = start_buff, end_buff = end_buff, skip_T = 0, skip_R = 0,
+			zoom = 0, ZslowR_lo = -0.03, ZslowR_hi = 0.03, ZslowT_lo = -0.03, ZslowT_hi = 0.03, Zstart_buff = 0, Zend_buff = 200,
+			fig_index = 402, plot_dyn_range = 50, snaptime = snaptime, snaps=1, ARRAY = ARRAY)
