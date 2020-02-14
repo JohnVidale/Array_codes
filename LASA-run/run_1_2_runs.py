@@ -18,6 +18,7 @@ from pro5b_stack2d           import pro5stack2d
 from pro6_plot_stacked_seis  import pro6stacked_seis
 from pro7a_plot_envstack     import pro7plotstack
 from pro7b_plot_stack        import pro7plotstack2
+from pro7c_plot_stack        import pro7plotstack3
 from pro7b_dec               import pro7dec
 os.chdir('/Users/vidale/Documents/PyCode/LASA')
 
@@ -55,10 +56,12 @@ freq_max = 3
 #freq_max = 2
 
 slowR_lo   = -0.03
-slowR_hi   =  0.03
-slowT_lo   = -0.03
-slowT_hi   =  0.03
-slow_delta =  0.0025
+slowR_hi   =  0.09
+slowT_lo   = -0.06
+slowT_hi   =  0.06
+slow_delta =  0.02
+R_slow_plot = 0.02
+T_slow_plot = 0.00
 
 slowR_lo_1D = -0.04
 slowR_hi_1D = 0.1
@@ -88,7 +91,7 @@ stat_corr = 1
 #			start_buff = start_buff, end_buff = end_buff,
 #			norm = 1, global_norm_plot = 1,
 #			ARRAY = ARRAY, decimate_fac = decimate_fac, NS = 0)
-
+#
 #pro5stack2d(eq_file = eq_file2, plot_scale_fac = 0.2,
 #			slowR_lo = slowR_lo, slowR_hi = slowR_hi, slowT_lo = slowT_lo, slowT_hi = slowT_hi, slow_delta = slow_delta,
 #			start_buff = start_buff, end_buff = end_buff,
@@ -96,21 +99,29 @@ stat_corr = 1
 #			ARRAY = ARRAY, decimate_fac = decimate_fac, NS = 0)
 
 ##%% --Compare pair of 2D stack results
-#pro6stacked_seis(eq_file1 = eq_file1, eq_file2 = eq_file2, plot_scale_fac = 0.003,
-#			slowR_lo = slowR_lo, slowR_hi = slowR_hi, slowT_lo = slowT_lo, slowT_hi = slowT_hi, slow_delta = slow_delta,
-#			start_buff = start_buff, end_buff = end_buff, freq_corr = freq_corr, ref_phase = ref_phase,
-#			fig_index = 301, plot_dyn_range = 100, ARRAY = ARRAY)
+pro6stacked_seis(eq_file1 = eq_file1, eq_file2 = eq_file2, plot_scale_fac = 0.015,
+			slowR_lo = slowR_lo, slowR_hi = slowR_hi, slowT_lo = slowT_lo, slowT_hi = slowT_hi, slow_delta = slow_delta,
+			start_buff = start_buff, end_buff = end_buff, freq_corr = freq_corr, ref_phase = ref_phase,
+			fig_index = 301, plot_dyn_range = 100, ARRAY = ARRAY,
+			turn_off_black = 1, R_slow_plot = R_slow_plot, T_slow_plot = T_slow_plot)
 
 ##%% --decimate stacking files to shorten processing time
 #pro7dec(eq_file1 = eq_file1, eq_file2 = eq_file2, decimate_fac = decimate_fac, ARRAY = ARRAY)
 
 #%% --slowness slices of time shift
-pro7plotstack2(eq_file1 = eq_file1, eq_file2 = eq_file2, plot_scale_fac = 0.05,
-			slowR_lo = slowR_lo, slowR_hi = slowR_hi, slowT_lo = slowT_lo, slowT_hi = slowT_hi, slow_delta = slow_delta,
-			zoom = 0, ZslowR_lo = -0.03, ZslowR_hi = 0.03, ZslowT_lo = -0.03, ZslowT_hi = 0.03, Zstart_buff = 5, Zend_buff = 15,
-			start_buff = start_buff, end_buff = end_buff, skip_T = 0, skip_R = 0, skip_snaps = 1, tdiff_clip = 0.2,
-			fig_index = 301, plot_dyn_range = 100, snaptime = snaptime, snaps=snaps, decimate_fac = 1, in_dec = 1,
-			ref_phase = ref_phase, ARRAY = ARRAY)
+#pro7plotstack2(eq_file1 = eq_file1, eq_file2 = eq_file2, plot_scale_fac = 0.05,
+#			slowR_lo = slowR_lo, slowR_hi = slowR_hi, slowT_lo = slowT_lo, slowT_hi = slowT_hi, slow_delta = slow_delta,
+#			zoom = 0, ZslowR_lo = -0.03, ZslowR_hi = 0.03, ZslowT_lo = -0.03, ZslowT_hi = 0.03, Zstart_buff = 5, Zend_buff = 15,
+#			start_buff = start_buff, end_buff = end_buff, skip_T = 0, skip_R = 0, skip_snaps = 1, tdiff_clip = 0.2,
+#			fig_index = 301, plot_dyn_range = 100, snaptime = snaptime, snaps=snaps, decimate_fac = 1, in_dec = 1,
+#			ref_phase = ref_phase, ARRAY = ARRAY)
+
+#%% --single slowness slices of time shift
+#pro7plotstack3(eq_file1 = eq_file1, eq_file2 = eq_file2, plot_scale_fac = 0.05,
+#			slowR_lo = slowR_lo, slowR_hi = slowR_hi, slowT_lo = slowT_lo, slowT_hi = slowT_hi, slow_delta = slow_delta,
+#			start_buff = start_buff, end_buff = end_buff, skip_T = 0, skip_R = 0, skip_snaps = 1, tdiff_clip = 0.2,
+#			fig_index = 301, plot_dyn_range = 100, snaptime = snaptime, snaps=snaps, decimate_fac = 1, in_dec = 1,
+#			ref_phase = ref_phase, ARRAY = ARRAY, R_slow_plot = R_slow_plot, T_slow_plot = T_slow_plot)
 
 #%% Individual events
 #%% --Cull seismic section event 1
@@ -156,14 +167,14 @@ pro7plotstack2(eq_file1 = eq_file1, eq_file2 = eq_file2, plot_scale_fac = 0.05,
 #			ARRAY = ARRAY, decimate_fac = decimate_fac, NS = 0)
 
 #%% --2D envelop stack results for individual events
-pro7plotstack(eq_file = eq_file1, plot_scale_fac = 0.05,
-			slowR_lo = slowR_lo, slowR_hi = slowR_hi, slowT_lo = slowT_lo, slowT_hi = slowT_hi, slow_delta = slow_delta,
-			start_buff = start_buff, end_buff = end_buff, skip_T = 0, skip_R = 0,
-			zoom = 0, ZslowR_lo = -0.03, ZslowR_hi = 0.03, ZslowT_lo = -0.03, ZslowT_hi = 0.03, Zstart_buff = 0, Zend_buff = 200,
-			fig_index = 401, plot_dyn_range = 50, snaptime = snaptime, snaps=1, ARRAY = ARRAY)
-
-pro7plotstack(eq_file = eq_file2, plot_scale_fac = 0.05,
-			slowR_lo = slowR_lo, slowR_hi = slowR_hi, slowT_lo = slowT_lo, slowT_hi = slowT_hi, slow_delta = slow_delta,
-			start_buff = start_buff, end_buff = end_buff, skip_T = 0, skip_R = 0,
-			zoom = 0, ZslowR_lo = -0.03, ZslowR_hi = 0.03, ZslowT_lo = -0.03, ZslowT_hi = 0.03, Zstart_buff = 0, Zend_buff = 200,
-			fig_index = 402, plot_dyn_range = 50, snaptime = snaptime, snaps=1, ARRAY = ARRAY)
+#pro7plotstack(eq_file = eq_file1, plot_scale_fac = 0.05,
+#			slowR_lo = slowR_lo, slowR_hi = slowR_hi, slowT_lo = slowT_lo, slowT_hi = slowT_hi, slow_delta = slow_delta,
+#			start_buff = start_buff, end_buff = end_buff, skip_T = 0, skip_R = 0,
+#			zoom = 0, ZslowR_lo = -0.03, ZslowR_hi = 0.03, ZslowT_lo = -0.03, ZslowT_hi = 0.03, Zstart_buff = 0, Zend_buff = 200,
+#			fig_index = 401, plot_dyn_range = 50, snaptime = snaptime, snaps=1, ARRAY = ARRAY)
+#
+#pro7plotstack(eq_file = eq_file2, plot_scale_fac = 0.05,
+#			slowR_lo = slowR_lo, slowR_hi = slowR_hi, slowT_lo = slowT_lo, slowT_hi = slowT_hi, slow_delta = slow_delta,
+#			start_buff = start_buff, end_buff = end_buff, skip_T = 0, skip_R = 0,
+#			zoom = 0, ZslowR_lo = -0.03, ZslowR_hi = 0.03, ZslowT_lo = -0.03, ZslowT_hi = 0.03, Zstart_buff = 0, Zend_buff = 200,
+#			fig_index = 402, plot_dyn_range = 50, snaptime = snaptime, snaps=1, ARRAY = ARRAY)

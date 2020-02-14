@@ -164,7 +164,7 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 			if ((amp_ratio[slow_i].data[it] < min_rat) or (amp_ratio[slow_i].data[it] > max_rat) or (amp_ave[slow_i].data[it] < (min_amp * global_max))):
 				tdiff[slow_i].data[it] = np.nan
 
-	#%% Slices near transverse slownesses of -0.015, -0.010, -0.005, zero, 0.005, 0.01, 0.015
+	#%% Slices near transverse slownesses in list slowT_n
 	if skip_R != 1:
 		lowest_Tslow = 1000000
 		for slow_i in range(slowT_n):
@@ -258,7 +258,7 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 		for slowR_i in range(slowR_n):
 			centralR15_st += tdiff[slowR_i*slowT_n + lowest_Tindex15]
 
-	#%% Slices near radial slownesses of zero, 0.005, 0.01, 0.015
+	#%% Slices near radial slownesses in list slowR_n
 	if skip_T != 1:
 		lowest_Rslow = 1000000
 		for slow_i in range(slowR_n):
