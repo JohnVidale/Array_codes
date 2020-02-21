@@ -9,8 +9,8 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0
 			  slowR_lo = -0.1, slowR_hi = 0.1, slowT_lo = -0.1, slowT_hi = 0.1,
 			  start_buff = -50, end_buff = 50, norm = 0, freq_corr = 1.0,
 			  plot_dyn_range = 1000, fig_index = 401, get_stf = 0, ref_phase = 'blank',
-			  ARRAY = 0, min_rat = 0.6, max_rat = 1.8, min_amp = 0.3, turn_off_black = 0,
-			  R_slow_plot = 0, T_slow_plot = 0):
+			  ARRAY = 0, max_rat = 1.8, min_amp = 0.2, turn_off_black = 0,
+			  R_slow_plot = 0, T_slow_plot = 0, tdiff_clip = 1):
 
 	import obspy
 	import obspy.signal
@@ -140,7 +140,7 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0
 		if slow_i % 200 == 0:
 			print('At line 140, ' +str(slow_i) + ' slowness out of ' + str(total_slows))
 		for it in range(nt1):
-			if ((amp_ratio[slow_i].data[it] < min_rat) or (amp_ratio[slow_i].data[it] > max_rat) or (amp_ave[slow_i].data[it] < (min_amp * global_max))):
+			if ((amp_ratio[slow_i].data[it] < (1/max_rat)) or (amp_ratio[slow_i].data[it] > max_rat) or (amp_ave[slow_i].data[it] < (min_amp * global_max))):
 				tshift[slow_i].data[it] = np.nan
 	#%% If desired, find transverse slowness nearest T_slow_plot
 	lowest_Tslow = 1000000
@@ -216,7 +216,9 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0
 		if turn_off_black == 0:
 			plt.plot(ttt, (centralR_tdiff[slowR_i].data)*plot_scale_fac/1 + dist_offset, color = 'black')
 			plt.plot(ttt, (centralR_amp[slowR_i].data)*0.0 + dist_offset, color = 'lightgray') # reference lines
-	plt.title(ref_phase + ' seismograms and tdiff at ' + str(T_slow_plot) + ' T slowness')
+	plt.xlabel('Time (s)')
+	plt.ylabel('R Slowness (s/km)')
+	plt.title(ref_phase + ' seismograms and tdiff at ' + str(T_slow_plot) + ' T slowness, green is event1, red is event2')
 	# Plot transverse amp and tdiff vs time plots
 	fig_index = 7
 #	plt.close(fig_index)
@@ -234,7 +236,9 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0
 		if turn_off_black == 0:
 			plt.plot(ttt, (centralT_tdiff[slowT_i].data)*plot_scale_fac/1 + dist_offset, color = 'black')
 			plt.plot(ttt, (centralT_amp[slowT_i].data)*0.0 + dist_offset, color = 'lightgray') # reference lines
-	plt.title(ref_phase + ' seismograms and tdiff ' + str(R_slow_plot) + ' R slowness')
+	plt.xlabel('Time (s)')
+	plt.ylabel('T Slowness (s/km)')
+	plt.title(ref_phase + ' seismograms and tdiff ' + str(R_slow_plot) + ' R slowness, green is event1, red is event2')
 #%% R-T tshift averaged over time window
 	fig_index = 8
 	stack_slice = np.zeros((slowR_n,slowT_n))
@@ -247,8 +251,8 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0
 #	stack_slice[0,0] = -0.25
 #	stack_slice[0,1] =  0.25
 #	tdiff_clip = 0.4/1.2
-	tdiff_clip_max =  0.15  # DO NOT LEAVE COMMENTED OUT!!
-	tdiff_clip_min = -0.15
+	tdiff_clip_max =  tdiff_clip  # DO NOT LEAVE COMMENTED OUT!!
+	tdiff_clip_min = -tdiff_clip
 
 	y1, x1 = np.mgrid[slice(stack_Rslows[0], stack_Rslows[-1] + slow_delta, slow_delta),
 				 slice(stack_Tslows[0], stack_Tslows[-1] + slow_delta, slow_delta)]

@@ -12,10 +12,10 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 			  start_buff = -50, end_buff = 50,
 			  ZslowR_lo = -0.1, ZslowR_hi = 0.1, ZslowT_lo = -0.1, ZslowT_hi = 0.1,
 			  Zstart_buff = 50, Zend_buff = 50, zoom = 0,
-			  snaptime = 8, snaps = 10, tdiff_clip = -1,
+			  snaptime = 8, snaps = 10, tdiff_clip = 1,
 			  plot_dyn_range = 1000, fig_index = 401, skip_T = 0, skip_R = 0, skip_snaps = 0,
 			  decimate_fac = 0, in_dec = 0, ref_phase = 'blank', ARRAY = 0,
-			  min_rat = 0.6, max_rat = 1.8, min_amp = 0.3):
+			  max_rat = 1.8, min_amp = 0.3):
 
 	from obspy import read
 	import numpy as np
@@ -161,7 +161,7 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 
 	for slow_i in range(len(tdiff)): # ignore less robust points
 		for it in range(nt):
-			if ((amp_ratio[slow_i].data[it] < min_rat) or (amp_ratio[slow_i].data[it] > max_rat) or (amp_ave[slow_i].data[it] < (min_amp * global_max))):
+			if ((amp_ratio[slow_i].data[it] < (1/max_rat)) or (amp_ratio[slow_i].data[it] > max_rat) or (amp_ave[slow_i].data[it] < (min_amp * global_max))):
 				tdiff[slow_i].data[it] = np.nan
 
 	#%% Slices near transverse slownesses in list slowT_n
@@ -333,7 +333,7 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 					 slice(ttt[0], ttt[-1] + dt, dt)]
 
 		fig, ax = plt.subplots(1, figsize=(10,3))
-		c = ax.pcolormesh(x, y, stack_array, cmap=plt.cm.coolwarm, vmin=-tdiff_clip, vmax=tdiff_clip)
+		c = ax.pcolormesh(x, y, stack_array, cmap=plt.cm.coolwarm, vmin= -tdiff_clip, vmax=tdiff_clip)
 		fig.subplots_adjust(bottom=0.2)
 		ax.axis([x.min(), x.max(), y.min(), y.max()])
 		fig.colorbar(c, ax=ax)
@@ -354,7 +354,7 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 					 slice(ttt[0], ttt[-1] + dt, dt)]
 
 		fig, ax = plt.subplots(1, figsize=(10,3))
-		c = ax.pcolormesh(x, y, stack_array, cmap=plt.cm.coolwarm, vmin=-tdiff_clip, vmax=tdiff_clip)
+		c = ax.pcolormesh(x, y, stack_array, cmap=plt.cm.coolwarm, vmin= -tdiff_clip, vmax=tdiff_clip)
 		fig.subplots_adjust(bottom=0.2)
 		ax.axis([x.min(), x.max(), y.min(), y.max()])
 		fig.colorbar(c, ax=ax)

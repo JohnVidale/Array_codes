@@ -309,33 +309,34 @@ def pro7plotstack(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 		plt.show()
 
 #%% R-T stack
-	stack_slice = np.zeros((slowR_n,slowT_n))
-	for snap_num in range(snaps):
-		fig_index += 1
-		it = int((snaptime - start_buff)/dt) + snap_num
-		for slowR_i in range(slowR_n):  # loop over radial slownesses
-			for slowT_i in range(slowT_n):  # loop over transverse slownesses
-				index = slowR_i*slowT_n + slowT_i
-				num_val = st[index].data[it]
-				if num_val < min_allowed:
-					num_val = min_allowed
-				stack_slice[slowR_i, slowT_i] = math.log10(num_val)
-		stack_slice[0,0] = math.log10(global_max)
-		stack_slice[0,1] = math.log10(min_allowed)
+	if snaps > 0:
+		stack_slice = np.zeros((slowR_n,slowT_n))
+		for snap_num in range(snaps):
+			fig_index += 1
+			it = int((snaptime - start_buff)/dt) + snap_num
+			for slowR_i in range(slowR_n):  # loop over radial slownesses
+				for slowT_i in range(slowT_n):  # loop over transverse slownesses
+					index = slowR_i*slowT_n + slowT_i
+					num_val = st[index].data[it]
+					if num_val < min_allowed:
+						num_val = min_allowed
+					stack_slice[slowR_i, slowT_i] = math.log10(num_val)
+			stack_slice[0,0] = math.log10(global_max)
+			stack_slice[0,1] = math.log10(min_allowed)
 
-		y1, x1 = np.mgrid[slice(stack_Rslows[0], stack_Rslows[-1] + slow_delta, slow_delta),
-					 slice(stack_Tslows[0], stack_Tslows[-1] + slow_delta, slow_delta)]
+			y1, x1 = np.mgrid[slice(stack_Rslows[0], stack_Rslows[-1] + slow_delta, slow_delta),
+						 slice(stack_Tslows[0], stack_Tslows[-1] + slow_delta, slow_delta)]
 
-		fig, ax = plt.subplots(1)
-		c = ax.pcolormesh(x1, y1, stack_slice, cmap=plt.cm.gist_rainbow_r)
-		ax.axis([x1.min(), x1.max(), y1.min(), y1.max()])
-		fig.colorbar(c, ax=ax)
-		circle1 = plt.Circle((0, 0), 0.019, color='black', fill=False)
-		ax.add_artist(circle1)
-		plt.xlabel('T Slowness (s/km)')
-		plt.ylabel('R Slowness (s/km)')
-		plt.title('T-R stack at rel time ' + str(snaptime + snap_num*dt) + '  ' + fname[12:22])
-		plt.show()
+			fig, ax = plt.subplots(1)
+			c = ax.pcolormesh(x1, y1, stack_slice, cmap=plt.cm.gist_rainbow_r)
+			ax.axis([x1.min(), x1.max(), y1.min(), y1.max()])
+			fig.colorbar(c, ax=ax)
+			circle1 = plt.Circle((0, 0), 0.019, color='black', fill=False)
+			ax.add_artist(circle1)
+			plt.xlabel('T Slowness (s/km)')
+			plt.ylabel('R Slowness (s/km)')
+			plt.title('T-R stack at rel time ' + str(snaptime + snap_num*dt) + '  ' + fname[12:22])
+			plt.show()
 
 	#  Save processed files
 #	fname = 'HD' + date_label + '_slice.mseed'

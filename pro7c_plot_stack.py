@@ -11,10 +11,10 @@ def pro7plotstack3(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 			  slowR_lo = -0.1, slowR_hi = 0.1, slowT_lo = -0.1, slowT_hi = 0.1,
 			  start_buff = -50, end_buff = 50,
 			  R_slow_plot = 0.06, T_slow_plot = 0.0,
-			  snaptime = 8, snaps = 10, tdiff_clip = -1,
+			  snaptime = 8, snaps = 10, tdiff_clip = 1,
 			  plot_dyn_range = 1000, fig_index = 401, skip_T = 0, skip_R = 0, skip_snaps = 0,
 			  decimate_fac = 0, in_dec = 0, ref_phase = 'blank', ARRAY = 0,
-			  min_rat = 0.6, max_rat = 1.8, min_amp = 0.3):
+			  max_rat = 1.8, min_amp = 0.3):
 
 	from obspy import read
 	import numpy as np
@@ -113,7 +113,7 @@ def pro7plotstack3(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 
 	for slow_i in range(len(tdiff)): # ignore less robust points
 		for it in range(nt):
-			if ((amp_ratio[slow_i].data[it] < min_rat) or (amp_ratio[slow_i].data[it] > max_rat) or (amp_ave[slow_i].data[it] < (min_amp * global_max))):
+			if ((amp_ratio[slow_i].data[it] < (1/max_rat)) or (amp_ratio[slow_i].data[it] > max_rat) or (amp_ave[slow_i].data[it] < (min_amp * global_max))):
 				tdiff[slow_i].data[it] = np.nan
 
 	#%% Slice near transverse slowness T_slow_plot
