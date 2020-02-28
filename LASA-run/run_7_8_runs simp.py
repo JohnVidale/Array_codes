@@ -24,8 +24,8 @@ os.chdir('/Users/vidale/Documents/PyCode/LASA')
 
 #%% Common parameters
 ARRAY      = 1
-eq_file1   = 'event1.txt'
-eq_file2   = 'event2.txt'
+eq_file1   = 'event7.txt'
+eq_file2   = 'event8.txt'
 
 # PcP
 #start_buff = 640
@@ -48,8 +48,8 @@ end_buff   = 1180
 #end_buff   = 2395
 
 # Full array
-min_dist = 58.5
-max_dist = 60.5
+min_dist = 46.2
+max_dist = 48.2
 
 # Just inner rings
 #min_dist = 59.2
@@ -91,25 +91,25 @@ ref_phase = 'PKiKP'
 
 #%% Comparing events
 #%% --Cull seismic section for common stations
-pro3pair(ARRAY = ARRAY, eq_file1 = eq_file1, eq_file2 = eq_file2, simple_taper = simple_taper, skip_SNR = skip_SNR,
-			rel_time = 0, start_buff = start_buff, end_buff = end_buff,
-			freq_min = freq_min, freq_max = freq_max,
-			plot_scale_fac = 0.025, stat_corr = stat_corr,
-			dphase = ref_phase, dphase2 = 'PKKP', dphase3 = 'PP', dphase4 = 'S',
-			min_dist = min_dist, max_dist = max_dist, ref_loc = 0)
+#pro3pair(ARRAY = ARRAY, eq_file1 = eq_file1, eq_file2 = eq_file2, simple_taper = simple_taper, skip_SNR = skip_SNR,
+#			rel_time = 0, start_buff = start_buff, end_buff = end_buff,
+#			freq_min = freq_min, freq_max = freq_max,
+#			plot_scale_fac = 0.025, stat_corr = stat_corr,
+#			dphase = ref_phase, dphase2 = 'PKKP', dphase3 = 'PP', dphase4 = 'S',
+#			min_dist = min_dist, max_dist = max_dist, ref_loc = 0)
 
 ##%%  --2D stacks
-pro5stack2d(eq_file = eq_file1, plot_scale_fac = 0.2,
-			slowR_lo = slowR_lo, slowR_hi = slowR_hi, slowT_lo = slowT_lo, slowT_hi = slowT_hi, slow_delta = slow_delta,
-			start_buff = start_buff, end_buff = end_buff,
-			norm = 1, global_norm_plot = 1,
-			ARRAY = ARRAY, decimate_fac = decimate_fac, NS = 0)
-
-pro5stack2d(eq_file = eq_file2, plot_scale_fac = 0.2,
-			slowR_lo = slowR_lo, slowR_hi = slowR_hi, slowT_lo = slowT_lo, slowT_hi = slowT_hi, slow_delta = slow_delta,
-			start_buff = start_buff, end_buff = end_buff,
-			norm = 1, global_norm_plot = 1,
-			ARRAY = ARRAY, decimate_fac = decimate_fac, NS = 0)
+#pro5stack2d(eq_file = eq_file1, plot_scale_fac = 0.2,
+#			slowR_lo = slowR_lo, slowR_hi = slowR_hi, slowT_lo = slowT_lo, slowT_hi = slowT_hi, slow_delta = slow_delta,
+#			start_buff = start_buff, end_buff = end_buff,
+#			norm = 1, global_norm_plot = 1,
+#			ARRAY = ARRAY, decimate_fac = decimate_fac, NS = 0)
+#
+#pro5stack2d(eq_file = eq_file2, plot_scale_fac = 0.2,
+#			slowR_lo = slowR_lo, slowR_hi = slowR_hi, slowT_lo = slowT_lo, slowT_hi = slowT_hi, slow_delta = slow_delta,
+#			start_buff = start_buff, end_buff = end_buff,
+#			norm = 1, global_norm_plot = 1,
+#			ARRAY = ARRAY, decimate_fac = decimate_fac, NS = 0)
 
 ##%% --Compare pair of 2D stack results
 pro6stacked_seis(eq_file1 = eq_file1, eq_file2 = eq_file2, plot_scale_fac = 0.002,

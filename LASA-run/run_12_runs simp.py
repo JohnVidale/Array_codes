@@ -18,80 +18,92 @@ from pro5b_stack2d           import pro5stack2d
 from pro6_plot_stacked_seis  import pro6stacked_seis
 from pro7a_plot_envstack     import pro7plotstack
 from pro7b_plot_stack        import pro7plotstack2
+from pro7c_plot_stack        import pro7plotstack3
 from pro7b_dec               import pro7dec
 os.chdir('/Users/vidale/Documents/PyCode/LASA')
 
 #%% Common parameters
 ARRAY      = 1
-eq_file1   = 'event1.txt'
-eq_file2   = 'event3.txt'
+eq_file1   = 'event12.txt'
+eq_file2   = 'event12.txt'
 
-# Long view
-start_buff = 00
-end_buff   = 2000
+# PcP
+#start_buff = 640
+#end_buff   = 680
 
-# PKiKP
-#start_buff = -1000
-#end_buff   = 1200
+# PKiKP best
+start_buff = 990
+end_buff   = 1100
+
+# PKiKP whole
+#start_buff = 1000
+#end_buff   = 1240
 
 # PKKP
-#start_buff = -1875
+#start_buff = 1875
 #end_buff   = 1890
 
 # P'P'
-#start_buff = -2370
+#start_buff = 2370
 #end_buff   = 2395
 
 # Full array
-min_dist = 58.0
-max_dist = 61.0
+min_dist = 11.1
+max_dist = 13.5
 
 # Just inner rings
 #min_dist = 59.2
 #max_dist = 59.75
 
 # HF
-freq_min = 1
-freq_max = 3
+freq_min = 0.5
+freq_max = 2
 
 # LF
 #freq_min = 0.5
 #freq_max = 2
 
-slowR_lo   = -0.03
-slowR_hi   =  0.03
-slowT_lo   = -0.03
-slowT_hi   =  0.03
+slowR_lo   =  -0.02
+slowR_hi   =  0.04
+slowT_lo   = -0.04
+slowT_hi   =  0.04
 slow_delta =  0.0025
+R_slow_plot = 0.015
+T_slow_plot = 0.00
+
+max_rat = 1.8
+min_amp = 0.2
+tdiff_clip = 0.2
 
 slowR_lo_1D = -0.04
 slowR_hi_1D = 0.1
 slow_delta_1D = 0.001
 
+stat_corr = 1
 decimate_fac   =  5
 simple_taper   =  1
 skip_SNR       =  1
-snaptime = 1064
-snaps = 5
+skip_snaps = 0
+snaptime   = 1104
+snaps      = 5
 freq_corr = 1.2
-ref_phase = 'PKIKKIKP'
-stat_corr = 1
+ref_phase = 'PKiKP'
 
 #%% Comparing events
 #%% --Cull seismic section for common stations
-#pro3pair(ARRAY = ARRAY, eq_file1 = eq_file1, eq_file2 = eq_file2, simple_taper = simple_taper, skip_SNR = skip_SNR,
-#			rel_time = 0, start_buff = start_buff, end_buff = end_buff,
-#			freq_min = freq_min, freq_max = freq_max,
-#			plot_scale_fac = 0.025, stat_corr = stat_corr,
-#			dphase = ref_phase, dphase2 = 'PKKP', dphase3 = 'PP', dphase4 = 'S',
-#			min_dist = min_dist, max_dist = max_dist, ref_loc = 0)
+pro3pair(ARRAY = ARRAY, eq_file1 = eq_file1, eq_file2 = eq_file2, simple_taper = simple_taper, skip_SNR = skip_SNR,
+			rel_time = 0, start_buff = start_buff, end_buff = end_buff,
+			freq_min = freq_min, freq_max = freq_max,
+			plot_scale_fac = 0.025, stat_corr = stat_corr,
+			dphase = ref_phase, dphase2 = 'PKKP', dphase3 = 'PP', dphase4 = 'S',
+			min_dist = min_dist, max_dist = max_dist, ref_loc = 0)
 
 ##%%  --2D stacks
-#pro5stack2d(eq_file = eq_file1, plot_scale_fac = 0.2,
-#			slowR_lo = slowR_lo, slowR_hi = slowR_hi, slowT_lo = slowT_lo, slowT_hi = slowT_hi, slow_delta = slow_delta,
-#			start_buff = start_buff, end_buff = end_buff,
-#			norm = 1, global_norm_plot = 1,
-#			ARRAY = ARRAY, decimate_fac = decimate_fac, NS = 0)
+pro5stack2d(eq_file = eq_file1, plot_scale_fac = 0.2,
+			slowR_lo = slowR_lo, slowR_hi = slowR_hi, slowT_lo = slowT_lo, slowT_hi = slowT_hi, slow_delta = slow_delta,
+			start_buff = start_buff, end_buff = end_buff,
+			norm = 1, global_norm_plot = 1,
+			ARRAY = ARRAY, decimate_fac = decimate_fac, NS = 0)
 
 #pro5stack2d(eq_file = eq_file2, plot_scale_fac = 0.2,
 #			slowR_lo = slowR_lo, slowR_hi = slowR_hi, slowT_lo = slowT_lo, slowT_hi = slowT_hi, slow_delta = slow_delta,
@@ -100,10 +112,12 @@ stat_corr = 1
 #			ARRAY = ARRAY, decimate_fac = decimate_fac, NS = 0)
 
 ##%% --Compare pair of 2D stack results
-#pro6stacked_seis(eq_file1 = eq_file1, eq_file2 = eq_file2, plot_scale_fac = 0.003,
-#			slowR_lo = slowR_lo, slowR_hi = slowR_hi, slowT_lo = slowT_lo, slowT_hi = slowT_hi, slow_delta = slow_delta,
-#			start_buff = start_buff, end_buff = end_buff, freq_corr = freq_corr, ref_phase = ref_phase,
-#			fig_index = 301, plot_dyn_range = 100, ARRAY = ARRAY)
+pro6stacked_seis(eq_file1 = eq_file1, eq_file2 = eq_file2, plot_scale_fac = 0.002,
+			slowR_lo = slowR_lo, slowR_hi = slowR_hi, slowT_lo = slowT_lo, slowT_hi = slowT_hi, slow_delta = slow_delta,
+			start_buff = start_buff, end_buff = end_buff, freq_corr = freq_corr, ref_phase = ref_phase,
+			fig_index = 301, plot_dyn_range = 100, ARRAY = ARRAY,
+			turn_off_black = 0, R_slow_plot = R_slow_plot, T_slow_plot = T_slow_plot,
+			max_rat = max_rat, min_amp = min_amp, tdiff_clip = tdiff_clip)
 
 ##%% --decimate stacking files to shorten processing time
 #pro7dec(eq_file1 = eq_file1, eq_file2 = eq_file2, decimate_fac = decimate_fac, ARRAY = ARRAY)
@@ -112,9 +126,18 @@ stat_corr = 1
 #pro7plotstack2(eq_file1 = eq_file1, eq_file2 = eq_file2, plot_scale_fac = 0.05,
 #			slowR_lo = slowR_lo, slowR_hi = slowR_hi, slowT_lo = slowT_lo, slowT_hi = slowT_hi, slow_delta = slow_delta,
 #			zoom = 0, ZslowR_lo = -0.03, ZslowR_hi = 0.03, ZslowT_lo = -0.03, ZslowT_hi = 0.03, Zstart_buff = 5, Zend_buff = 15,
-#			start_buff = start_buff, end_buff = end_buff, skip_T = 1, skip_R = 1, skip_snaps = 0, tdiff_clip = 0.2,
+#			start_buff = start_buff, end_buff = end_buff, skip_T = 1, skip_R = 1, skip_snaps = skip_snaps, tdiff_clip = tdiff_clip,
 #			fig_index = 301, plot_dyn_range = 100, snaptime = snaptime, snaps=snaps, decimate_fac = 1, in_dec = 1,
-#			ref_phase = ref_phase, ARRAY = ARRAY)
+#			ref_phase = ref_phase, ARRAY = ARRAY,
+#			max_rat = max_rat, min_amp = min_amp)
+
+#%% --single slowness slices of time shift
+#pro7plotstack3(eq_file1 = eq_file1, eq_file2 = eq_file2, plot_scale_fac = 0.02,
+#			slowR_lo = slowR_lo, slowR_hi = slowR_hi, slowT_lo = slowT_lo, slowT_hi = slowT_hi, slow_delta = slow_delta,
+#			start_buff = start_buff, end_buff = end_buff, skip_T = 0, skip_R = 0, skip_snaps = 1, tdiff_clip = tdiff_clip,
+#			fig_index = 301, plot_dyn_range = 100, snaptime = snaptime, snaps=snaps, decimate_fac = 1, in_dec = 1,
+#			ref_phase = ref_phase, ARRAY = ARRAY, R_slow_plot = R_slow_plot, T_slow_plot = T_slow_plot,
+#			max_rat = max_rat, min_amp = min_amp)
 
 #%% Individual events
 #%% --Cull seismic section event 1
@@ -125,13 +148,13 @@ stat_corr = 1
 #			freq_min = freq_min, freq_max = freq_max,
 #			min_dist = min_dist, max_dist = max_dist, ref_loc = 0, fig_index = 101)
 
-#%% --Cull seismic section event 3
-pro3singlet(ARRAY = ARRAY, stat_corr = stat_corr, eq_file = eq_file2, simple_taper = simple_taper,
-			rel_time = 0, start_buff = start_buff, end_buff = end_buff,
-			plot_scale_fac = 0.1, skip_SNR = 1,
-			dphase = ref_phase, dphase2 = 'PcP', dphase3 = 'PKiKP', dphase4 = 'P',
-			freq_min = freq_min, freq_max = freq_max,
-			min_dist = min_dist, max_dist = max_dist, ref_loc = 0, fig_index = 102)
+#%% --Cull seismic section event 2
+#pro3singlet(ARRAY = ARRAY, stat_corr = stat_corr, eq_file = eq_file2, simple_taper = simple_taper,
+#			rel_time = 0, start_buff = start_buff, end_buff = end_buff,
+#			plot_scale_fac = 0.1, skip_SNR = 1,
+#			dphase = ref_phase, dphase2 = 'PcP', dphase3 = 'PP', dphase4 = 'P',
+#			freq_min = freq_min, freq_max = freq_max,
+#			min_dist = min_dist, max_dist = max_dist, ref_loc = 0, fig_index = 102)
 
 #%% --1D stack
 #pro5stack(ARRAY = ARRAY, eq_file = eq_file1, plot_scale_fac = 0.05,
@@ -164,10 +187,10 @@ pro3singlet(ARRAY = ARRAY, stat_corr = stat_corr, eq_file = eq_file2, simple_tap
 #			slowR_lo = slowR_lo, slowR_hi = slowR_hi, slowT_lo = slowT_lo, slowT_hi = slowT_hi, slow_delta = slow_delta,
 #			start_buff = start_buff, end_buff = end_buff, skip_T = 0, skip_R = 0,
 #			zoom = 0, ZslowR_lo = -0.03, ZslowR_hi = 0.03, ZslowT_lo = -0.03, ZslowT_hi = 0.03, Zstart_buff = 0, Zend_buff = 200,
-#			fig_index = 401, plot_dyn_range = 50, snaptime = snaptime, snaps=1, ARRAY = ARRAY)
-
+#			fig_index = 401, plot_dyn_range = 50, snaptime = snaptime, snaps=0, ARRAY = ARRAY)
+#
 #pro7plotstack(eq_file = eq_file2, plot_scale_fac = 0.05,
 #			slowR_lo = slowR_lo, slowR_hi = slowR_hi, slowT_lo = slowT_lo, slowT_hi = slowT_hi, slow_delta = slow_delta,
 #			start_buff = start_buff, end_buff = end_buff, skip_T = 0, skip_R = 0,
 #			zoom = 0, ZslowR_lo = -0.03, ZslowR_hi = 0.03, ZslowT_lo = -0.03, ZslowT_hi = 0.03, Zstart_buff = 0, Zend_buff = 200,
-#			fig_index = 402, plot_dyn_range = 50, snaptime = snaptime, snaps=1, ARRAY = ARRAY)
+#			fig_index = 402, plot_dyn_range = 50, snaptime = snaptime, snaps=0, ARRAY = ARRAY)

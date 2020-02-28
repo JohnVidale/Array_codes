@@ -76,8 +76,8 @@ ref_phase = 'P'
 
 #%% Pairs
 
-pro1get(eq_file1)
-pro1get(eq_file2)
+#pro1get(eq_file1)
+#pro1get(eq_file2)
 
 #pro2_decimate(eq_file1, decimate_fac = decimate_fac)
 #pro2_decimate(eq_file2, decimate_fac = decimate_fac)
@@ -93,18 +93,18 @@ pro1get(eq_file2)
 #			corr_threshold = corr_threshold, freq_min = freq_min, freq_max = freq_max,
 #			min_dist = min_dist, max_dist = max_dist)
 
-#pro3pair(eq_file1 = eq_file2, eq_file2 = eq_file1, start_buff = start_buff,
-#			end_buff = end_buff, plot_scale_fac = 0.2, qual_threshold = qual_threshold,
-#			dphase = ref_phase, dphase2 = 'pP', dphase3 = 'PcP', dphase4 = 'sP',
-#			corr_threshold = corr_threshold, freq_min = freq_min, freq_max = freq_max,
-#			min_dist = min_dist, max_dist = max_dist)
-#
-#pro5stack(eq_file = eq_file1, plot_scale_fac = 0.05, slowR_lo = slowR_lo_1D, slowR_hi = slowR_hi_1D,
-#			  slow_delta = slow_delta_1D, start_buff = start_buff, end_buff = end_buff, envelope = 1,
-#			  norm = 1, global_norm_plot = 1, color_plot = 1, fig_index = 301)
-#pro5stack(eq_file = eq_file2, plot_scale_fac = 0.05, slowR_lo = slowR_lo_1D, slowR_hi = slowR_hi_1D,
-#			  slow_delta = slow_delta_1D, start_buff = start_buff, end_buff = end_buff, envelope = 1,
-#			  norm = 1, global_norm_plot = 1, color_plot = 1, fig_index = 301)
+pro3pair(eq_file1 = eq_file2, eq_file2 = eq_file1, start_buff = start_buff,
+			end_buff = end_buff, plot_scale_fac = 0.2, qual_threshold = qual_threshold,
+			dphase = ref_phase, dphase2 = 'pP', dphase3 = 'PcP', dphase4 = 'sP',
+			corr_threshold = corr_threshold, freq_min = freq_min, freq_max = freq_max,
+			min_dist = min_dist, max_dist = max_dist)
+
+pro5stack(eq_file = eq_file1, plot_scale_fac = 0.05, slowR_lo = slowR_lo_1D, slowR_hi = slowR_hi_1D,
+			  slow_delta = slow_delta_1D, start_buff = start_buff, end_buff = end_buff, envelope = 1,
+			  norm = 1, global_norm_plot = 1, color_plot = 1, fig_index = 301)
+pro5stack(eq_file = eq_file2, plot_scale_fac = 0.05, slowR_lo = slowR_lo_1D, slowR_hi = slowR_hi_1D,
+			  slow_delta = slow_delta_1D, start_buff = start_buff, end_buff = end_buff, envelope = 1,
+			  norm = 1, global_norm_plot = 1, color_plot = 1, fig_index = 301)
 
 #%%  --2D stacks
 #pro5stack2d(eq_file = eq_file1, plot_scale_fac = 0.05,

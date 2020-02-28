@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import os
-os.chdir('/Users/vidale/Documents/GitHub/Hinet-codes')
+os.chdir('/Users/vidale/Documents/GitHub/Array_codes/H-run')
 from pro1_get import pro1get
 
 os.environ['PATH'] += os.pathsep + '/usr/local/bin'
