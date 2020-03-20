@@ -26,10 +26,13 @@ def pro7plotstack(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 
 	start_time_wc = time.time()
 
+
 	if ARRAY == 0:
 		file = open(eq_file, 'r')
 	elif ARRAY == 1:
-		file = open('EvLocs/' + eq_file, 'r')
+		goto = '/Users/vidale/Documents/PyCode/LASA/EvLocs'
+		os.chdir(goto)
+		file = open(eq_file, 'r')
 	lines=file.readlines()
 	split_line = lines[0].split()
 #			ids.append(split_line[0])  ignore label for now
@@ -42,7 +45,9 @@ def pro7plotstack(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 	if ARRAY == 0:
 		fname = 'HD' + date_label + '_2dstack_env.mseed'
 	elif ARRAY == 1:
-		fname = 'Pro_files/HD' + date_label + '_2dstack_env.mseed'
+		goto = '/Users/vidale/Documents/PyCode/LASA/Pro_Files'
+		fname = 'HD' + date_label + '_2dstack_env.mseed'
+	os.chdir(goto)
 	st = Stream()
 	st = read(fname)
 	print('Read in: ' + str(len(st)) + ' traces')

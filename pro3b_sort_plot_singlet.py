@@ -6,14 +6,14 @@
 # plot lines are blue, orange, yellow, purple for phases 1 through 4
 # John Vidale 2/2019
 
-def pro3singlet(eq_file, stat_corr = 0, rel_time = 1, simple_taper = 0, skip_SNR = 0,
-			dphase = 'PKIKP', dphase2 = 'PKiKP', dphase3 = 'PKIKP', dphase4 = 'PKiKP',
+def pro3singlet(eq_file, stat_corr = 0, rel_time = 1, rel_slow = 1, simple_taper = 0, skip_SNR = 0,
+			dphase = 'PKiKP', dphase2 = 'PKKP', dphase3 = 'PKIKP', dphase4 = 'PPP',
 			start_buff = -10, end_buff = 30,
 			plot_scale_fac = 0.05, qual_threshold = 0, corr_threshold = 0,
-			freq_min = 0.25, freq_max = 1,
-			min_dist = 0, max_dist = 180, do_decimate = 0,
-			alt_statics = 0, statics_file = 'nothing', ARRAY = 0, ref_loc = 0,
-			verbose = 0, fig_index = 101):
+			freq_min = 0.25, freq_max = 1, do_filt = 1,
+			min_dist = 0, max_dist = 180, auto_dist = 0, do_decimate = 0,
+			alt_statics = 0, statics_file = 'nothing', ARRAY = 0, ref_loc = 0, ref_rad = 0.4,
+			verbose = 0, fig_index = 101, event_no = 0):
 # 0 is Hinet, 1 is LASA, 2 is NORSAR
 
 #%% Import functions
@@ -85,7 +85,7 @@ def pro3singlet(eq_file, stat_corr = 0, rel_time = 1, simple_taper = 0, skip_SNR
 			st_lons.append( split_line[3])
 			st_shift.append(split_line[4])
 			st_corr.append(split_line[5])
-	else: # no static terms, always true for LASA or NORSAR
+	else: # no static terms, always true for NORSAR
 		if ARRAY == 0: # Hinet set
 			sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/hinet_sta.txt'
 		elif ARRAY == 1: #         LASA set
@@ -123,15 +123,14 @@ def pro3singlet(eq_file, stat_corr = 0, rel_time = 1, simple_taper = 0, skip_SNR
 	plot_tt = 1           # plot the traveltimes?
 #	ref_loc = 0  # 1 if selecting stations within ref_rad of ref_lat and ref_lon
 	             # 0 if selecting stations by distance from earthquake
-	if ref_loc == 1:
-		if ARRAY == 0:
-			ref_lat = 36.3  # °N, around middle of Japan
-			ref_lon = 138.5 # °E
-			ref_rad = 1.5   # ° radius (°)
-		elif ARRAY == 1:
-			ref_lat = 46.7  # °N keep only inner rings A-D
-			ref_lon = -106.22   # °E
-			ref_rad = 0.4    # ° radius (°)
+	if ARRAY == 0:
+		ref_lat = 36.3  # °N, around middle of Japan
+		ref_lon = 138.5 # °E
+		ref_rad = 1.5   # ° radius (°)
+	elif ARRAY == 1:
+		ref_lat = 46.7  # °N keep only inner rings A-D
+		ref_lon = -106.22   # °E
+#		ref_rad = 0.4    # ° radius (°) set by input or at top
 
 #%% Is taper too long compared to noise estimation window?
 	totalt = end_buff - start_buff
@@ -190,6 +189,9 @@ def pro3singlet(eq_file, stat_corr = 0, rel_time = 1, simple_taper = 0, skip_SNR
 	tra_located   = 0
 	tra_in_range  = 0
 	tra_sta_found = 0
+	if auto_dist != 0: # set plot limit automatically
+		min_dist_auto = 180
+		max_dist_auto = 0
 #	for ii in station_index:
 #		print('Station name of index ' + str(ii) + ' is ' + str(st_names[ii])) # enumerate stations
 #	for tr in st: # traces one by one, find lat-lon by searching entire inventory.  Inefficient
@@ -211,18 +213,24 @@ def pro3singlet(eq_file, stat_corr = 0, rel_time = 1, simple_taper = 0, skip_SNR
 				if stat_corr != 1 or float(st_corr[ii]) > corr_threshold: # if using statics, reject low correlations
 					stalat = float(st_lats[ii])
 					stalon = float(st_lons[ii]) # look up lat & lon again to find distance
-					if ref_loc == 1:
-						ref_distance = gps2dist_azimuth(stalat,stalon,ref_lat,ref_lon)
-						ref_dist = ref_distance[0]/(1000*111)
+
+					# only used if ref_slow == 1:
+					ref_distance = gps2dist_azimuth(ref_lat,ref_lon,ev_lat,ev_lon)
+					ref1_dist = ref_distance[0]/(1000*111)
+
 					distance = gps2dist_azimuth(stalat,stalon,ev_lat,ev_lon) # Get traveltimes again, hard to store
 					tr.stats.distance=distance[0] # distance in km
 					dist = distance[0]/(1000*111)
+
 					if ref_loc != 1:
 						tra_located += 1
 						if min_dist < dist and dist < max_dist: # select distance range from earthquake
 							tra_in_range += 1
 							try:
-								arrivals = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree=dist,phase_list=[dphase])
+								if rel_slow == 0:
+									arrivals = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree=dist,phase_list=[dphase])
+								else:
+									arrivals = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree=ref1_dist,phase_list=[dphase])
 								atime = arrivals[0].time
 								if stat_corr == 1: # apply static station corrections
 									tr.stats.starttime -= float(st_shift[ii])
@@ -240,9 +248,16 @@ def pro3singlet(eq_file, stat_corr = 0, rel_time = 1, simple_taper = 0, skip_SNR
 							except:
 								pass
 					elif ref_loc == 1:
-						if ref_dist < ref_rad: # alternatively, select based on distance from ref location
+						# only used if ref_loc == 1:
+						ref_distance = gps2dist_azimuth(ref_lat,ref_lon,stalat,stalon)
+						ref2_dist = ref_distance[0]/(1000*111)
+#						print('ref_rad ' + str(ref_rad) + ' ref2_dist ' + str(ref2_dist))
+						if ref2_dist < ref_rad: # alternatively, select based on distance from ref location
 							try:
-								arrivals = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree=dist,phase_list=[dphase])
+								if rel_slow == 0:
+									arrivals = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree=dist,phase_list=[dphase])
+								else:
+									arrivals = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree=ref1_dist,phase_list=[dphase])
 								atime = arrivals[0].time
 								if stat_corr == 1: # apply static station corrections
 									tr.stats.starttime -= float(st_shift[ii])
@@ -261,6 +276,9 @@ def pro3singlet(eq_file, stat_corr = 0, rel_time = 1, simple_taper = 0, skip_SNR
 								pass
 	print('After alignment + range and correlation selection - event: ' + str(len(st_pickalign)) + ' traces')
 	print('Traces found: ' + str(tra_sta_found) + ' traces with range examined: ' + str(tra_located) + ' traces in range: ' + str(tra_in_range))
+	print('distance: ' + str(dist) + ' ref1_distance: ' + str(ref1_dist) + ' atime: ' + str(atime))
+	print('ref_lat: ' + str(ref_lat) + ' ref_lon: ' + str(ref_lon))
+	print('ref_lat: ' + str(stalat) + ' ref_lon: ' + str(stalon))
 
 	#print(st) # at length
 	if verbose:
@@ -272,7 +290,8 @@ def pro3singlet(eq_file, stat_corr = 0, rel_time = 1, simple_taper = 0, skip_SNR
 	st_pickalign.detrend(type='simple')
 	print('taper_frac is ' + str(taper_frac))
 	st_pickalign.taper(taper_frac)
-	st_pickalign.filter('bandpass', freqmin=freq_min, freqmax=freq_max, corners=4, zerophase=True)
+	if do_filt == 1:
+		st_pickalign.filter('bandpass', freqmin=freq_min, freqmax=freq_max, corners=4, zerophase=True)
 	st_pickalign.taper(taper_frac)
 
 #%%  Cull further by imposing SNR threshold on both traces
@@ -306,16 +325,27 @@ def pro3singlet(eq_file, stat_corr = 0, rel_time = 1, simple_taper = 0, skip_SNR
 				stalon = float(st_lons[ii]) # look up lat & lon again to find distance
 				stalat = float(st_lats[ii])
 				distance = gps2dist_azimuth(stalat,stalon,ev_lat,ev_lon)
-				tr.stats.distance=distance[0] # distance in km
+				tr.stats.distance=distance[0]/(1000*111) # distance in degrees
+				if auto_dist != 0:
+					if tr.stats.distance < min_dist_auto:
+						min_dist_auto = tr.stats.distance
+					if tr.stats.distance > max_dist_auto:
+						max_dist_auto = tr.stats.distance
 
 #%%  This section causes a crash in Spyder
 	# plot traces
 	plt.close(fig_index)
 	plt.figure(fig_index,figsize=(10,10))
 	plt.xlim(start_buff,end_buff)
-	plt.ylim(min_dist,max_dist)
+
+	if auto_dist == 1:
+		dist_diff = max_dist_auto - min_dist_auto # add space at extremes
+		plt.ylim(min_dist_auto - 0.1 * dist_diff, max_dist_auto + 0.1 * dist_diff)
+	else:
+		plt.ylim(min_dist,max_dist)
+
 	for tr in stgood:
-		dist_offset = tr.stats.distance/(1000*111) # trying for approx degrees
+		dist_offset = tr.stats.distance
 		ttt = np.arange(len(tr.data)) * tr.stats.delta + (tr.stats.starttime - t)
 		if red_plot == 1:
 			shift = red_time + (dist_offset - red_dist) * red_slow
@@ -401,14 +431,16 @@ def pro3singlet(eq_file, stat_corr = 0, rel_time = 1, simple_taper = 0, skip_SNR
 	if ARRAY == 0:
 		plt.title(dphase + ' for ' + fname)
 	elif ARRAY == 1:
-		plt.title(dphase + ' for ' + fname[8:18])
+		plt.title(dphase + ' for ' + fname[8:18] + ' event # ' + str(event_no))
+	os.chdir('/Users/vidale/Documents/PyCode/LASA/Quake_results/Plots')
+	plt.savefig(date_label + '_' + str(event_no) + '_raw.png')
 	plt.show()
 
 #%%  Save processed files
 	if ARRAY == 0:
-		fname3 = 'HD' + date_label + 'sel.mseed'
+		fname3 = '/Users/vidale/Documents/PyCode/LASA/HD' + date_label + 'sel.mseed'
 	elif ARRAY == 1:
-		fname3 = 'Pro_Files/HD' + date_label + 'sel.mseed'
+		fname3 = '/Users/vidale/Documents/PyCode/LASA/Pro_Files/HD' + date_label + 'sel.mseed'
 
 	stgood.write(fname3,format = 'MSEED')
 

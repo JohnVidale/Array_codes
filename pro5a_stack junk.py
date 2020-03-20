@@ -223,20 +223,15 @@ def pro5stack(eq_file, plot_scale_fac = 0.05, slowR_lo = -0.1, slowR_hi = 0.1,
 	plt.xlabel('Time (s)')
 	plt.ylabel('Slowness (s/km)')
 	plt.title(date_label)
-	os.chdir('/Users/vidale/Documents/PyCode/LASA/Quake_results/Plots')
-	plt.savefig(date_label + '_' + str(start_buff) + '_' + str(end_buff) + '_1D.png')
 	plt.show()
 
 #%% Save processed files
 	print('Stack has ' + str(len(stack)) + ' traces')
-#
-#	if ARRAY == 0:
-#		goto = '/Users/vidale/Documents/PyCode/Hinet'
-#	if ARRAY == 1:
-#		goto = '/Users/vidale/Documents/PyCode/LASA/Pro_Files'
-#	os.chdir(goto)
-#	fname = 'HD' + date_label + '_1dstack.mseed'
-#	stack.write(fname,format = 'MSEED')
+	if ARRAY == 0:
+		fname = 'HD' + date_label + '_1dstack.mseed'
+	elif ARRAY == 1:
+		fname = 'Pro_Files/HD' + date_label + '_1dstack.mseed'
+	stack.write(fname,format = 'MSEED')
 
 	elapsed_time_wc = time.time() - start_time_wc
 	print('This job took ' + str(elapsed_time_wc) + ' seconds')

@@ -10,7 +10,7 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0
 			  start_buff = -50, end_buff = 50, norm = 0, freq_corr = 1.0,
 			  plot_dyn_range = 1000, fig_index = 401, get_stf = 0, ref_phase = 'blank',
 			  ARRAY = 0, max_rat = 1.8, min_amp = 0.2, turn_off_black = 0,
-			  R_slow_plot = 0, T_slow_plot = 0, tdiff_clip = 1):
+			  R_slow_plot = 0, T_slow_plot = 0, tdiff_clip = 1, event_no = 0):
 
 	import obspy
 	import obspy.signal
@@ -34,19 +34,17 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0
 	print('Running pro6_plot_stacked_seis')
 	start_time_wc = time.time()
 
-	if ARRAY == 0:
-		file = open(eq_file1, 'r')
-	elif ARRAY == 1:
-		file = open('EvLocs/' + eq_file1, 'r')
+	if ARRAY == 1:
+		goto = '/Users/vidale/Documents/PyCode/LASA/EvLocs'
+		os.chdir(goto)
+
+	file = open(eq_file1, 'r')
 	lines=file.readlines()
 	split_line = lines[0].split()
 	t1           = UTCDateTime(split_line[1])
 	date_label1  = split_line[1][0:10]
 
-	if ARRAY == 0:
-		file = open(eq_file2, 'r')
-	elif ARRAY == 1:
-		file = open('EvLocs/' + eq_file2, 'r')
+	file = open(eq_file2, 'r')
 	lines=file.readlines()
 	split_line = lines[0].split()
 	t2           = UTCDateTime(split_line[1])
@@ -55,12 +53,11 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0
 	#%% read files
 	# #%% Get saved event info, also used to name files
 	# date_label = '2018-04-02' # date for filename
-	if ARRAY == 0:
-		fname1 = 'HD' + date_label1 + '_2dstack.mseed'
-		fname2 = 'HD' + date_label2 + '_2dstack.mseed'
-	elif ARRAY == 1:
-		fname1 = 'Pro_Files/HD' + date_label1 + '_2dstack.mseed'
-		fname2 = 'Pro_Files/HD' + date_label2 + '_2dstack.mseed'
+	if ARRAY == 1:
+		goto = '/Users/vidale/Documents/PyCode/LASA/Pro_files'
+		os.chdir(goto)
+	fname1 = 'HD' + date_label1 + '_2dstack.mseed'
+	fname2 = 'HD' + date_label2 + '_2dstack.mseed'
 	st1 = Stream()
 	st2 = Stream()
 	st1 = read(fname1)
@@ -238,7 +235,10 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0
 			plt.plot(ttt, (centralT_amp[slowT_i].data)*0.0 + dist_offset, color = 'lightgray') # reference lines
 	plt.xlabel('Time (s)')
 	plt.ylabel('T Slowness (s/km)')
-	plt.title(ref_phase + ' seismograms and tdiff ' + str(R_slow_plot) + ' R slowness, green is event1, red is event2')
+	plt.title(str(event_no) + '  ' + date_label1 + '  ' +ref_phase + ' seismograms and tdiff ' + str(R_slow_plot) + ' R slowness, green is event1, red is event2')
+	os.chdir('/Users/vidale/Documents/PyCode/LASA/Quake_results/Plots')
+	plt.savefig(date_label1 + '_' + str(start_buff) + '_' + str(end_buff) + '_stack.png')
+
 #%% R-T tshift averaged over time window
 	fig_index = 8
 	stack_slice = np.zeros((slowR_n,slowT_n))
@@ -304,32 +304,33 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0
 	plt.ylabel('Radial Slowness (s/km)')
 	plt.title(ref_phase + ' beam amplitude')
 #	plt.title('Beam amplitude ' + date_label1 + ' ' + date_label2)
+	os.chdir('/Users/vidale/Documents/PyCode/LASA/Quake_results/Plots')
+	plt.savefig(date_label1 + '_' + str(start_buff) + '_' + str(end_buff) + '_beam.png')
 	plt.show()
 
 #%%  Save processed files
 	if ARRAY == 0:
-		fname = 'HD' + date_label1 + '_' + date_label2 + '_tshift.mseed'
-	elif ARRAY == 1:
-		fname = 'Pro_Files/HD' + date_label1 + '_' + date_label2 + '_tshift.mseed'
+		goto = '/Users/vidale/Documents/PyCode/Hinet'
+	if ARRAY == 1:
+		goto = '/Users/vidale/Documents/PyCode/LASA/Pro_Files'
+	os.chdir(goto)
+
+	fname = 'HD' + date_label1 + '_' + date_label2 + '_tshift.mseed'
 	tshift_full.write(fname,format = 'MSEED')
-	if ARRAY == 0:
-		fname = 'HD' + date_label1 + '_' + date_label2 + '_amp_ave.mseed'
-	elif ARRAY == 1:
-		fname = 'Pro_Files/HD' + date_label1 + '_' + date_label2 + '_amp_ave.mseed'
+
+	fname = 'HD' + date_label1 + '_' + date_label2 + '_amp_ave.mseed'
 	amp_ave.write(fname,format = 'MSEED')
-	if ARRAY == 0:
-		fname = 'HD' + date_label1 + '_' + date_label2 + '_amp_ratio.mseed'
-	elif ARRAY == 1:
-		fname = 'Pro_Files/HD' + date_label1 + '_' + date_label2 + '_amp_ratio.mseed'
+
+	fname = 'HD' + date_label1 + '_' + date_label2 + '_amp_ratio.mseed'
 	amp_ratio.write(fname,format = 'MSEED')
 
 #%% Option to write out stf
 	if get_stf != 0:
 		event1_sample.taper(0.1)
 		event2_sample.taper(0.1)
-		fname = 'Pro_Files/HD' + date_label1 + '_stf.mseed'
+		fname = 'HD' + date_label1 + '_stf.mseed'
 		event1_sample.write(fname,format = 'MSEED')
-		fname = 'Pro_Files/HD' + date_label2 + '_stf.mseed'
+		fname = 'HD' + date_label2 + '_stf.mseed'
 		event2_sample.write(fname,format = 'MSEED')
 
 	elapsed_time_wc = time.time() - start_time_wc

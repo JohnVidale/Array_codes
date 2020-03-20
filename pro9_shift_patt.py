@@ -292,7 +292,7 @@ plt.axis('equal')
 #ax.add_artist(circle1)
 plt.xlabel('°E of lon = 0,180')
 plt.ylabel('°N of lon = 90,270')
-plt.title('Tranverse slowness')
+plt.title('Transverse slowness')
 
 plt.show()
 
