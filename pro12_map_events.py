@@ -123,3 +123,29 @@ def map_plot(min_dist = 0, max_dist = 180):
 #	plot.legend([])
 	plt.colorbar()
 	plt.show()
+
+	fig_index = 3
+	fig = plt.figure()
+	ax = fig.add_subplot(111, projection='polar')
+	c = ax.scatter(np.pi * event_baz / 180, event_dist, c=event_ICSflag, s=100, cmap='hsv', alpha=0.75)
+#	ax.set_xticks(np.arange(-180, 180, 30))
+#	ax.set_yticks(np.arange(-90, 90, 30))
+
+	# old
+#	obs = [0.05,  0.10,  0.03, -0.04, -0.20,  0.10, -0.05, -0.18, -0.10,  0.20, -0.05,  -0.10,  0.05,  0.00]
+#	pred = [0.3, -0.6, -0.1,  0.2,  0.5, -0.5,  0.1,  0.5,  0.5, -0.5,  0.4,  0.7, -0.5, 0.3]
+
+#	FILL NUMBERS
+
+#	plt.scatter(event_baz, event_dist, c='k', s=100, alpha=1, marker='.')
+#	plt.scatter(event_lon, event_lat, c=event_dep, s=100, alpha=1, marker='.', cmap=plt.cm.autumn)
+#	plt.scatter(pred,obs, c='k', s=100, alpha=1, marker='.')
+#	plt.plot(np.unique(pred), np.poly1d(np.polyfit(pred, obs, 1))(np.unique(pred)))
+#	plt.grid()
+#	plt.rc('grid', linestyle="-", color='black')
+#	plt.xlabel('Longitude (°)')
+#	plt.ylabel('Latitude')
+	plt.title('LASA events available - map')
+#	plot.legend([])
+#	plt.colorbar()
+	plt.show()

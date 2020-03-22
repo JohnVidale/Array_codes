@@ -12,6 +12,7 @@ os.chdir('/Users/vidale/Documents/GitHub/Array_codes')
 
 #%% Import functions
 from pro12_map_events    import map_plot
+from pro13_PKiKP_comp    import map_slo_plot
 os.chdir('/Users/vidale/Documents/PyCode/LASA')
 
 #%% Common parameters
@@ -19,4 +20,5 @@ min_dist = 0
 max_dist = 180
 
 #%% Do it
-map_plot(min_dist = min_dist, max_dist = max_dist)
+#map_plot(min_dist = min_dist, max_dist = max_dist)
+map_slo_plot(min_dist = min_dist, max_dist = max_dist)
