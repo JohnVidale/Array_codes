@@ -34,104 +34,6 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0
 	print('Running pro6_plot_stacked_seis')
 	start_time_wc = time.time()
 
-	dphase = 'PKiKP'
-
-	sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/events_good.txt'
-	with open(sta_file, 'r') as file:
-		lines = file.readlines()
-	event_count = len(lines)
-
-	print(str(event_count) + ' lines read from ' + sta_file)
-	# Load station coords into arrays
-	station_index = range(event_count)
-	event_names        = []
-
-	event_index = np.zeros(event_count)
-	event_year  = np.zeros(event_count)
-	event_mo    = np.zeros(event_count)
-	event_day   = np.zeros(event_count)
-	event_hr    = np.zeros(event_count)
-	event_min   = np.zeros(event_count)
-	event_sec   = np.zeros(event_count)
-	event_lat   = np.zeros(event_count)
-	event_lon   = np.zeros(event_count)
-	event_dep   = np.zeros(event_count)
-	event_mb    = np.zeros(event_count)
-	event_ms    = np.zeros(event_count)
-	event_tstart       = np.zeros(event_count)
-	event_tend         = np.zeros(event_count)
-	event_gcdist       = np.zeros(event_count)
-	event_dist         = np.zeros(event_count)
-	event_baz          = np.zeros(event_count)
-	event_SNR          = np.zeros(event_count)
-	event_Sflag        = np.zeros(event_count)
-	event_PKiKPflag    = np.zeros(event_count)
-	event_ICSflag      = np.zeros(event_count)
-	event_PKiKP_radslo = np.zeros(event_count)
-	event_PKiKP_traslo = np.zeros(event_count)
-	event_PKiKP_qual   = np.zeros(event_count)
-	event_ICS_qual     = np.zeros(event_count)
-
-	iii = 0
-	for ii in station_index:   # read file
-		line = lines[ii]
-		split_line = line.split()
-
-		event_index[ii]  = float(split_line[0])
-		event_names.append(split_line[1])
-		event_year[ii]   = float(split_line[2])
-		event_mo[ii]     = float(split_line[3])
-		event_day[ii]    = float(split_line[4])
-		event_hr[ii]     = float(split_line[5])
-		event_min[ii]    = float(split_line[6])
-		event_sec[ii]    = float(split_line[7])
-		event_lat[ii]    = float(split_line[8])
-		event_lon[ii]    = float(split_line[9])
-		event_dep[ii]    = float(split_line[10])
-		event_mb[ii]     = float(split_line[11])
-		event_ms[ii]     = float(split_line[12])
-		event_tstart[ii] = float(split_line[13])
-		event_tend[ii]   = float(split_line[14])
-		event_gcdist[ii] = float(split_line[15])
-		event_dist[ii]   = float(split_line[16])
-		event_baz[ii]    = float(split_line[17])
-		event_SNR[ii]    = float(split_line[18])
-		event_Sflag[ii]  = float(split_line[19])
-		event_PKiKPflag[ii]     = float(split_line[20])
-		event_ICSflag[ii]       = float(split_line[21])
-		event_PKiKP_radslo[ii]  = float(split_line[22])
-		event_PKiKP_traslo[ii]  = float(split_line[23])
-		event_PKiKP_qual[ii]    = float(split_line[24])
-		event_ICS_qual[ii]      = float(split_line[25])
-#		print('Event ' + str(ii) + ' is ' + str(event_index[ii]))
-		if event_index[ii] == event_no:
-			iii = ii
-
-	if iii == 0:
-		print('Event ' + str(event_no) + ' not found')
-	else:
-		print('Event ' + str(event_no) + ' is ' + str(iii))
-	#  find predicted slowness
-	arrivals1 = model.get_travel_times(source_depth_in_km=event_dep[iii],distance_in_degree=event_gcdist[iii]-0.5,phase_list=[dphase])
-	arrivals2 = model.get_travel_times(source_depth_in_km=event_dep[iii],distance_in_degree=event_gcdist[iii]+0.5,phase_list=[dphase])
-	dtime = arrivals2[0].time - arrivals1[0].time
-	event_pred_slo  = dtime/111.  # s/km
-
-	# convert to pred rslo and tslo
-	sin_baz = np.sin(event_baz[iii] * np.pi /180)
-	cos_baz = np.cos(event_baz[iii] * np.pi /180)
-	pred_Nslo = event_pred_slo * cos_baz
-	pred_Eslo = event_pred_slo * sin_baz
-
-	#  rotate observed slowness to N and E
-	obs_Nslo = (event_PKiKP_radslo[iii] * cos_baz) - (event_PKiKP_traslo[iii] * sin_baz)
-	obs_Eslo = (event_PKiKP_radslo[iii] * sin_baz) + (event_PKiKP_traslo[iii] * cos_baz)
-
-	print('PR '+ str(pred_Nslo) + ' PT ' + str(pred_Eslo) + ' OR ' + str(obs_Nslo) + ' OT ' + str(obs_Eslo))
-	#  find observed back-azimuth
-#	bazi_rad = np.arctan(event_PKiKP_traslo[ii]/event_PKiKP_radslo[ii])
-#	event_obs_bazi  = event_baz[ii] + (bazi_rad * 180 / np.pi)
-
 	if ARRAY == 1:
 		goto = '/Users/vidale/Documents/PyCode/LASA/EvLocs'
 		os.chdir(goto)
@@ -397,14 +299,10 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0
 	ax.add_artist(circle1)  #inner core limit
 	circle2 = plt.Circle((0, 0), 0.040, color='black', fill=False)
 	ax.add_artist(circle2)  #outer core limit
-
-	c = ax.scatter(pred_Eslo, pred_Nslo, color='blue', s=100, alpha=0.75)
-	c = ax.scatter(obs_Eslo, obs_Nslo, color='black', s=100, alpha=0.75)
-
 	fig.colorbar(c, ax=ax)
 	plt.xlabel('Transverse Slowness (s/km)')
 	plt.ylabel('Radial Slowness (s/km)')
-	plt.title(str(event_no) + '  ' + date_label1 + '  ' + ref_phase + ' beam amplitude')
+	plt.title(ref_phase + ' beam amplitude')
 #	plt.title('Beam amplitude ' + date_label1 + ' ' + date_label2)
 	os.chdir('/Users/vidale/Documents/PyCode/LASA/Quake_results/Plots')
 	plt.savefig(date_label1 + '_' + str(start_buff) + '_' + str(end_buff) + '_beam.png')

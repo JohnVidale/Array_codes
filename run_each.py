@@ -20,6 +20,7 @@ def run_each(start_buff = -20, end_buff = 150, event_no = 0, min_dist = 0,
 	from pro7a_plot_envstack     import pro7plotstack
 	from pro7b_plot_stack        import pro7plotstack2
 	from pro7b_dec               import pro7dec
+	import matplotlib.pyplot as plt
 	os.chdir('/Users/vidale/Documents/PyCode/LASA')
 
 	#%% Common parameters
@@ -30,8 +31,9 @@ def run_each(start_buff = -20, end_buff = 150, event_no = 0, min_dist = 0,
 	# window
 	#start_buff = 980
 	#end_buff   = 1180
-	slowR_lo   = -0.02
-	slowR_hi   =  0.06
+	NS = 1
+	slowR_lo   = -0.04
+	slowR_hi   =  0.04
 	slowT_lo   = -0.04
 	slowT_hi   =  0.04
 #	slow_delta =  0.0025
@@ -75,24 +77,24 @@ def run_each(start_buff = -20, end_buff = 150, event_no = 0, min_dist = 0,
 				ref_loc = ref_loc, fig_index = 102)
 
 	#%% --1D stack
-	pro5stack(ARRAY = ARRAY, eq_file = eq_file, plot_scale_fac = 0.05,
-				slowR_lo = slowR_lo_1D, slowR_hi = slowR_hi_1D, slow_delta = slow_delta_1D,
-				start_buff = start_buff, end_buff = end_buff,
-				log_plot = 0, envelope = 1, plot_dyn_range = 50,
-				norm = 1, global_norm_plot = 1, color_plot = 1, fig_index = 302)
+#	pro5stack(ARRAY = ARRAY, eq_file = eq_file, plot_scale_fac = 0.05,
+#				slowR_lo = slowR_lo_1D, slowR_hi = slowR_hi_1D, slow_delta = slow_delta_1D,
+#				start_buff = start_buff, end_buff = end_buff,
+#				log_plot = 0, envelope = 1, plot_dyn_range = 50,
+#				norm = 1, global_norm_plot = 1, color_plot = 1, fig_index = 302)
 
 	##%%  --2D stack
 	pro5stack2d(eq_file = eq_file, plot_scale_fac = 0.05,
 				slowR_lo = slowR_lo, slowR_hi = slowR_hi, slowT_lo = slowT_lo, slowT_hi = slowT_hi, slow_delta = slow_delta,
 				start_buff = start_buff, end_buff = end_buff,
 				norm = 1, global_norm_plot = 1,
-				ARRAY = ARRAY, decimate_fac = decimate_fac, NS = 0)
+				ARRAY = ARRAY, decimate_fac = decimate_fac, NS = NS)
 
 	#%% --Compare 2D stack results with themselves
 	pro6stacked_seis(eq_file1 = eq_file, eq_file2 = eq_file, plot_scale_fac = 0.003,
 				slowR_lo = slowR_lo, slowR_hi = slowR_hi, slowT_lo = slowT_lo, slowT_hi = slowT_hi, slow_delta = slow_delta,
 				start_buff = start_buff, end_buff = end_buff, freq_corr = freq_corr, ref_phase = dphase,
-				fig_index = 301, plot_dyn_range = 100, ARRAY = ARRAY)
+				fig_index = 301, plot_dyn_range = 100, ARRAY = ARRAY, event_no = event_no)
 
 	#%% --2D envelope stack
 #	pro7plotstack(eq_file = eq_file, plot_scale_fac = 0.05,
@@ -100,3 +102,5 @@ def run_each(start_buff = -20, end_buff = 150, event_no = 0, min_dist = 0,
 #				start_buff = start_buff, end_buff = end_buff, skip_T = 0, skip_R = 0,
 #				zoom = 0, ZslowR_lo = -0.03, ZslowR_hi = 0.03, ZslowT_lo = -0.03, ZslowT_hi = 0.03, Zstart_buff = 0, Zend_buff = 200,
 #				fig_index = 402, plot_dyn_range = 50, snaptime = snaptime, snaps=snaps, ARRAY = ARRAY)
+#
+	plt.close('all')

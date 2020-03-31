@@ -433,7 +433,7 @@ def pro3singlet(eq_file, stat_corr = 0, rel_time = 1, rel_slow = 1, simple_taper
 	elif ARRAY == 1:
 		plt.title(dphase + ' for ' + fname[8:18] + ' event # ' + str(event_no))
 	os.chdir('/Users/vidale/Documents/PyCode/LASA/Quake_results/Plots')
-	plt.savefig(date_label + '_' + str(event_no) + '_raw.png')
+#	plt.savefig(date_label + '_' + str(event_no) + '_raw.png')
 	plt.show()
 
 #%%  Save processed files

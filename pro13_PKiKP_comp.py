@@ -14,13 +14,13 @@ def map_slo_plot(min_dist = 0, max_dist = 180):
 	model = TauPyModel(model='iasp91')
 	dphase = 'PKiKP'
 
-	sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/event_table_good.txt'
+	sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/events_best_PKiKP.txt'
 	with open(sta_file, 'r') as file:
 		lines = file.readlines()
+	event_count = len(lines)
 
-	print(str(len(lines)) + ' lines read from ' + sta_file)
+	print(str(event_count) + ' lines read from ' + sta_file)
 	# Load station coords into arrays
-	event_count = 73
 	station_index = range(event_count)
 	event_names        = []
 	event_year         = np.zeros(event_count)
@@ -45,6 +45,7 @@ def map_slo_plot(min_dist = 0, max_dist = 180):
 	event_ICSflag      = np.zeros(event_count)
 	event_PKiKP_radslo = np.zeros(event_count)
 	event_PKiKP_traslo = np.zeros(event_count)
+	event_PKiKP_qual   = np.zeros(event_count)
 
 	for ii in station_index:   # read file
 		line = lines[ii]
@@ -73,6 +74,7 @@ def map_slo_plot(min_dist = 0, max_dist = 180):
 		event_ICSflag[ii]   = float(split_line[20])
 		event_PKiKP_radslo[ii]  = float(split_line[21])
 		event_PKiKP_traslo[ii]  = float(split_line[22])
+		event_PKiKP_qual[ii]    = float(split_line[23])
 
 	event_pred_bazi     = np.zeros(event_count)
 	event_pred_slo     = np.zeros(event_count)
@@ -102,16 +104,16 @@ def map_slo_plot(min_dist = 0, max_dist = 180):
 #		print('pred: slo bazi  obs: slo bazi : ' + str(event_pred_slo[ii]) + '  ' + str(event_pred_bazi[ii]) + '  ' +
 #			 str(event_obs_slo[ii]) + '  ' + str(event_obs_bazi[ii]))
 
-	fig_index = 3
-	fig = plt.figure()
-	ax = fig.add_subplot(111, projection='polar')
-	c = ax.scatter(np.pi * event_baz / 180, event_dist, c=event_ICSflag, s=100, cmap='hsv', alpha=0.75)
-	plt.title('LASA events available - map')
-	ax.set_theta_zero_location("N")  # theta=0 at the top
-	ax.set_theta_direction(-1)  # theta increasing clockwise
-	plt.show()
+#	fig_index = 3
+#	fig = plt.figure()
+#	ax = fig.add_subplot(111, projection='polar')
+#	c = ax.scatter(np.pi * event_baz / 180, event_dist, c=event_PKiKP_qual, s=100, cmap='brg', alpha=0.75)
+#	plt.title('PKiKP quality - polar plot')
+#	ax.set_theta_zero_location("N")  # theta=0 at the top
+#	ax.set_theta_direction(-1)  # theta increasing clockwise
+#	plt.show()
 
-	fig_index = 4
+#	fig_index = 4
 	fig = plt.figure()
 	ax = fig.add_subplot(111, projection='polar')
 
@@ -121,9 +123,15 @@ def map_slo_plot(min_dist = 0, max_dist = 180):
 	c = ax.scatter(event_pred_bazi, event_pred_slo, color='blue', s=100, alpha=0.75)
 	c = ax.scatter(event_obs_bazi,  event_obs_slo,  color='red', s=100, alpha=0.75)
 	for ii in range(event_count):   # read file
-		c = ax.plot([event_pred_bazi[ii], event_obs_bazi[ii]], [event_pred_slo[ii], event_obs_slo[ii]], color='black')
+		if event_PKiKP_qual[ii] == 2:
+			c = ax.plot([event_pred_bazi[ii], event_obs_bazi[ii]], [event_pred_slo[ii], event_obs_slo[ii]], color='black')
+		elif event_PKiKP_qual[ii] == 1:
+			c = ax.plot([event_pred_bazi[ii], event_obs_bazi[ii]], [event_pred_slo[ii], event_obs_slo[ii]], color='gray')
+		else:
+			c = ax.plot([event_pred_bazi[ii], event_obs_bazi[ii]], [event_pred_slo[ii], event_obs_slo[ii]], color='pink')
 
-	ax.set_rmax(.025)
+	ax.set_rmax(0.025)
+	ax.set_rmin(0.0)
 	ax.grid(True)
 	plt.title('Predicted vs observed slowness of PKiKP')
 	ax.set_theta_zero_location("N")  # theta=0 at the top
