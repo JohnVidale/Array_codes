@@ -188,8 +188,8 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
 	st1=read(fname1)
 	st2=read(fname2)
 	if do_decimate != 0:
-		st1.decimate(do_decimate)
-		st2.decimate(do_decimate)
+		st1.decimate(do_decimate, no_filter=True)
+		st2.decimate(do_decimate, no_filter=True)
 
 	print('1st trace has : ' + str(len(st1[0].data)) + ' time pts ')
 	print('st1 has ' + str(len(st1)) + ' traces')

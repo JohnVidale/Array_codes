@@ -8,8 +8,8 @@
 # John Vidale 2/2019
 
 def pro5stack(eq_file, plot_scale_fac = 0.05, slowR_lo = -0.1, slowR_hi = 0.1,
-			  slow_delta = 0.0005, start_buff = -50, end_buff = 50,
-			  ref_lat = 36.3, ref_lon = 138.5, envelope = 1, plot_dyn_range = 1000,
+			  slow_delta = 0.0005, start_buff = -50, end_buff = 50, event_no = 5,
+			  ref_lat = 36.3, ref_lon = 138.5, ref_loc = 0, envelope = 1, plot_dyn_range = 1000,
 			  log_plot = 1, norm = 1, global_norm_plot = 1, color_plot = 1, fig_index = 401, ARRAY = 0):
 
 #%% Import functions
@@ -38,10 +38,7 @@ def pro5stack(eq_file, plot_scale_fac = 0.05, slowR_lo = -0.1, slowR_hi = 0.1,
 #%% Get saved event info, also used to name files
 	start_time_wc = time.time()
 
-	if ARRAY == 0:
-		file = open(eq_file, 'r')
-	elif ARRAY == 1:
-		file = open('EvLocs/' + eq_file, 'r')
+	file = open('/Users/vidale/Documents/PyCode/EvLocs/' + eq_file, 'r')
 	lines=file.readlines()
 	split_line = lines[0].split()
 #			ids.append(split_line[0])  ignore label for now
@@ -56,17 +53,25 @@ def pro5stack(eq_file, plot_scale_fac = 0.05, slowR_lo = -0.1, slowR_hi = 0.1,
 
 #%% Get station location file
 	if ARRAY == 0: # Hinet set and center
-		sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/hinet_sta.txt'
-		ref_lat = 36.3
-		ref_lon = 138.5
+		sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_hinet.txt'
+		if ref_loc == 0:
+			ref_lat = 36.3
+			ref_lon = 138.5
 	elif ARRAY == 1: # LASA set and center
-		sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/LASA_sta.txt'
-		ref_lat = 46.69
-		ref_lon = -106.22
-	else:         # NORSAR set and center if 2
-		sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/NORSAR_sta.txt'
-		ref_lat = 61
-		ref_lon = 11
+		sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_LASA.txt'
+		if ref_loc == 0:
+			ref_lat = 46.69
+			ref_lon = -106.22
+	elif ARRAY == 2: # China set and center
+		sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_ch.txt'
+		if ref_loc == 0:
+			ref_lat = 38      # °N
+			ref_lon = 104.5   # °E
+	else:         # NORSAR set and center
+		sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_NORSAR.txt'
+		if ref_loc == 0:
+			ref_lat = 61
+			ref_lon = 11
 	with open(sta_file, 'r') as file:
 		lines = file.readlines()
 	print(str(len(lines)) + ' stations read from ' + sta_file)
@@ -84,10 +89,7 @@ def pro5stack(eq_file, plot_scale_fac = 0.05, slowR_lo = -0.1, slowR_hi = 0.1,
 
 #%% Name file, read data
 	# date_label = '2018-04-02' # date for filename
-	if ARRAY == 0:
-		fname = 'HD' + date_label + 'sel.mseed'
-	elif ARRAY == 1:
-		fname = 'Pro_Files/HD' + date_label + 'sel.mseed'
+	fname = '/Users/vidale/Documents/PyCode/Pro_Files/HD' + date_label + 'sel.mseed'
 	st = Stream()
 	print('reading ' + fname)
 	st = read(fname)
@@ -131,7 +133,7 @@ def pro5stack(eq_file, plot_scale_fac = 0.05, slowR_lo = -0.1, slowR_hi = 0.1,
 				this_name = st_names[ii]
 				this_name_truc = this_name[0:5]
 				name_truc_cap  = this_name_truc.upper()
-			elif ARRAY == 1:
+			elif ARRAY == 1 or ARRAY == 2:
 				name_truc_cap = st_names[ii]
 			if (tr.stats.station == name_truc_cap): # find station in inventory
 				if norm == 1:
@@ -222,7 +224,7 @@ def pro5stack(eq_file, plot_scale_fac = 0.05, slowR_lo = -0.1, slowR_hi = 0.1,
 		plt.xlim(start_buff,end_buff)
 	plt.xlabel('Time (s)')
 	plt.ylabel('Slowness (s/km)')
-	plt.title(date_label)
+	plt.title(str(event_no) + '  ' + date_label)
 	os.chdir('/Users/vidale/Documents/PyCode/LASA/Quake_results/Plots')
 	plt.savefig(date_label + '_' + str(start_buff) + '_' + str(end_buff) + '_1D.png')
 	plt.show()

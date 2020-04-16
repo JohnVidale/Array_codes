@@ -83,9 +83,9 @@ amp_ave = Stream()
 amp_ave = read(fname2)
 
 tshift_full = tshift.copy()
-tshift.decimate(decimate_fac)
-amp_ratio.decimate(decimate_fac)
-amp_ave.decimate(decimate_fac)
+tshift.decimate(decimate_fac, no_filter=True)
+amp_ratio.decimate(decimate_fac, no_filter=True)
+amp_ave.decimate(decimate_fac, no_filter=True)
 
 #print(f'len(tshift): ' {len(tshift):4d} 'len(tshift[0].data): ' {len(tshift[0].data:4d})
 print(f'len(tshift): {len(tshift):4d}')

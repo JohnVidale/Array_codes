@@ -6,7 +6,7 @@
 # plot lines are blue, orange, yellow, purple for phases 1 through 4
 # John Vidale 2/2019
 
-def pro3singlet(eq_file, stat_corr = 0, rel_time = 1, simple_taper = 0, skip_SNR = 0,
+def pro3singlet(eq_file, stat_corr = 0, rel_time = 1, rel_slow = 1, simple_taper = 0, skip_SNR = 0,
 			dphase = 'PKiKP', dphase2 = 'PKKP', dphase3 = 'PKIKP', dphase4 = 'PPP',
 			start_buff = -10, end_buff = 30,
 			plot_scale_fac = 0.05, qual_threshold = 0, corr_threshold = 0,
@@ -189,26 +189,16 @@ def pro3singlet(eq_file, stat_corr = 0, rel_time = 1, simple_taper = 0, skip_SNR
 #%% Select by distance, window and adjust start time to align picked times
 	st_pickalign = Stream()
 
+	tra_located   = 0
 	tra_in_range  = 0
 	tra_sta_found = 0
 	nodata        = 0
 	min_dist_auto = 180
 	max_dist_auto = 0
-	min_time_plot =  1000000
-	max_time_plot = -1000000
-
-	# not used in all cases, but printed out below
-	# only used if rel_slow == 1, preserves 0 slowness, otherwise 0 is set to phase slowness
-	ref_distance = gps2dist_azimuth(ref_lat,ref_lon,ev_lat,ev_lon)
-	ref1_dist  = ref_distance[0]/(1000*111)
-	dist_minus = ref1_dist - 0.5
-	dist_plus  = ref1_dist + 0.5
-	arrivals_ref   = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree=ref1_dist, phase_list=[dphase])
-	arrivals_minus = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree=dist_minus,phase_list=[dphase])
-	arrivals_plus  = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree=dist_plus ,phase_list=[dphase])
-	atime_ref = arrivals_ref[0].time  # phase arrival time at reference distance
-	ref_slow = arrivals_plus[0].time - arrivals_minus[0].time  # dt over 1 degree at ref distance
-
+#	for ii in station_index:
+#		print('Station name of index ' + str(ii) + ' is ' + str(st_names[ii])) # enumerate stations
+#	for tr in st: # traces one by one, find lat-lon by searching entire inventory.  Inefficient
+#		print('Station name of tr ' + str(tr.stats.station)) # enumerate stations
 	for tr in st: # traces one by one, find lat-lon by searching entire inventory.  Inefficient
 #		print('Station ' + str(tr.stats.station) + ' has : ' + str(len(tr.data)) + ' time pts ') # enumerate stations
 		if float(year) < 1970: # fix the damn 1969 -> 2069 bug in Gibbon's LASA data
@@ -230,71 +220,87 @@ def pro3singlet(eq_file, stat_corr = 0, rel_time = 1, simple_taper = 0, skip_SNR
 				name_truc_cap  = this_name_truc.upper()
 			elif ARRAY == 1 or ARRAY == 2:
 				name_truc_cap = st_names[ii]
-			if (tr.stats.station == name_truc_cap): # find station in inventory, clumsy coding
-#				print('  ii is ' + str(ii) + '  Station ' + str(tr.stats.station) + ' ' + str(st_names[ii]) +
-#		  ' has : ' + str(len(tr.data)) + ' time pts ') # enumerate stations
+			if (tr.stats.station == name_truc_cap): # find station in inventory
+#				print('  ii is ' + str(ii) + '  Station ' + str(tr.stats.station) + ' ' + str(st_names[ii]) + ' has : ' + str(len(tr.data)) + ' time pts ') # enumerate stations
+
 				tra_sta_found += 1
 				if stat_corr != 1 or float(st_corr[ii]) > corr_threshold: # if using statics, reject low correlations
-					stalat = float(st_lats[ii]) # look up lat & lon again to find distance
-					stalon = float(st_lons[ii])
+					stalat = float(st_lats[ii])
+					stalon = float(st_lons[ii]) # look up lat & lon again to find distance
+
+					# only used if rel_slow == 1, preserves 0 slowness, otherwise 0 is set to phase slowness
+					ref_distance = gps2dist_azimuth(ref_lat,ref_lon,ev_lat,ev_lon)
+					ref1_dist = ref_distance[0]/(1000*111)
 
 					distance = gps2dist_azimuth(stalat,stalon,ev_lat,ev_lon) # Get traveltimes again, hard to store
 					tr.stats.distance=distance[0] # distance in km
 					dist = distance[0]/(1000*111)
 
-					in_range = 0  # flag for whether this trace goes into stack
-					if ref_loc == 0:  # check whether trace is in distance range from earthquake
-						if min_dist < dist and dist < max_dist:
-							in_range = 1
+					if ref_loc != 1:
+						if min_dist < dist and dist < max_dist: # select distance range from earthquake
+#							print('    ii is ' + str(ii) + '  Station name of tr ' + str(tr.stats.station) + ' has : ' + str(len(tr.data)) + ' time pts ') # enumerate stations
+#							if tr.stats.station == '15620':
+#								print('hit exit') # enumerate stations
+#								sys.exit()
 							tra_in_range += 1
-					elif ref_loc == 1:  # alternately, check whether trace is close enough to ref_location
+							if rel_slow == 0:
+								arrivals = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree=dist,phase_list=[dphase])
+							else:
+								arrivals = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree=ref1_dist,phase_list=[dphase])
+							atime = arrivals[0].time
+							if stat_corr == 1: # apply static station corrections
+								tr.stats.starttime -= float(st_shift[ii])
+							if rel_time == 1:
+								s_t = t + atime + start_buff
+								e_t = t + atime + end_buff
+							else:
+								s_t = t + start_buff
+								e_t = t + end_buff
+							tr.trim(starttime=s_t,endtime = e_t)
+							# deduct theoretical traveltime and start_buf from starttime
+							if rel_time == 1:
+								tr.stats.starttime -= atime
+#							print('      Station ' + str(tr.stats.station) + ' finally has : ' + str(len(tr.data)) + ' time pts ') # enumerate stations
+							if len(tr.data) > 0:
+								st_pickalign += tr
+							else:
+								nodata += 1
+								print('        1st ii is ' + str(ii) + '  Skipping Trace ' + tr.stats.station + ' has : ' + str(len(tr.data)) + ' time pts ')
+					elif ref_loc == 1:
+						# only used if ref_loc == 1:
 						ref_distance = gps2dist_azimuth(ref_lat,ref_lon,stalat,stalon)
 						ref2_dist = ref_distance[0]/(1000*111)
-						if ref2_dist < ref_rad:
-							in_range = 1
+#						print('ref_rad ' + str(ref_rad) + ' ref2_dist ' + str(ref2_dist))
+						if ref2_dist < ref_rad: # alternatively, select based on distance from ref location
 							tra_in_range += 1
-					if in_range == 1:   # trace fulfills the specified criteria for being in range
-						s_t = t + start_buff
-						e_t = t + end_buff
-						if stat_corr == 1: # apply static station corrections
-							tr.stats.starttime -= float(st_shift[ii])
-						if rel_time == 0:  #  don't adjust absolute time
-							tr.trim(starttime=s_t,endtime = e_t)
-						else:              # shift relative to a chosen phase
-							arrivals_each = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree=dist,phase_list=[dphase])
-							atime_each = arrivals_each[0].time
-							if rel_time == 1: # each window has a shift proportional to ref_dist at phase slowness at ref_dist
-								s_t += atime_each
-								e_t += atime_each
-								tr.trim( starttime=s_t, endtime = e_t)
-								tr.stats.starttime -= atime_each - (dist-ref1_dist) * ref_slow
-							elif rel_time == 2: # each window has a distinct shift, but offset is common to all stations
-								s_t += atime_each
-								e_t += atime_each
-								tr.trim( starttime=s_t, endtime = e_t)
-								tr.stats.starttime -= atime_ref
-							elif rel_time == 3:  # each station has an individual, chosen-phase shift, phase arrival set to zero
-								s_t += atime_each
-								e_t += atime_each
-								tr.trim( starttime=s_t, endtime = e_t)
-								tr.stats.starttime -= atime_each
-							elif rel_time == 4: # use same window around chosen phase for all stations, phase arrival set to zero
-								s_t += atime_ref
-								e_t += atime_ref
-								tr.trim( starttime=s_t, endtime = e_t)
-								tr.stats.starttime -= atime_ref
+							if rel_slow == 0:
+								arrivals = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree=dist,phase_list=[dphase])
 							else:
-								print('invalid rel_time, must be integer 0 to 4')
-								sys.exit()
-						if len(tr.data) > 0:
-							st_pickalign += tr
-						else:
-							nodata += 1
+								arrivals = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree=ref1_dist,phase_list=[dphase])
+							atime = arrivals[0].time
+							if stat_corr == 1: # apply static station corrections
+								tr.stats.starttime -= float(st_shift[ii])
+							if rel_time == 1:
+								s_t = t + atime + start_buff
+								e_t = t + atime + end_buff
+							else:
+								s_t = t + start_buff
+								e_t = t + end_buff
+							tr.trim(starttime=s_t,endtime = e_t)
+							# deduct theoretical traveltime and start_buf from starttime
+							if rel_time == 1:
+								tr.stats.starttime -= atime
+							if len(tr.data) > 0:
+								st_pickalign += tr
+							else:
+								nodata += 1
+#								print('2nd ii is ' + str(ii) + '  Skipping Trace ' + tr.stats.station + ' has : ' + str(len(tr.data)) + ' time pts ')
 	print('After alignment + range and correlation selection - event: ' + str(len(st_pickalign)) + ' traces')
 	print('Traces found: ' + str(tra_sta_found) + ' Traces in range: ' + str(tra_in_range) + ' Traces with no data: ' + str(nodata))
-	print('ref1_distance ' + str(ref1_dist) + ' relative start time ' + str(atime_ref))
-	print('ref_loc == 1, ref_lat: ' + str(ref_lat) + ' ref_lon: ' + str(ref_lon))
-	print('last station: distance ' + str(dist) + 'last station lat: ' + str(stalat) + ' last station lon: ' + str(stalon))
+	print('last station: distance ' + str(dist) + ' ref1_distance ' + str(ref1_dist) + ' relative start time ' + str(atime))
+	if ref_loc == 1:
+		print('ref_loc == 1, ref_lat: ' + str(ref_lat) + ' ref_lon: ' + str(ref_lon))
+	print('last station lat: ' + str(stalat) + ' last station lon: ' + str(stalon))
 
 	#print(st) # at length
 	if verbose:
@@ -334,7 +340,7 @@ def pro3singlet(eq_file, stat_corr = 0, rel_time = 1, simple_taper = 0, skip_SNR
 		for tr in stgood:
 			print('Distance is ' + str(tr.stats.distance/(1000*111)) + ' for station ' + tr.stats.station)
 
-	#%%  get station lat-lon, compute distance and time limits for plot
+	#%%  get station lat-lon, compute distance for plot
 	for tr in stgood:
 		for ii in station_index:
 			if ARRAY == 0:  # have to chop off last letter, always 'h'
@@ -352,18 +358,13 @@ def pro3singlet(eq_file, stat_corr = 0, rel_time = 1, simple_taper = 0, skip_SNR
 					min_dist_auto = tr.stats.distance
 				if tr.stats.distance > max_dist_auto:
 					max_dist_auto = tr.stats.distance
-				if tr.stats.starttime - t < min_time_plot:
-					min_time_plot = tr.stats.starttime - t
-				if ((tr.stats.starttime - t) + ((len(tr.data)-1) * tr.stats.delta)) > max_time_plot:
-					max_time_plot =  ((tr.stats.starttime - t) + ((len(tr.data)-1) * tr.stats.delta))
 	print('Min distance is ' + str(min_dist_auto) + ' Max distance is ' + str(max_dist_auto))
-	print('Min time is     ' + str(min_time_plot) + ' Max time is     ' + str(max_time_plot))
 
 #%%  This section causes a crash in Spyder
 	# plot traces
 	plt.close(fig_index)
 	plt.figure(fig_index,figsize=(10,10))
-	plt.xlim(min_time_plot,max_time_plot)
+	plt.xlim(start_buff,end_buff)
 
 	if auto_dist == 1:
 		dist_diff = max_dist_auto - min_dist_auto # add space at extremes
@@ -386,87 +387,78 @@ def pro3singlet(eq_file, stat_corr = 0, rel_time = 1, simple_taper = 0, skip_SNR
 			nodata += 1
 			print('Trace ' + tr.stats.station + ' has : ' + str(len(tr.data)) + ' time pts, skip plotting')
 #%% Plot traveltime curves
-	if rel_time != 1:
-		if plot_tt:
-			# first traveltime curve
-			line_pts = 50
-			dist_vec  = np.arange(min_dist_auto, max_dist_auto, (max_dist_auto - min_dist_auto)/line_pts) # distance grid
-			time_vec1 = np.arange(min_dist_auto, max_dist_auto, (max_dist_auto - min_dist_auto)/line_pts) # empty time grid of same length (filled with -1000)
+	if plot_tt:
+		# first traveltime curve
+		line_pts = 50
+		dist_vec  = np.arange(min_dist, max_dist, (max_dist - min_dist)/line_pts) # distance grid
+		time_vec1 = np.arange(min_dist, max_dist, (max_dist - min_dist)/line_pts) # empty time grid of same length (filled with -1000)
+		for i in range(0,line_pts):
+			arrivals = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree
+										=dist_vec[i],phase_list=[dphase])
+			num_arrivals = len(arrivals)
+			found_it = 0
+			for j in range(0,num_arrivals):
+				if arrivals[j].name == dphase:
+					time_vec1[i] = arrivals[j].time
+					found_it = 1
+			if found_it == 0:
+				time_vec1[i] = np.nan
+		# second traveltime curve
+		if dphase2 != 'no':
+			time_vec2 = np.arange(min_dist, max_dist, (max_dist - min_dist)/line_pts) # empty time grid of same length (filled with -1000)
 			for i in range(0,line_pts):
 				arrivals = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree
-											=dist_vec[i],phase_list=[dphase])
+											=dist_vec[i],phase_list=[dphase2])
 				num_arrivals = len(arrivals)
 				found_it = 0
 				for j in range(0,num_arrivals):
-					if arrivals[j].name == dphase:
-						time_vec1[i] = arrivals[j].time
+					if arrivals[j].name == dphase2:
+						time_vec2[i] = arrivals[j].time
 						found_it = 1
 				if found_it == 0:
-					time_vec1[i] = np.nan
-			# second traveltime curve
-			if dphase2 != 'no':
-				time_vec2 = np.arange(min_dist_auto, max_dist_auto, (max_dist_auto - min_dist_auto)/line_pts) # empty time grid of same length (filled with -1000)
-				for i in range(0,line_pts):
-					arrivals = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree
-												=dist_vec[i],phase_list=[dphase2])
-					num_arrivals = len(arrivals)
-					found_it = 0
-					for j in range(0,num_arrivals):
-						if arrivals[j].name == dphase2:
-							time_vec2[i] = arrivals[j].time
-							found_it = 1
-					if found_it == 0:
-						time_vec2[i] = np.nan
-				if   rel_time == 3 or rel_time == 4:
-					time_vec2 = time_vec2 - time_vec1
-				elif rel_time == 2:
-					time_vec2 = time_vec2 - atime_ref
-				plt.plot(time_vec2,dist_vec, color = 'orange')
-			# third traveltime curve
-			if dphase3 != 'no':
-				time_vec3 = np.arange(min_dist_auto, max_dist_auto, (max_dist_auto - min_dist_auto)/line_pts) # empty time grid of same length (filled with -1000)
-				for i in range(0,line_pts):
-					arrivals = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree
-												=dist_vec[i],phase_list=[dphase3])
-					num_arrivals = len(arrivals)
-					found_it = 0
-					for j in range(0,num_arrivals):
-						if arrivals[j].name == dphase3:
-							time_vec3[i] = arrivals[j].time
-							found_it = 1
-					if found_it == 0:
-						time_vec3[i] = np.nan
-				if   rel_time == 3 or rel_time == 4:
-					time_vec2 = time_vec2 - time_vec1
-				elif rel_time == 2:
-					time_vec2 = time_vec2 - atime_ref
-				plt.plot(time_vec3,dist_vec, color = 'yellow')
-			# fourth traveltime curve
-			if dphase4 != 'no':
-				time_vec4 = np.arange(min_dist, max_dist_auto, (max_dist_auto - min_dist)/line_pts) # empty time grid of same length (filled with -1000)
-				for i in range(0,line_pts):
-					arrivals = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree
-												=dist_vec[i],phase_list=[dphase4])
-					num_arrivals = len(arrivals)
-					found_it = 0
-					for j in range(0,num_arrivals):
-						if arrivals[j].name == dphase4:
-							time_vec4[i] = arrivals[j].time
-							found_it = 1
-					if found_it == 0:
-						time_vec4[i] = np.nan
-				if   rel_time == 3 or rel_time == 4:
-					time_vec2 = time_vec2 - time_vec1
-				elif rel_time == 2:
-					time_vec2 = time_vec2 - atime_ref
-				plt.plot(time_vec4,dist_vec, color = 'purple')
+					time_vec2[i] = np.nan
+			if rel_time == 1:
+				time_vec2 = time_vec2 - time_vec1
+			plt.plot(time_vec2,dist_vec, color = 'orange')
+		# third traveltime curve
+		if dphase3 != 'no':
+			time_vec3 = np.arange(min_dist, max_dist, (max_dist - min_dist)/line_pts) # empty time grid of same length (filled with -1000)
+			for i in range(0,line_pts):
+				arrivals = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree
+											=dist_vec[i],phase_list=[dphase3])
+				num_arrivals = len(arrivals)
+				found_it = 0
+				for j in range(0,num_arrivals):
+					if arrivals[j].name == dphase3:
+						time_vec3[i] = arrivals[j].time
+						found_it = 1
+				if found_it == 0:
+					time_vec3[i] = np.nan
+			if rel_time == 1:
+				time_vec3 = time_vec3 - time_vec1
+			plt.plot(time_vec3,dist_vec, color = 'yellow')
+		# fourth traveltime curve
+		if dphase4 != 'no':
+			time_vec4 = np.arange(min_dist, max_dist, (max_dist - min_dist)/line_pts) # empty time grid of same length (filled with -1000)
+			for i in range(0,line_pts):
+				arrivals = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree
+											=dist_vec[i],phase_list=[dphase4])
+				num_arrivals = len(arrivals)
+				found_it = 0
+				for j in range(0,num_arrivals):
+					if arrivals[j].name == dphase4:
+						time_vec4[i] = arrivals[j].time
+						found_it = 1
+				if found_it == 0:
+					time_vec4[i] = np.nan
+			if rel_time == 1:
+				time_vec4 = time_vec4 - time_vec1
+			plt.plot(time_vec4,dist_vec, color = 'purple')
 
-			if   rel_time == 3 or rel_time == 4:
-				time_vec1 = time_vec1 - time_vec1
-			elif rel_time == 2:
-				time_vec1 = time_vec1 - atime_ref
-			plt.plot(time_vec1,dist_vec, color = 'blue')
-			plt.show()
+		if rel_time == 1:
+			time_vec1 = time_vec1 - time_vec1
+		plt.plot(time_vec1,dist_vec, color = 'blue')
+		plt.show()
 
 	plt.xlabel('Time (s)')
 	plt.ylabel('Epicentral distance from event (°)')

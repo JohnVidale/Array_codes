@@ -56,7 +56,7 @@ def pro2_convstf(eq_file, conv_file):
 	   ', ' + str(nt) + ' time pts, time sampling of '
 		  + str(dt) + ' and thus duration of ' + str((nt-1)*dt))
 
-		#%%  detrend, taper, decimate
+		#%%  detrend, taper
 	st.detrend(type='simple')
 	st.taper(taper_frac)
 
@@ -77,7 +77,7 @@ def pro2_convstf(eq_file, conv_file):
 
 	nt = len(st_out[0].data)
 	dt = st_out[0].stats.delta
-	print('After decimation:\n' + str(len(st_out)) + ' traces written to file ' + fname_sel +
+	print('After detrend and taper:\n' + str(len(st_out)) + ' traces written to file ' + fname_sel +
 	   ', ' + str(nt) + ' time pts, time sampling of '
 		  + str(dt) + ' and thus duration of ' + str((nt-1)*dt))
 

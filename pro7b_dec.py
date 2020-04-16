@@ -50,9 +50,9 @@ def pro7dec(eq_file1, eq_file2, decimate_fac = 5, ARRAY = 0):
 	   + str(st[0].stats.delta), ' number of time points is ' + str(len(st[0].data)))
 
 	for i in range(len(st)):  # loop over traces
-		st[i].decimate(decimate_fac)
-		amp_ave[i].decimate(decimate_fac)
-		amp_ratio[i].decimate(decimate_fac)
+		st[i].decimate(decimate_fac, no_filter=True)
+		amp_ave[i].decimate(decimate_fac, no_filter=True)
+		amp_ratio[i].decimate(decimate_fac, no_filter=True)
 
 	elapsed_time_wc = time.time() - start_time_wc
 	print('Decimation took ' + str(elapsed_time_wc) + ' seconds')

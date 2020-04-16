@@ -42,7 +42,7 @@ for ii in station_index:
 print('This event: ' + str(len(stfull)) + ' traces.')
 
 #if do_decimate != 0:
-#	st1.decimate(do_decimate)
+#	st1.decimate(do_decimate, no_filter=True)
 
 os.chdir('/Users/vidale/Documents/PyCode/LASA/Mseed')
 

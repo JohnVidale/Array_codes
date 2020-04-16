@@ -79,9 +79,9 @@ def pro7plotstack3(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
 
 	for i in range(len(tdiff)):  # loop over traces, probably already decimated in previous step, pro7dec
 			if decimate_fac != 0:
-				tdiff[i].decimate(decimate_fac)
-				amp_ave[i].decimate(decimate_fac)
-				amp_ratio[i].decimate(decimate_fac)
+				tdiff[i].decimate(decimate_fac, no_filter=True)
+				amp_ave[i].decimate(decimate_fac, no_filter=True)
+				amp_ratio[i].decimate(decimate_fac, no_filter=True)
 
 	elapsed_time_wc = time.time() - start_time_wc
 	print('Decimation took ' + str(elapsed_time_wc) + ' seconds')

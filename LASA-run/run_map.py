@@ -20,5 +20,5 @@ min_dist = 0
 max_dist = 180
 
 #%% Do it
-map_plot(min_dist = min_dist, max_dist = max_dist)
-#map_slo_plot(min_dist = min_dist, max_dist = max_dist)
+#map_plot(min_dist = min_dist, max_dist = max_dist)
+map_slo_plot(min_dist = min_dist, max_dist = max_dist, plot_J = 0)

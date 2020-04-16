@@ -1,12 +1,9 @@
-#!/usr/bin/env python
-# input is set of LASA traces from NTS event
-# This programs deals with a single event.
-# this program tapers, filters, selects range and SNR
-# plots against traveltime curves, either raw or reduced against traveltimes
-# John Vidale 2/2019
+#!/usr/bin/env python3
+# John Vidale 4/2020
 
 def run_each(start_buff = 980, end_buff = 1180, event_no = 35, min_dist = 0,
-			  max_dist = 180, freq_min = 1, freq_max = 3, slow_delta = 0.001):
+			  max_dist = 180, freq_min = 1, freq_max = 3, slow_delta = 0.0025):
+
 	import os
 	os.environ['PATH'] += os.pathsep + '/usr/local/bin'
 	os.chdir('/Users/vidale/Documents/GitHub/Array_codes')
@@ -20,6 +17,7 @@ def run_each(start_buff = 980, end_buff = 1180, event_no = 35, min_dist = 0,
 	from pro7a_plot_envstack     import pro7plotstack
 	from pro7b_plot_stack        import pro7plotstack2
 	from pro7b_dec               import pro7dec
+	import matplotlib.pyplot as plt
 	os.chdir('/Users/vidale/Documents/PyCode/LASA')
 
 	#%% Common parameters
@@ -30,10 +28,11 @@ def run_each(start_buff = 980, end_buff = 1180, event_no = 35, min_dist = 0,
 	# window
 	#start_buff = 980
 	#end_buff   = 1180
-	slowR_lo   = -0.005
-	slowR_hi   =  0.025
-	slowT_lo   = -0.015
-	slowT_hi   =  0.015
+	NS = 1
+	slowR_lo   = -0.04
+	slowR_hi   =  0.04
+	slowT_lo   = -0.04
+	slowT_hi   =  0.04
 #	slow_delta =  0.0025
 
 	dphase = 'PKiKP'
@@ -44,6 +43,7 @@ def run_each(start_buff = 980, end_buff = 1180, event_no = 35, min_dist = 0,
 	# Full array
 	min_dist = min_dist
 	max_dist = max_dist
+	auto_dist = 1
 
 	ref_loc = 0 # all stations
 	#ref_loc = 1 # only rings A-D
@@ -55,7 +55,7 @@ def run_each(start_buff = 980, end_buff = 1180, event_no = 35, min_dist = 0,
 	slowR_hi_1D = 0.1
 	slow_delta_1D = 0.005
 
-	decimate_fac   =  5
+	decimate_fac   = 10
 	simple_taper   =  1
 	skip_SNR       =  1
 	snaptime = 995.5
@@ -70,7 +70,8 @@ def run_each(start_buff = 980, end_buff = 1180, event_no = 35, min_dist = 0,
 				plot_scale_fac = 0.1, skip_SNR = 1,
 				dphase = dphase, dphase2 = dphase2, dphase3 = dphase3, dphase4 = dphase4,
 				freq_min = freq_min, freq_max = freq_max,
-				min_dist = min_dist, max_dist = max_dist, ref_loc = ref_loc, fig_index = 102)
+				min_dist = min_dist, max_dist = max_dist, auto_dist = auto_dist,
+				ref_loc = ref_loc, fig_index = 102)
 
 	#%% --1D stack
 	pro5stack(ARRAY = ARRAY, eq_file = eq_file, plot_scale_fac = 0.05,
@@ -84,17 +85,22 @@ def run_each(start_buff = 980, end_buff = 1180, event_no = 35, min_dist = 0,
 				slowR_lo = slowR_lo, slowR_hi = slowR_hi, slowT_lo = slowT_lo, slowT_hi = slowT_hi, slow_delta = slow_delta,
 				start_buff = start_buff, end_buff = end_buff,
 				norm = 1, global_norm_plot = 1,
-				ARRAY = ARRAY, decimate_fac = decimate_fac, NS = 0)
+				ARRAY = ARRAY, decimate_fac = decimate_fac, NS = NS)
 
 	#%% --Compare 2D stack results with themselves
 	pro6stacked_seis(eq_file1 = eq_file, eq_file2 = eq_file, plot_scale_fac = 0.003,
 				slowR_lo = slowR_lo, slowR_hi = slowR_hi, slowT_lo = slowT_lo, slowT_hi = slowT_hi, slow_delta = slow_delta,
 				start_buff = start_buff, end_buff = end_buff, freq_corr = freq_corr, ref_phase = dphase,
-				fig_index = 301, plot_dyn_range = 100, ARRAY = ARRAY)
+				fig_index = 301, plot_dyn_range = 100, ARRAY = ARRAY, event_no = event_no)
 
 	#%% --2D envelope stack
-#	pro7plotstack(eq_file = eq_file, plot_scale_fac = 0.05,
-#				slowR_lo = slowR_lo, slowR_hi = slowR_hi, slowT_lo = slowT_lo, slowT_hi = slowT_hi, slow_delta = slow_delta,
-#				start_buff = start_buff, end_buff = end_buff, skip_T = 0, skip_R = 0,
-#				zoom = 0, ZslowR_lo = -0.03, ZslowR_hi = 0.03, ZslowT_lo = -0.03, ZslowT_hi = 0.03, Zstart_buff = 0, Zend_buff = 200,
-#				fig_index = 402, plot_dyn_range = 50, snaptime = snaptime, snaps=snaps, ARRAY = ARRAY)
+	pro7plotstack(eq_file = eq_file, plot_scale_fac = 0.05,
+				slowR_lo = slowR_lo, slowR_hi = slowR_hi, slowT_lo = slowT_lo, slowT_hi = slowT_hi, slow_delta = slow_delta,
+				start_buff = start_buff, end_buff = end_buff, skip_T = 0, skip_R = 0,
+				zoom = 0, ZslowR_lo = -0.03, ZslowR_hi = 0.03, ZslowT_lo = -0.03, ZslowT_hi = 0.03, Zstart_buff = 0, Zend_buff = 200,
+				fig_index = 402, plot_dyn_range = 50, snaptime = snaptime, snaps=snaps, ARRAY = ARRAY)
+
+#	plt.close('all')
+
+	code_directory = '/Users/vidale/Documents/GitHub/Array_codes'
+	os.chdir(code_directory)

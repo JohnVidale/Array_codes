@@ -10,7 +10,8 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0
 			  start_buff = -50, end_buff = 50, norm = 0, freq_corr = 1.0,
 			  plot_dyn_range = 1000, fig_index = 401, get_stf = 0, ref_phase = 'blank',
 			  ARRAY = 0, max_rat = 1.8, min_amp = 0.2, turn_off_black = 0,
-			  R_slow_plot = 0, T_slow_plot = 0, tdiff_clip = 1, event_no = 0):
+			  R_slow_plot = 0, T_slow_plot = 0, tdiff_clip = 1, event_no = 0,
+			  ref_loc = 0, ref_lat = 36.3, ref_lon = 138.5):
 
 	import obspy
 	import obspy.signal
@@ -111,15 +112,35 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0
 		print('Event ' + str(event_no) + ' not found')
 	else:
 		print('Event ' + str(event_no) + ' is ' + str(iii))
+
 	#  find predicted slowness
-	arrivals1 = model.get_travel_times(source_depth_in_km=event_dep[iii],distance_in_degree=event_gcdist[iii]-0.5,phase_list=[dphase])
-	arrivals2 = model.get_travel_times(source_depth_in_km=event_dep[iii],distance_in_degree=event_gcdist[iii]+0.5,phase_list=[dphase])
+	if ref_loc == 0:
+		if ARRAY == 0:
+			ref_lat = 36.3  # °N, around middle of Japan
+			ref_lon = 138.5 # °E
+		elif ARRAY == 1:
+			ref_lat = 46.7  # °N keep only inner rings A-D
+			ref_lon = -106.22   # °E
+		elif ARRAY == 2: # China set and center
+			ref_lat = 38      # °N
+			ref_lon = 104.5   # °E
+	ref_dist_az = gps2dist_azimuth(event_lat[iii],event_lon[iii],ref_lat,ref_lon)
+#	ref_dist    = ref_dist_az[0]/1000  # km
+	ref_back_az = ref_dist_az[2]
+	ref_dist    = ref_dist_az[0]/(1000*111)
+
+#	arrivals1 = model.get_travel_times(source_depth_in_km=event_dep[iii],distance_in_degree=event_gcdist[iii]-0.5,phase_list=[dphase])
+#	arrivals2 = model.get_travel_times(source_depth_in_km=event_dep[iii],distance_in_degree=event_gcdist[iii]+0.5,phase_list=[dphase])
+	arrivals1 = model.get_travel_times(source_depth_in_km=event_dep[iii],distance_in_degree=ref_dist-0.5,phase_list=[dphase])
+	arrivals2 = model.get_travel_times(source_depth_in_km=event_dep[iii],distance_in_degree=ref_dist+0.5,phase_list=[dphase])
 	dtime = arrivals2[0].time - arrivals1[0].time
 	event_pred_slo  = dtime/111.  # s/km
 
 	# convert to pred rslo and tslo
-	sin_baz = np.sin(event_baz[iii] * np.pi /180)
-	cos_baz = np.cos(event_baz[iii] * np.pi /180)
+#	sin_baz = np.sin(event_baz[iii] * np.pi /180)
+#	cos_baz = np.cos(event_baz[iii] * np.pi /180)
+	sin_baz = np.sin(ref_back_az * np.pi /180)
+	cos_baz = np.cos(ref_back_az * np.pi /180)
 	pred_Nslo = event_pred_slo * cos_baz
 	pred_Eslo = event_pred_slo * sin_baz
 
@@ -132,9 +153,8 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0
 #	bazi_rad = np.arctan(event_PKiKP_traslo[ii]/event_PKiKP_radslo[ii])
 #	event_obs_bazi  = event_baz[ii] + (bazi_rad * 180 / np.pi)
 
-	if ARRAY == 1:
-		goto = '/Users/vidale/Documents/PyCode/LASA/EvLocs'
-		os.chdir(goto)
+	goto = '/Users/vidale/Documents/PyCode/EvLocs'
+	os.chdir(goto)
 
 	file = open(eq_file1, 'r')
 	lines=file.readlines()
@@ -151,9 +171,8 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0
 	#%% read files
 	# #%% Get saved event info, also used to name files
 	# date_label = '2018-04-02' # date for filename
-	if ARRAY == 1:
-		goto = '/Users/vidale/Documents/PyCode/LASA/Pro_files'
-		os.chdir(goto)
+	goto = '/Users/vidale/Documents/PyCode/Pro_files'
+	os.chdir(goto)
 	fname1 = 'HD' + date_label1 + '_2dstack.mseed'
 	fname2 = 'HD' + date_label2 + '_2dstack.mseed'
 	st1 = Stream()
@@ -392,16 +411,17 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0
 #	c = ax.pcolormesh(x1, y1, stack_slice/smax, cmap=plt.cm.gist_yarg, vmin = 0.5)
 	c = ax.pcolormesh(x1, y1, stack_slice/smax, cmap=plt.cm.gist_rainbow_r, vmin = 0)
 #	c = ax.pcolormesh(x1, y1, stack_slice, cmap=plt.cm.gist_rainbow_r, vmin = 0)
+	fig.colorbar(c, ax=ax, label='linear amplitude')
 	ax.axis([x1.min(), x1.max(), y1.min(), y1.max()])
 	circle1 = plt.Circle((0, 0), 0.019, color='black', fill=False)
 	ax.add_artist(circle1)  #inner core limit
 	circle2 = plt.Circle((0, 0), 0.040, color='black', fill=False)
 	ax.add_artist(circle2)  #outer core limit
 
-	c = ax.scatter(pred_Eslo, pred_Nslo, color='blue', s=100, alpha=0.75)
-	c = ax.scatter(obs_Eslo, obs_Nslo, color='black', s=100, alpha=0.75)
+	c = ax.scatter(pred_Eslo, pred_Nslo, color='blue'  , s=100, alpha=0.75)
+	c = ax.scatter( obs_Eslo,  obs_Nslo, color='purple', s=100, alpha=0.75)
+	c = ax.scatter(        0,         0, color='black' , s=50,  alpha=0.75)
 
-	fig.colorbar(c, ax=ax)
 	plt.xlabel('Transverse Slowness (s/km)')
 	plt.ylabel('Radial Slowness (s/km)')
 	plt.title(str(event_no) + '  ' + date_label1 + '  ' + ref_phase + ' beam amplitude')
@@ -411,10 +431,7 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0
 	plt.show()
 
 #%%  Save processed files
-	if ARRAY == 0:
-		goto = '/Users/vidale/Documents/PyCode/Hinet'
-	if ARRAY == 1:
-		goto = '/Users/vidale/Documents/PyCode/LASA/Pro_Files'
+	goto = '/Users/vidale/Documents/PyCode/Pro_Files'
 	os.chdir(goto)
 
 	fname = 'HD' + date_label1 + '_' + date_label2 + '_tshift.mseed'

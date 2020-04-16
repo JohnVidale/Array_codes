@@ -5,7 +5,7 @@ Created on Sat March 21 2020
 Compares predicted and observed PKiKP slownesses
 @author: vidale
 """
-def map_slo_plot(min_dist = 0, max_dist = 180):
+def map_slo_plot(min_dist = 0, max_dist = 180, plot_J = 1):
 	import numpy as np
 	import matplotlib.pyplot as plt
 	from obspy.taup import TauPyModel
@@ -14,7 +14,10 @@ def map_slo_plot(min_dist = 0, max_dist = 180):
 	model = TauPyModel(model='iasp91')
 	dphase = 'PKiKP'
 
-	sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/events_best_PKiKP.txt'
+	if plot_J == 0:
+		sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/events_best_PKiKP.txt'
+	else:
+		sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/events_best_PKiKP_J.txt'
 	with open(sta_file, 'r') as file:
 		lines = file.readlines()
 	event_count = len(lines)

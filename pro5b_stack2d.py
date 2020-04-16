@@ -10,7 +10,8 @@
 def pro5stack2d(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 			  slowR_lo = -0.1, slowR_hi = 0.1, slowT_lo = -0.1, slowT_hi = 0.1,
 			  start_buff = -50, end_buff = 50, norm = 1, global_norm_plot = 1,
-			  ARRAY = 0, NS = 0, decimate_fac = 0):
+			  ARRAY = 0, NS = 0, decimate_fac = 0,
+			  ref_loc = 0, ref_lat = 36.3, ref_lon = 138.5):
 
 	from obspy import UTCDateTime
 	from obspy import Stream, Trace
@@ -28,12 +29,9 @@ def pro5stack2d(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 	print('Running pro5b_stack2d')
 	start_time_wc = time.time()
 
-	if ARRAY == 0:
-		file = open(eq_file, 'r')
-	elif ARRAY == 1:
-		goto = '/Users/vidale/Documents/PyCode/LASA/EvLocs'
-		os.chdir(goto)
-		file = open(eq_file, 'r')
+	goto = '/Users/vidale/Documents/PyCode/EvLocs'
+	os.chdir(goto)
+	file = open(eq_file, 'r')
 
 	lines=file.readlines()
 	split_line = lines[0].split()
@@ -49,13 +47,20 @@ def pro5stack2d(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 
 #%% Get location file
 	if ARRAY == 0: # Hinet set
-		sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/hinet_sta.txt'
-		ref_lat = 36.3
-		ref_lon = 138.5
-	else:         # LASA set
-		sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/LASA_sta.txt'
-		ref_lat = 46.69
-		ref_lon = -106.22
+		sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_hinet.txt'
+		if ref_loc == 0:
+			ref_lat = 36.3
+			ref_lon = 138.5
+	elif ARRAY == 1:         # LASA set
+		sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_LASA.txt'
+		if ref_loc == 0:
+			ref_lat = 46.69
+			ref_lon = -106.22
+	elif ARRAY == 2: # China set and center
+		sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_ch.txt'
+		if ref_loc == 0:
+			ref_lat = 38      # °N
+			ref_lon = 104.5   # °E
 	with open(sta_file, 'r') as file:
 		lines = file.readlines()
 	print(str(len(lines)) + ' stations read from ' + sta_file)
@@ -74,9 +79,8 @@ def pro5stack2d(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 #%% Input parameters
 	# date_label = '2018-04-02' # date for filename
 	fname = 'HD' + date_label + 'sel.mseed'
-	if ARRAY == 1:
-		goto = '/Users/vidale/Documents/PyCode/LASA/Pro_Files'
-		os.chdir(goto)
+	goto = '/Users/vidale/Documents/PyCode/Pro_Files'
+	os.chdir(goto)
 
 	st = Stream()
 	st = read(fname)
@@ -118,7 +122,8 @@ def pro5stack2d(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 	ref_dist_az = gps2dist_azimuth(ev_lat,ev_lon,ref_lat,ref_lon)
 #	ref_dist    = ref_dist_az[0]/1000  # km
 	ref_back_az = ref_dist_az[2]
-#	print(f'Ref location {ref_lat:.4f} , {ref_lon:.4f}, event location {ev_lat:.4f}  {ev_lon:.4f} ref_back_az  {ref_back_az:.1f}°')
+	ref_dist    = ref_dist_az[0]/(1000*111)
+	print(f'Ref location {ref_lat:.4f} , {ref_lon:.4f}, event location {ev_lat:.4f}  {ev_lon:.4f} ref_back_az  {ref_back_az:.1f} ref_dist  {ref_dist:.1f}°')
 
 #%% select by distance, window and adjust start time to align picked times
 	done = 0
@@ -128,7 +133,7 @@ def pro5stack2d(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 				this_name = st_names[ii]
 				this_name_truc = this_name[0:5]
 				name_truc_cap  = this_name_truc.upper()
-			elif ARRAY == 1:
+			elif ARRAY == 1 or ARRAY == 2:
 				name_truc_cap = st_names[ii]
 			if (tr.stats.station == name_truc_cap): # find station in inventory
 #			if (tr.stats.station == st_names[ii]): # found station in inventory
@@ -169,7 +174,7 @@ def pro5stack2d(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 			indx = slowR_i*slowT_n + slowT_i
 			stack[indx].data = np.abs(hilbert(stack[indx].data))
 			if decimate_fac != 0:
-				stack[indx].decimate(decimate_fac)
+				stack[indx].decimate(decimate_fac, no_filter=True)
 
 #%%  Save processed files
 	fname = 'HD' + date_label + '_2dstack_env.mseed'

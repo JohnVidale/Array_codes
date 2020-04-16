@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# this program only detrends, tapers and decimates
+# this program convolves
 # John Vidale 2/2019
 
 def pro2_test(eq_file1, conv_file1, eq_file2, conv_file2):
