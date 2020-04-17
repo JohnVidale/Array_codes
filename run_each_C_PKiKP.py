@@ -14,7 +14,8 @@ def run_each(start_buff = 980, end_buff = 1180, event_no = 35, min_dist = 0,
 	from pro3b_sort_plot_singlet import pro3singlet
 	from pro5a_stack             import pro5stack
 	from pro5b_stack2d           import pro5stack2d
-	from pro6_plot_stacked_seis  import pro6stacked_seis
+	from pro6_plot_pair          import pro6stacked_seis
+	from pro6_plot_singlet       import pro6stacked_singlet
 	from pro7a_plot_envstack     import pro7plotstack
 	from pro7b_plot_stack        import pro7plotstack2
 	from pro7b_dec               import pro7dec
@@ -34,7 +35,7 @@ def run_each(start_buff = 980, end_buff = 1180, event_no = 35, min_dist = 0,
 	freq_min = 1
 	freq_max = 3
 
-	rel_time = 1   # phase alignment details
+	rel_time = 3   # phase alignment details
 #	rel_time == 0  window in absolute time after origin time
 #	rel_time == 1  each window has a distinct phase-chose shift, but time offset is common to all stations
 #	rel_time == 2  each station has an individual, chosen-phase shift, phase arrival set to common time
@@ -52,7 +53,7 @@ def run_each(start_buff = 980, end_buff = 1180, event_no = 35, min_dist = 0,
 	slowR_hi   =  0.03
 	slowT_lo   = -0.03
 	slowT_hi   =  0.03
-	slow_delta =  0.003
+	slow_delta =  0.001
 
 	slowR_lo_1D = -0.03
 	slowR_hi_1D =  0.03
@@ -81,23 +82,23 @@ def run_each(start_buff = 980, end_buff = 1180, event_no = 35, min_dist = 0,
 
 	# decimate, in 100 sps, out 10 sps
 	#pro2_decimate(eq_file, decimate_fac = decimate_fac)
-
+#
 #	pro2_decimate(eq_file, decimate_fac = 1, ARRAY = ARRAY)
+#
+	pro3singlet(ARRAY = ARRAY, stat_corr = stat_corr, eq_file = eq_file, simple_taper = simple_taper,
+				rel_time = rel_time, start_buff = start_buff, end_buff = end_buff,
+				plot_scale_fac = 0.1, skip_SNR = skip_SNR,
+				dphase = dphase, dphase2 = dphase2, dphase3 = dphase3, dphase4 = dphase4,
+				freq_min = freq_min, freq_max = freq_max,
+				min_dist = min_dist, max_dist = max_dist, auto_dist = auto_dist,
+				qual_threshold = qual_threshold, corr_threshold = corr_threshold,
+				ref_loc = ref_loc, ref_rad = ref_rad, fig_index = 102, JST = 0)
 
-#	pro3singlet(ARRAY = ARRAY, stat_corr = stat_corr, eq_file = eq_file, simple_taper = simple_taper,
-#				rel_time = rel_time, start_buff = start_buff, end_buff = end_buff,
-#				plot_scale_fac = 0.1, skip_SNR = skip_SNR,
-#				dphase = dphase, dphase2 = dphase2, dphase3 = dphase3, dphase4 = dphase4,
-#				freq_min = freq_min, freq_max = freq_max,
-#				min_dist = min_dist, max_dist = max_dist, auto_dist = auto_dist,
-#				qual_threshold = qual_threshold, corr_threshold = corr_threshold,
-#				ref_loc = ref_loc, ref_rad = ref_rad, fig_index = 102, JST = 0)
-
-#	pro5stack(ARRAY = ARRAY, eq_file = eq_file, plot_scale_fac = 0.05,
-#				slowR_lo = slowR_lo_1D, slowR_hi = slowR_hi_1D, slow_delta = slow_delta_1D,
-#				start_buff = start_buff, end_buff = end_buff,
-#				log_plot = 0, envelope = 1, plot_dyn_range = 50, event_no = event_no,
-#				norm = 1, global_norm_plot = 1, color_plot = 1, fig_index = 302)
+	pro5stack(ARRAY = ARRAY, eq_file = eq_file, plot_scale_fac = 0.05, stack_option = 0,
+				slowR_lo = slowR_lo_1D, slowR_hi = slowR_hi_1D, slow_delta = slow_delta_1D,
+				start_buff = start_buff, end_buff = end_buff,
+				log_plot = 0, envelope = 1, plot_dyn_range = 50, event_no = event_no,
+				norm = 1, global_norm_plot = 1, color_plot = 1, fig_index = 302)
 
 	#%%  --2D stacks
 	pro5stack2d(eq_file = eq_file, plot_scale_fac = 0.05,
@@ -106,10 +107,10 @@ def run_each(start_buff = 980, end_buff = 1180, event_no = 35, min_dist = 0,
 				norm = 1, global_norm_plot = 1,
 				ARRAY = ARRAY, decimate_fac = decimate_fac, NS = NS)
 
-	#%% --Compare pair of 2D stack results
-	pro6stacked_seis(eq_file1 = eq_file, eq_file2 = eq_file, plot_scale_fac = 0.003,
+	#%% --Look at 2D stack results
+	pro6stacked_singlet(eq_file = eq_file, plot_scale_fac = 0.003, NS = NS,
 				slowR_lo = slowR_lo, slowR_hi = slowR_hi, slowT_lo = slowT_lo, slowT_hi = slowT_hi, slow_delta = slow_delta,
-				start_buff = start_buff, end_buff = end_buff, freq_corr = freq_corr, ref_phase = ref_phase,
+				start_buff = start_buff, end_buff = end_buff, ref_phase = ref_phase,
 				fig_index = 301, plot_dyn_range = 100, ARRAY = ARRAY, event_no = event_no)
 
 	#%% --2D envelop stack results for individual events

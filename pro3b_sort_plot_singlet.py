@@ -471,7 +471,7 @@ def pro3singlet(eq_file, stat_corr = 0, rel_time = 1, simple_taper = 0, skip_SNR
 	plt.xlabel('Time (s)')
 	plt.ylabel('Epicentral distance from event (°)')
 	plt.title(dphase + ' for ' + date_label + ' event # ' + str(event_no))
-	os.chdir('/Users/vidale/Documents/PyCode/LASA/Quake_results/Plots')
+	os.chdir('/Users/vidale/Documents/PyCode/Plots')
 #	plt.savefig(date_label + '_' + str(event_no) + '_raw.png')
 	plt.show()
 
