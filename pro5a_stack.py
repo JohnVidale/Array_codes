@@ -7,7 +7,7 @@
 # saves 1D stack "_1Dstack.mseed"
 # John Vidale 2/2019
 
-def pro5stack(eq_file, plot_scale_fac = 0.05, slowR_lo = -0.1, slowR_hi = 0.1,
+def pro5stack(eq_file, plot_scale_fac = 0.05, slowR_lo = -0.1, slowR_hi = 0.1, stack_option = 1,
 			  slow_delta = 0.0005, start_buff = -50, end_buff = 50, event_no = 5,
 			  ref_lat = 36.3, ref_lon = 138.5, ref_loc = 0, envelope = 1, plot_dyn_range = 1000,
 			  log_plot = 1, norm = 1, global_norm_plot = 1, color_plot = 1, fig_index = 401, ARRAY = 0):
@@ -138,31 +138,38 @@ def pro5stack(eq_file, plot_scale_fac = 0.05, slowR_lo = -0.1, slowR_hi = 0.1,
 			if (tr.stats.station == name_truc_cap): # find station in inventory
 				if norm == 1:
 					tr.normalize()
-#					tr.normalize(norm= -len(st)) # mystery command or error
 				stalat = float(st_lats[ii])
 				stalon = float(st_lons[ii]) # look up lat & lon again to find distance
 				distance = gps2dist_azimuth(stalat,stalon,ev_lat,ev_lon) # Get traveltimes again, hard to store
 				tr.stats.distance=distance[0] # distance in m
 				del_dist = (ref_distance[0] - distance[0])/(1000) # in km
-				# ALSO NEEDS distance station - hypocenter calculation
-				#isolate components of distance in radial and transverse directions, ref_distR & ref_distT
-				# FIX ref_distR = distance*cos(azi-backazi)
-				# FIX ref_distT = distance*sin(azi-backazi)
-	#			for(k=0;k<nslow;k++){
-	#				slow = 110.*(LOWSLOW + k*DELTASLOW);
+
+#			for(k=0;k<nslow;k++){
+#				slow = 110.*(LOWSLOW + k*DELTASLOW);
 				for slow_i in range(slow_n):  # for this station, loop over slownesses
 					time_lag = -del_dist * stack_slows[slow_i]  # time shift due to slowness, flipped to match 2D
-#					start_offset = tr.stats.starttime - t
-#					time_correction = (start_buff - (start_offset + time_lag))/dt
 					time_correction = ((t-tr.stats.starttime) + (time_lag + start_buff))/dt
-	#				print('Time lag ' + str(time_lag) + ' for slowness ' + str(stack_slows[slow_i]) + ' and distance ' + str(del_dist) + ' time sample correction is ' + str(time_correction))
-					for it in range(stack_nt):  # check points one at a time
-						it_in = int(it + time_correction)
-						if it_in >= 0 and it_in < nt - 1: # does data lie within seismogram?
-							stack[slow_i].data[it] += tr[it_in]
+
+					arr = tr.data
+					nshift = int(time_correction)
+					if time_correction < 0:
+						nshift = nshift-1
+					if nshift <= 0:
+						nbeg1 = -nshift
+						nend1 = stack_nt
+						nbeg2 = 0
+						nend2 = stack_nt + nshift;
+					elif nshift > 0:
+						nbeg1 = 0
+						nend1 = stack_nt - nshift
+						nbeg2 = nshift
+						nend2 = stack_nt
+					stack[slow_i].data[nbeg1:nend1] += arr[nbeg2:nend2]
+
 				done += 1
-				if done%50 == 0:
+				if done % 50 == 0:
 					print('Done stacking ' + str(done) + ' out of ' + str(len(st)) + ' stations.')
+
 #%% Plot traces
 	global_max = 0
 	for slow_i in range(slow_n): # find global max, and if requested, take envelope
@@ -225,7 +232,7 @@ def pro5stack(eq_file, plot_scale_fac = 0.05, slowR_lo = -0.1, slowR_hi = 0.1,
 	plt.xlabel('Time (s)')
 	plt.ylabel('Slowness (s/km)')
 	plt.title(str(event_no) + '  ' + date_label)
-	os.chdir('/Users/vidale/Documents/PyCode/LASA/Quake_results/Plots')
+	os.chdir('/Users/vidale/Documents/PyCode/Plots')
 	plt.savefig(date_label + '_' + str(start_buff) + '_' + str(end_buff) + '_1D.png')
 	plt.show()
 

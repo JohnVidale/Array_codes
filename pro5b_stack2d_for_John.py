@@ -7,11 +7,17 @@
 # saves 2D stack "_2Dstack.mseed" and envelope of 2D stack "_2Dstack_env.mseed"
 # John Vidale 2/2019
 
+# add one input option:
+#   stack_option: 0 is original
+#                 1 is improved
+
+# I do not change other thing, only the stacking one,because you use your own path in your computer.
+# You can test it with your data to check it.
+
 def pro5stack2d(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 			  slowR_lo = -0.1, slowR_hi = 0.1, slowT_lo = -0.1, slowT_hi = 0.1,
 			  start_buff = -50, end_buff = 50, norm = 1, global_norm_plot = 1,
-			  ARRAY = 0, NS = 0, decimate_fac = 0,
-			  ref_loc = 0, ref_lat = 36.3, ref_lon = 138.5):
+			  ARRAY = 0, NS = 0, decimate_fac = 0, stack_option=1):
 
 	from obspy import UTCDateTime
 	from obspy import Stream, Trace
@@ -29,9 +35,12 @@ def pro5stack2d(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 	print('Running pro5b_stack2d')
 	start_time_wc = time.time()
 
-	goto = '/Users/vidale/Documents/PyCode/EvLocs'
-	os.chdir(goto)
-	file = open(eq_file, 'r')
+	if ARRAY == 0:
+		file = open(eq_file, 'r')
+	elif ARRAY == 1:
+		goto = '/Users/vidale/Documents/PyCode/LASA/EvLocs'
+		os.chdir(goto)
+		file = open(eq_file, 'r')
 
 	lines=file.readlines()
 	split_line = lines[0].split()
@@ -47,20 +56,13 @@ def pro5stack2d(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 
 #%% Get location file
 	if ARRAY == 0: # Hinet set
-		sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_hinet.txt'
-		if ref_loc == 0:
-			ref_lat = 36.3
-			ref_lon = 138.5
-	elif ARRAY == 1:         # LASA set
-		sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_LASA.txt'
-		if ref_loc == 0:
-			ref_lat = 46.69
-			ref_lon = -106.22
-	elif ARRAY == 2: # China set and center
-		sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_ch.txt'
-		if ref_loc == 0:
-			ref_lat = 38      # °N
-			ref_lon = 104.5   # °E
+		sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/hinet_sta.txt'
+		ref_lat = 36.3
+		ref_lon = 138.5
+	else:         # LASA set
+		sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/LASA_sta.txt'
+		ref_lat = 46.69
+		ref_lon = -106.22
 	with open(sta_file, 'r') as file:
 		lines = file.readlines()
 	print(str(len(lines)) + ' stations read from ' + sta_file)
@@ -79,8 +81,9 @@ def pro5stack2d(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 #%% Input parameters
 	# date_label = '2018-04-02' # date for filename
 	fname = 'HD' + date_label + 'sel.mseed'
-	goto = '/Users/vidale/Documents/PyCode/Pro_Files'
-	os.chdir(goto)
+	if ARRAY == 1:
+		goto = '/Users/vidale/Documents/PyCode/LASA/Pro_Files'
+		os.chdir(goto)
 
 	st = Stream()
 	st = read(fname)
@@ -155,21 +158,26 @@ def pro5stack2d(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 						time_correction = ((t-tr.stats.starttime) + (time_lag + start_buff))/dt
 						indx = int(slowR_i*slowT_n + slowT_i)
 
-						arr = tr.data
-						nshift = int(time_correction)
-						if time_correction < 0:
-							nshift = nshift - 1
-						if nshift <= 0:
-							nbeg1 = -nshift
-							nend1 = stack_nt
-							nbeg2 = 0
-							nend2 = stack_nt + nshift;
-						elif nshift > 0:
-							nbeg1 = 0
-							nend1 = stack_nt - nshift
-							nbeg2 = nshift
-							nend2 = stack_nt
-						stack[indx].data[nbeg1 : nend1] += arr[nbeg2 : nend2]
+						if stack_option == 0:
+							for it in range(stack_nt):  # check points one at a time
+								it_in = int(it + time_correction)
+								if it_in >= 0 and it_in < nt - 2: # does data lie within seismogram?
+									stack[indx].data[it] += tr[it_in]
+
+						if stack_option == 1:
+							arr=tr.data
+							nshift=int(time_correction)
+							if time_correction<0:
+								nshift=nshift-1
+							if nshift<=0:
+								nbeg1=-nshift; nend1=stack_nt
+								nbeg2=0; nend2=stack_nt+nshift;
+
+							elif nshift>0:
+								nbeg1=0; nend1=stack_nt-nshift
+								nbeg2=nshift; nend2=stack_nt
+							stack[slowT_i].data[nbeg1:nend1] += arr[nbeg2:nend2]
+
 				done += 1
 				if done%20 == 0:
 					print('Done stacking ' + str(done) + ' out of ' + str(len(st)) + ' stations.')

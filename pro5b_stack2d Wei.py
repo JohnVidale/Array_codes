@@ -11,7 +11,7 @@ def pro5stack2d(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 			  slowR_lo = -0.1, slowR_hi = 0.1, slowT_lo = -0.1, slowT_hi = 0.1,
 			  start_buff = -50, end_buff = 50, norm = 1, global_norm_plot = 1,
 			  ARRAY = 0, NS = 0, decimate_fac = 0,
-			  ref_loc = 0, ref_lat = 36.3, ref_lon = 138.5):
+			  ref_loc = 0, ref_lat = 36.3, ref_lon = 138.5, stack_option = 1):
 
 	from obspy import UTCDateTime
 	from obspy import Stream, Trace
@@ -155,21 +155,30 @@ def pro5stack2d(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 						time_correction = ((t-tr.stats.starttime) + (time_lag + start_buff))/dt
 						indx = int(slowR_i*slowT_n + slowT_i)
 
-						arr = tr.data
-						nshift = int(time_correction)
-						if time_correction < 0:
-							nshift = nshift - 1
-						if nshift <= 0:
-							nbeg1 = -nshift
-							nend1 = stack_nt
-							nbeg2 = 0
-							nend2 = stack_nt + nshift;
-						elif nshift > 0:
-							nbeg1 = 0
-							nend1 = stack_nt - nshift
-							nbeg2 = nshift
-							nend2 = stack_nt
-						stack[indx].data[nbeg1 : nend1] += arr[nbeg2 : nend2]
+						if stack_option == 0:
+							for it in range(stack_nt):  # check points one at a time
+								it_in = int(it + time_correction)
+								if it_in >= 0 and it_in < nt - 2: # does data lie within seismogram?
+									# should be 1, not 2, but 2 prevents the problem "index XX is out of bounds for axis 0 with size XX"
+									stack[indx].data[it] += tr[it_in]
+
+						if stack_option == 1:
+							arr = tr.data
+							nshift = int(time_correction)
+							if time_correction < 0:
+								nshift = nshift - 1
+							if nshift <= 0:
+								nbeg1 = -nshift
+								nend1 = stack_nt
+								nbeg2 = 0
+								nend2 = stack_nt + nshift;
+							elif nshift > 0:
+								nbeg1 = 0
+								nend1 = stack_nt - nshift
+								nbeg2 = nshift
+								nend2 = stack_nt
+							stack[indx].data[nbeg1 : nend1] += arr[nbeg2 : nend2]
+
 				done += 1
 				if done%20 == 0:
 					print('Done stacking ' + str(done) + ' out of ' + str(len(st)) + ' stations.')

@@ -353,7 +353,7 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0
 	plt.xlabel('Time (s)')
 	plt.ylabel('T Slowness (s/km)')
 	plt.title(str(event_no) + '  ' + date_label1 + '  ' +ref_phase + ' seismograms and tdiff ' + str(R_slow_plot) + ' R slowness, green is event1, red is event2')
-	os.chdir('/Users/vidale/Documents/PyCode/LASA/Quake_results/Plots')
+	os.chdir('/Users/vidale/Documents/PyCode/Plots')
 #	plt.savefig(date_label1 + '_' + str(start_buff) + '_' + str(end_buff) + '_stack.png')
 
 #%% R-T tshift averaged over time window
@@ -426,7 +426,7 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0
 	plt.ylabel('Radial Slowness (s/km)')
 	plt.title(str(event_no) + '  ' + date_label1 + '  ' + ref_phase + ' beam amplitude')
 #	plt.title('Beam amplitude ' + date_label1 + ' ' + date_label2)
-	os.chdir('/Users/vidale/Documents/PyCode/LASA/Quake_results/Plots')
+	os.chdir('/Users/vidale/Documents/PyCode/Plots')
 	plt.savefig(date_label1 + '_' + str(start_buff) + '_' + str(end_buff) + '_beam.png')
 	plt.show()
 

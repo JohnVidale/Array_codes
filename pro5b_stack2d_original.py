@@ -120,7 +120,10 @@ def pro5stack2d(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 
 	#  Only need to compute ref location to event distance once
 	ref_dist_az = gps2dist_azimuth(ev_lat,ev_lon,ref_lat,ref_lon)
+#	ref_dist    = ref_dist_az[0]/1000  # km
 	ref_back_az = ref_dist_az[2]
+	ref_dist    = ref_dist_az[0]/(1000*111)
+	print(f'Ref location {ref_lat:.4f} , {ref_lon:.4f}, event location {ev_lat:.4f}  {ev_lon:.4f} ref_back_az  {ref_back_az:.1f} ref_dist  {ref_dist:.1f}°')
 
 #%% select by distance, window and adjust start time to align picked times
 	done = 0
@@ -133,6 +136,7 @@ def pro5stack2d(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 			elif ARRAY == 1 or ARRAY == 2:
 				name_truc_cap = st_names[ii]
 			if (tr.stats.station == name_truc_cap): # find station in inventory
+#			if (tr.stats.station == st_names[ii]): # found station in inventory
 				if norm == 1:
 					tr.normalize() # trace divided abs(max of trace)
 				stalat = float(st_lats[ii])
@@ -141,6 +145,7 @@ def pro5stack2d(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 				rel_dist    = rel_dist_az[0]/1000  # km
 				rel_back_az = rel_dist_az[1]       # radians
 
+#				print(f'Sta lat-lon {stalat:.4f}  {stalon:.4f}')
 				if NS == 0:
 					del_distR = rel_dist * math.cos((rel_back_az - ref_back_az)* math.pi/180)
 					del_distT = rel_dist * math.sin((rel_back_az - ref_back_az)* math.pi/180)
@@ -154,22 +159,11 @@ def pro5stack2d(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 						time_lag += del_distT * stack_Tslows[slowT_i]  # time shift due to transverse slowness
 						time_correction = ((t-tr.stats.starttime) + (time_lag + start_buff))/dt
 						indx = int(slowR_i*slowT_n + slowT_i)
-
-						arr = tr.data
-						nshift = int(time_correction)
-						if time_correction < 0:
-							nshift = nshift - 1
-						if nshift <= 0:
-							nbeg1 = -nshift
-							nend1 = stack_nt
-							nbeg2 = 0
-							nend2 = stack_nt + nshift;
-						elif nshift > 0:
-							nbeg1 = 0
-							nend1 = stack_nt - nshift
-							nbeg2 = nshift
-							nend2 = stack_nt
-						stack[indx].data[nbeg1 : nend1] += arr[nbeg2 : nend2]
+						for it in range(stack_nt):  # check points one at a time
+							it_in = int(it + time_correction)
+							if it_in >= 0 and it_in < nt - 2: # does data lie within seismogram?
+								# should be 1, not 2, but 2 prevents the problem "index XX is out of bounds for axis 0 with size XX"
+								stack[indx].data[it] += tr[it_in]
 				done += 1
 				if done%20 == 0:
 					print('Done stacking ' + str(done) + ' out of ' + str(len(st)) + ' stations.')
