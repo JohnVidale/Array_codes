@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 # John Vidale 4/2020
 
-def run_eachPKiKP(start_buff = 980, end_buff = 1180, event_no = 35, min_dist = 0,
+def run_each_C_PcP(start_buff = 980, end_buff = 1180, event_no = 35, min_dist = 0,
 			  max_dist = 180, freq_min = 1, freq_max = 3, slow_delta = 0.001,
-			  start_beam = 0, end_beam = 0, dphase  = 'PKiKP'):
+			  dphase  = 'PcP', start_beam = 0, end_beam = 0):
 
 	import os
 	os.environ['PATH'] += os.pathsep + '/usr/local/bin'
 	os.chdir('/Users/vidale/Documents/GitHub/Array_codes')
 
 	#%% Import functions
+	from pro2_dec import pro2_decimate
 	from pro3b_sort_plot_singlet import pro3singlet
 	from pro5a_stack             import pro5stack
 	from pro5b_stack2d           import pro5stack2d
@@ -20,11 +21,11 @@ def run_eachPKiKP(start_buff = 980, end_buff = 1180, event_no = 35, min_dist = 0
 	import matplotlib.pyplot as plt
 
 	#%% Common parameters
-	ev_directory = '/Users/vidale/Documents/PyCode/Hinet/Tian_events'
-	os.chdir(ev_directory)
+#	ev_directory = '/Users/vidale/Documents/PyCode/Hinet/Tian_events'
+#	os.chdir(ev_directory)
 
 	eq_file   = 'event' + str(event_no) + '.txt'
-	ARRAY     = 0
+	ARRAY     = 2
 
 	freq_min = 1
 	freq_max = 3
@@ -37,24 +38,21 @@ def run_eachPKiKP(start_buff = 980, end_buff = 1180, event_no = 35, min_dist = 0
 #	rel_time == 4  use same window around chosen phase for all stations, using ref distance
 
 	ref_loc  = 0   # 0 select stations by distance from epicenter, 1 select stations by distance from ref location
-	ref_rad  = 0.3 # radius of stations around ref_loc chosen
-	ref_lat = 36
-	ref_lon = 138
-	NS       = 1   # 0 plot slowness R-T, 1 plot slowness N-S
+	ref_rad  = 0.75 # radius of stations around ref_loc chosen
 
 	auto_dist = 1  #  automatically plot only real distance range
 	min_dist = 0
 	max_dist = 180
 
-	slowR_lo   = -0.01
-	slowR_hi   =  0.01
-	slowT_lo   = -0.01
-	slowT_hi   =  0.01
-	slow_delta =  0.0005
+	slowR_lo   = -0.05
+	slowR_hi   =  0.05
+	slowT_lo   = -0.05
+	slowT_hi   =  0.05
+	slow_delta =  0.001
 
-	slowR_lo_1D = -0.02
-	slowR_hi_1D =  0.02
-	slow_delta_1D = 0.001
+	slowR_lo_1D = -0.05
+	slowR_hi_1D =  0.05
+	slow_delta_1D = 0.0005
 
 	decimate_fac   =  10
 	simple_taper   =  1
@@ -62,13 +60,13 @@ def run_eachPKiKP(start_buff = 980, end_buff = 1180, event_no = 35, min_dist = 0
 	freq_corr = 1.2
 
 	stat_corr      = 1
-	corr_threshold = 0.6
+	corr_threshold = 0.0
 	skip_SNR       = 1
 	qual_threshold = 1.5
 
 #	dphase  = 'PKiKP'
 	dphase2 = 'PP'
-	dphase3 = 'PcP'
+	dphase3 = 'P'
 	dphase4 = 'sP'
 
 	#%% Singlets
@@ -78,7 +76,9 @@ def run_eachPKiKP(start_buff = 980, end_buff = 1180, event_no = 35, min_dist = 0
 
 	# decimate, in 100 sps, out 10 sps
 	#pro2_decimate(eq_file, decimate_fac = decimate_fac)
-
+#
+#	pro2_decimate(eq_file, decimate_fac = 1, ARRAY = ARRAY)
+#
 	pro3singlet(ARRAY = ARRAY, stat_corr = stat_corr, eq_file = eq_file, simple_taper = simple_taper,
 				rel_time = rel_time, start_buff = start_buff, end_buff = end_buff,
 				plot_scale_fac = 0.1, skip_SNR = skip_SNR,
@@ -86,33 +86,33 @@ def run_eachPKiKP(start_buff = 980, end_buff = 1180, event_no = 35, min_dist = 0
 				freq_min = freq_min, freq_max = freq_max,
 				min_dist = min_dist, max_dist = max_dist, auto_dist = auto_dist,
 				qual_threshold = qual_threshold, corr_threshold = corr_threshold,
-				ref_loc = ref_loc, ref_rad = ref_rad, fig_index = 102, JST = 1)
+				ref_loc = ref_loc, ref_rad = ref_rad, fig_index = 102, JST = 0)
 
-	pro5stack(ARRAY = ARRAY, eq_file = eq_file, plot_scale_fac = 0.05,
-				slowR_lo = slowR_lo_1D, slowR_hi = slowR_hi_1D, slow_delta = slow_delta_1D,
-				start_buff = start_buff, end_buff = end_buff,
-				log_plot = 0, envelope = 1, plot_dyn_range = 50,
-				norm = 1, global_norm_plot = 1, color_plot = 1, fig_index = 302)
+#	pro5stack(ARRAY = ARRAY, eq_file = eq_file, plot_scale_fac = 0.05, stack_option = 0,
+#				slowR_lo = slowR_lo_1D, slowR_hi = slowR_hi_1D, slow_delta = slow_delta_1D,
+#				start_buff = start_buff, end_buff = end_buff,
+#				log_plot = 0, envelope = 1, plot_dyn_range = 50, event_no = event_no,
+#				norm = 1, global_norm_plot = 1, color_plot = 1, fig_index = 302)
 
 	#%%  --2D stacks
-	pro5stack2d(eq_file = eq_file, plot_scale_fac = 0.05,
-				slowR_lo = slowR_lo, slowR_hi = slowR_hi, slowT_lo = slowT_lo, slowT_hi = slowT_hi, slow_delta = slow_delta,
-				start_buff = start_buff, end_buff = end_buff,
-				norm = 1, global_norm_plot = 1,
-				ARRAY = ARRAY, decimate_fac = decimate_fac, NS = NS)
+#	pro5stack2d(eq_file = eq_file, plot_scale_fac = 0.05,
+#				slowR_lo = slowR_lo, slowR_hi = slowR_hi, slowT_lo = slowT_lo, slowT_hi = slowT_hi, slow_delta = slow_delta,
+#				start_buff = start_buff, end_buff = end_buff,
+#				norm = 1, global_norm_plot = 1,
+#				ARRAY = ARRAY, decimate_fac = decimate_fac, NS = 1)
 
-	#%% --Compare pair of 2D stack results
-	pro6stacked_singlet(eq_file = eq_file, plot_scale_fac = 0.003,
+	#%% --Look at 2D stack results in NS
+	pro6stacked_singlet(eq_file = eq_file, plot_scale_fac = 0.003, NS = 1,
 				slowR_lo = slowR_lo, slowR_hi = slowR_hi, slowT_lo = slowT_lo, slowT_hi = slowT_hi, slow_delta = slow_delta,
-				start_buff = start_buff, end_buff = end_buff, R_slow_plot = 0, T_slow_plot = 0, dphase = dphase,
-				fig_index = 301, plot_dyn_range = 100, ARRAY = ARRAY, event_no = event_no, start_beam = start_beam, end_beam = end_beam)
+				dphase = dphase, start_buff = start_buff, end_buff = end_buff, start_beam = start_beam, end_beam = end_beam,
+				fig_index = 301, plot_dyn_range = 100, ARRAY = ARRAY, event_no = event_no)
 
 	#%% --2D envelop stack results for individual events
-	#pro7plotstack(eq_file = eq_file, plot_scale_fac = 0.05,
-	#			slowR_lo = slowR_lo, slowR_hi = slowR_hi, slowT_lo = slowT_lo, slowT_hi = slowT_hi, slow_delta = slow_delta,
-	#			start_buff = start_buff, end_buff = end_buff, skip_T = 1, skip_R = 0,
-	#			zoom = 0, ZslowR_lo = -0.03, ZslowR_hi = 0.03, ZslowT_lo = -0.03, ZslowT_hi = 0.03, Zstart_buff = 0, Zend_buff = 200,
-	#			fig_index = 401, plot_dyn_range = 50, snaptime = snaptime, snaps=1, ARRAY = ARRAY)
+#	pro7plotstack(eq_file = eq_file, plot_scale_fac = 0.05,
+#				slowR_lo = slowR_lo, slowR_hi = slowR_hi, slowT_lo = slowT_lo, slowT_hi = slowT_hi, slow_delta = slow_delta,
+#				start_buff = start_buff, end_buff = end_buff, skip_T = 1, skip_R = 0,
+#				zoom = 0, ZslowR_lo = -0.03, ZslowR_hi = 0.03, ZslowT_lo = -0.03, ZslowT_hi = 0.03, Zstart_buff = 0, Zend_buff = 200,
+#				fig_index = 401, plot_dyn_range = 50, snaptime = snaptime, snaps=1, ARRAY = ARRAY)
 
 	#%% Pairs
 
@@ -162,7 +162,7 @@ def run_eachPKiKP(start_buff = 980, end_buff = 1180, event_no = 35, min_dist = 0
 	#%% --Compare pair of 2D stack results
 	#pro6stacked_seis(eq_file1 = eq_file1, eq_file2 = eq_file2, plot_scale_fac = 0.003,
 	#			slowR_lo = slowR_lo, slowR_hi = slowR_hi, slowT_lo = slowT_lo, slowT_hi = slowT_hi, slow_delta = slow_delta,
-	#			start_buff = start_buff, end_buff = end_buff, freq_corr = freq_corr, ref_phase = ref_phase,
+	#			start_buff = start_buff, end_buff = end_buff, freq_corr = freq_corr, dphase = dphase,
 	#			fig_index = 301, plot_dyn_range = 100, ARRAY = ARRAY)
 
 	#%% just copied from LASA workflow
@@ -176,7 +176,7 @@ def run_eachPKiKP(start_buff = 980, end_buff = 1180, event_no = 35, min_dist = 0
 	#			zoom = 0, ZslowR_lo = -0.03, ZslowR_hi = 0.03, ZslowT_lo = -0.03, ZslowT_hi = 0.03, Zstart_buff = 5, Zend_buff = 15,
 	#			start_buff = start_buff, end_buff = end_buff, skip_T = 0, skip_R = 1, skip_snaps = 0, tdiff_clip = 0.2,
 	#			fig_index = 301, plot_dyn_range = 100, snaptime = snaptime, snaps=1, decimate_fac = 1, in_dec = 1,
-	#			ref_phase = ref_phase, ARRAY = ARRAY)
+	#			dphase = dphase, ARRAY = ARRAY)
 
 	#%% Individual events
 	#%% --Cull seismic section event 1

@@ -41,7 +41,7 @@ if source == 0:
 elif source == 1:
 	s_lat = NZN_lat
 	s_lon = NZN_lon
-else:
+else: source ==2
 	s_lat = NZS_lat
 	s_lon = NZS_lon
 

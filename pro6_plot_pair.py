@@ -8,10 +8,10 @@
 def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0005,
 			  slowR_lo = -0.1, slowR_hi = 0.1, slowT_lo = -0.1, slowT_hi = 0.1,
 			  start_buff = -50, end_buff = 50, norm = 0, freq_corr = 1.0,
-			  plot_dyn_range = 1000, fig_index = 401, get_stf = 0, ref_phase = 'blank',
+			  plot_dyn_range = 1000, fig_index = 401, get_stf = 0,
 			  ARRAY = 0, max_rat = 1.8, min_amp = 0.2, turn_off_black = 0,
 			  R_slow_plot = 0, T_slow_plot = 0, tdiff_clip = 1, event_no = 0,
-			  ref_loc = 0, ref_lat = 36.3, ref_lon = 138.5):
+			  ref_loc = 0, ref_lat = 36.3, ref_lon = 138.5, dphase = 'PKiKP'):
 
 	import obspy
 	import obspy.signal
@@ -34,8 +34,6 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0
 	#%% get locations
 	print('Running pro6_plot_stacked_seis')
 	start_time_wc = time.time()
-
-	dphase = 'PKiKP'
 
 	sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/events_good.txt'
 	with open(sta_file, 'r') as file:
@@ -229,21 +227,21 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0
 		angle2 = np.angle(seismogram2)
 		phase1 = np.unwrap(angle1)
 		phase2 = np.unwrap(angle2)
-		dphase = (angle1 - angle2)
-#		dphase = phase1 - phase2
+		d_phase = (angle1 - angle2)
+#		d_phase = phase1 - phase2
 		for it in range(nt1):
-			if dphase[it] > math.pi:
-				dphase[it] -= 2 * math.pi
-			elif dphase[it] < -1 * math.pi:
-				dphase[it] += 2 * math.pi
-			if dphase[it] > math.pi or dphase[it] < -math.pi:
-				print(f'Bad dphase value {dphase[it]:.2f}  {it:4d}')
+			if d_phase[it] > math.pi:
+				d_phase[it] -= 2 * math.pi
+			elif d_phase[it] < -1 * math.pi:
+				d_phase[it] += 2 * math.pi
+			if d_phase[it] > math.pi or d_phase[it] < -math.pi:
+				print(f'Bad d_phase value {d_phase[it]:.2f}  {it:4d}')
 		freq1 = np.diff(phase1) #freq in radians/sec
 		freq2 = np.diff(phase2)
 		ave_freq = 0.5*(freq1 + freq2)
 		ave_freq_plus = np.append(ave_freq,[1]) # ave_freq one element too short
-#		tshift[slow_i].data     = dphase / ave_freq_plus # 2*pi top and bottom cancels
-		tshift[slow_i].data     = dphase/(2*math.pi*freq_corr)
+#		tshift[slow_i].data     = d_phase / ave_freq_plus # 2*pi top and bottom cancels
+		tshift[slow_i].data     = d_phase/(2*math.pi*freq_corr)
 
 		local_max = max(abs(amp_ave[slow_i].data))
 		if local_max > global_max:

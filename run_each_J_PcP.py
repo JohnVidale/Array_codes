@@ -3,7 +3,7 @@
 
 def run_eachPcP(start_buff = 980, end_buff = 1180, event_no = 1, min_dist = 0,
 			  max_dist = 180, freq_min = 1, freq_max = 3, slow_delta = 0.0025,
-			  rel_time = 1):
+			  start_beam = 0, end_beam = 0, dphase  = 'PcP'):
 
 	import os
 	os.environ['PATH'] += os.pathsep + '/usr/local/bin'
@@ -13,8 +13,7 @@ def run_eachPcP(start_buff = 980, end_buff = 1180, event_no = 1, min_dist = 0,
 	from pro3b_sort_plot_singlet import pro3singlet
 	from pro5a_stack             import pro5stack
 	from pro5b_stack2d           import pro5stack2d
-	from pro6_plot_stacked_seis  import pro6stacked_seis
-	#from junk     import pro7plotstack
+	from pro6_plot_singlet       import pro6stacked_singlet
 	from pro7a_plot_envstack     import pro7plotstack
 	from pro7b_plot_stack        import pro7plotstack2
 	from pro7b_dec               import pro7dec
@@ -24,30 +23,21 @@ def run_eachPcP(start_buff = 980, end_buff = 1180, event_no = 1, min_dist = 0,
 	ev_directory = '/Users/vidale/Documents/PyCode/Hinet/Tian_events'
 	os.chdir(ev_directory)
 
-#	event_no = 104
 	eq_file   = 'event' + str(event_no) + '.txt'
 	ARRAY     = 0
-	# singlet
-	# doublet
-	#eq_file1   = 'event1.txt'
-	#eq_file2   = 'event2.txt'
-
-#	start_buff = -4
-#	end_buff   =  4
 
 	freq_min = 1
 	freq_max = 3
 
-#	rel_time = 1   # phase alignment details
+	rel_time = 1   # phase alignment details
 #	rel_time == 0  window in absolute time after origin time
-#	rel_time == 1  each window has a distinct phase-chose shift, but time offset is common to all stations
-#	rel_time == 2  each station has an individual, chosen-phase shift, phase arrival set to common time
-#	rel_time == 3  use same window around chosen phase for all stations, using ref distance
+#	rel_time == 1  each window has a shift proportional to (dist - ref_dist) at phase slowness at ref_dist
+#	rel_time == 2  each window has a distinct phase-chose shift, but time offset is common to all stations
+#	rel_time == 3  each station has an individual, chosen-phase shift, phase arrival set to common time
+#	rel_time == 4  use same window around chosen phase for all stations, using ref distance
 
 	ref_loc  = 0   # 0 select stations by distance from epicenter, 1 select stations by distance from ref location
 	ref_rad  = 0.3 # radius of stations around ref_loc chosen
-#	ref_lat = 36.3  # °N, around middle of Japan
-#	ref_lon = 138.5 # °E
 	ref_lat = 36
 	ref_lon = 138
 	NS       = 1   # 0 plot slowness R-T, 1 plot slowness N-S
@@ -76,8 +66,7 @@ def run_eachPcP(start_buff = 980, end_buff = 1180, event_no = 1, min_dist = 0,
 	skip_SNR       = 1
 	qual_threshold = 1.5
 
-	dphase  = 'PcP'
-	ref_phase = dphase
+#	dphase  = 'PcP'
 	dphase2 = 'PP'
 	dphase3 = 'PcP'
 	dphase4 = 'sP'
@@ -116,11 +105,10 @@ def run_eachPcP(start_buff = 980, end_buff = 1180, event_no = 1, min_dist = 0,
 				ARRAY = ARRAY, decimate_fac = decimate_fac, NS = NS)
 
 	#%% --Compare pair of 2D stack results
-	pro6stacked_seis(eq_file1 = eq_file, eq_file2 = eq_file, plot_scale_fac = 0.003,
+	pro6stacked_singlet(eq_file = eq_file, plot_scale_fac = 0.003,
 				slowR_lo = slowR_lo, slowR_hi = slowR_hi, slowT_lo = slowT_lo, slowT_hi = slowT_hi, slow_delta = slow_delta,
-				start_buff = start_buff, end_buff = end_buff, freq_corr = freq_corr, ref_phase = ref_phase,
-				ref_loc = ref_loc, ref_lat = ref_lat, ref_lon = ref_lon,
-				fig_index = 301, plot_dyn_range = 100, ARRAY = ARRAY, event_no = event_no)
+				start_buff = start_buff, end_buff = end_buff, R_slow_plot = 0, T_slow_plot = 0, dphase = dphase,
+				fig_index = 301, plot_dyn_range = 100, ARRAY = ARRAY, event_no = event_no, start_beam = start_beam, end_beam = end_beam)
 
 	#%% --2D envelop stack results for individual events
 	#pro7plotstack(eq_file = eq_file, plot_scale_fac = 0.05,
