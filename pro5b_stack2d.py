@@ -9,8 +9,7 @@
 
 def pro5stack2d(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 			  slowR_lo = -0.1, slowR_hi = 0.1, slowT_lo = -0.1, slowT_hi = 0.1,
-			  start_buff = -50, end_buff = 50, norm = 1, global_norm_plot = 1,
-			  ARRAY = 0, NS = 0, decimate_fac = 0,
+			  start_buff = -50, end_buff = 50, norm = 1, ARRAY = 0, NS = 0, decimate_fac = 0,
 			  ref_loc = 0, ref_lat = 36.3, ref_lon = 138.5, stack_option = 1):
 
 	from obspy import UTCDateTime
@@ -25,6 +24,9 @@ def pro5stack2d(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 
 	import sys # don't show any warnings
 	import warnings
+
+#	norm = 1 # norm by dividing by max(abs)
+#	global_norm_plot = 1 # not used, only used in pro5stack
 
 	print('Running pro5b_stack2d')
 	start_time_wc = time.time()
@@ -75,6 +77,11 @@ def pro5stack2d(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 		st_names.append(split_line[0])
 		st_lats.append( split_line[1])
 		st_lons.append( split_line[2])
+	if ARRAY == 0:  # shorten and make upper case Hi-net station names to match station list
+		for ii in station_index:
+			this_name = st_names[ii]
+			this_name_truc = this_name[0:5]
+			st_names[ii]  = this_name_truc.upper()
 
 #%% Input parameters
 	# date_label = '2018-04-02' # date for filename
@@ -125,62 +132,59 @@ def pro5stack2d(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 #%% select by distance, window and adjust start time to align picked times
 	done = 0
 	for tr in st: # traces one by one, find lat-lon by searching entire inventory.  Inefficient but cheap
-		for ii in station_index:
-			if ARRAY == 0:  # have to chop off last letter, always 'h'
-				this_name = st_names[ii]
-				this_name_truc = this_name[0:5]
-				name_truc_cap  = this_name_truc.upper()
-			elif ARRAY == 1 or ARRAY == 2:
-				name_truc_cap = st_names[ii]
-			if (tr.stats.station == name_truc_cap): # find station in inventory
-				if norm == 1:
-					tr.normalize() # trace divided abs(max of trace)
-				stalat = float(st_lats[ii])
-				stalon = float(st_lons[ii]) # use lat & lon to find distance and back-az
-				rel_dist_az = gps2dist_azimuth(stalat,stalon,ref_lat,ref_lon)
-				rel_dist    = rel_dist_az[0]/1000  # km
-				rel_back_az = rel_dist_az[1]       # radians
+		if tr.stats.station in st_names:  # find station in station list
+			ii = st_names.index(tr.stats.station)
+			if norm == 1:
+				tr.normalize() # trace divided abs(max of trace)
+			stalat = float(st_lats[ii])
+			stalon = float(st_lons[ii]) # use lat & lon to find distance and back-az
+			rel_dist_az = gps2dist_azimuth(stalat,stalon,ref_lat,ref_lon)
+			rel_dist    = rel_dist_az[0]/1000  # km
+			rel_back_az = rel_dist_az[1]       # radians
 
-				if NS == 0:
-					del_distR = rel_dist * math.cos((rel_back_az - ref_back_az)* math.pi/180)
-					del_distT = rel_dist * math.sin((rel_back_az - ref_back_az)* math.pi/180)
-				# North and east
-				else:
-					del_distR = rel_dist * math.cos( rel_back_az * math.pi/180)
-					del_distT = rel_dist * math.sin( rel_back_az * math.pi/180)
-				for slowR_i in range(slowR_n):  # for this station, loop over radial slownesses
-					for slowT_i in range(slowT_n):  # loop over transverse slownesses
-						time_lag  = del_distR * stack_Rslows[slowR_i]  # time shift due to radial slowness
-						time_lag += del_distT * stack_Tslows[slowT_i]  # time shift due to transverse slowness
-						time_correction = ((t-tr.stats.starttime) + (time_lag + start_buff))/dt
-						indx = int(slowR_i*slowT_n + slowT_i)
+			if NS == 0:
+				del_distR = rel_dist * math.cos((rel_back_az - ref_back_az)* math.pi/180)
+				del_distT = rel_dist * math.sin((rel_back_az - ref_back_az)* math.pi/180)
+			# North and east
+			else:
+				del_distR = rel_dist * math.cos( rel_back_az * math.pi/180)
+				del_distT = rel_dist * math.sin( rel_back_az * math.pi/180)
+			for slowR_i in range(slowR_n):  # for this station, loop over radial slownesses
+				for slowT_i in range(slowT_n):  # loop over transverse slownesses
+					time_lag  = del_distR * stack_Rslows[slowR_i]  # time shift due to radial slowness
+					time_lag += del_distT * stack_Tslows[slowT_i]  # time shift due to transverse slowness
+					time_correction = ((t-tr.stats.starttime) + (time_lag + start_buff))/dt
+					indx = int(slowR_i*slowT_n + slowT_i)
 
-						if stack_option == 0:
-							for it in range(stack_nt):  # check points one at a time
-								it_in = int(it + time_correction)
-								if it_in >= 0 and it_in < nt - 1: # does data lie within seismogram?
-									stack[indx].data[it] += tr[it_in]
+					if stack_option == 0:
+						for it in range(stack_nt):  # check points one at a time
+							it_in = int(it + time_correction)
+							if it_in >= 0 and it_in < nt - 1: # does data lie within seismogram?
+								stack[indx].data[it] += tr[it_in]
 
-						if stack_option == 1:
-							arr = tr.data
-							nshift = round(time_correction)
-							if time_correction < 0:
-								nshift = nshift - 1
-							if nshift <= 0:
-								nbeg1 = -nshift
-								nend1 = stack_nt
-								nbeg2 = 0
-								nend2 = stack_nt + nshift;
-							elif nshift > 0:
-								nbeg1 = 0
-								nend1 = stack_nt - nshift
-								nbeg2 = nshift
-								nend2 = stack_nt
-							if nend1 >= 0 and nbeg1 <= stack_nt:
-								stack[indx].data[nbeg1 : nend1] += arr[nbeg2 : nend2]
-				done += 1
-				if done%100 == 0:
-					print('Done stacking ' + str(done) + ' out of ' + str(len(st)) + ' stations.')
+					if stack_option == 1:
+						arr = tr.data
+						nshift = round(time_correction)
+						if time_correction < 0:
+							nshift = nshift - 1
+						if nshift <= 0:
+							nbeg1 = -nshift
+							nend1 = stack_nt
+							nbeg2 = 0
+							nend2 = stack_nt + nshift;
+						elif nshift > 0:
+							nbeg1 = 0
+							nend1 = stack_nt - nshift
+							nbeg2 = nshift
+							nend2 = stack_nt
+						if nend1 >= 0 and nbeg1 <= stack_nt:
+							stack[indx].data[nbeg1 : nend1] += arr[nbeg2 : nend2]
+			done += 1
+			if done%100 == 0:
+				print('Done stacking ' + str(done) + ' out of ' + str(len(st)) + ' stations.')
+		else:
+			print(tr.stats.station + ' not found in station list')
+
 #%% take envelope, decimate envelope
 	stack_raw = stack.copy()
 	for slowR_i in range(slowR_n):  # loop over radial slownesses
@@ -198,5 +202,5 @@ def pro5stack2d(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 	stack_raw.write(fname,format = 'MSEED')
 
 	elapsed_time_wc = time.time() - start_time_wc
-	print('This job took ' + str(elapsed_time_wc) + ' seconds')
+	print(f'This job took   {elapsed_time_wc:.1f}   seconds')
 	os.system('say "Done"')

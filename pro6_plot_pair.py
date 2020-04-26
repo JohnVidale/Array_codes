@@ -451,5 +451,5 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0
 		event2_sample.write(fname,format = 'MSEED')
 
 	elapsed_time_wc = time.time() - start_time_wc
-	print('This job took ' + str(elapsed_time_wc) + ' seconds')
+	print(f'This job took   {elapsed_time_wc:.1f}   seconds')
 	os.system('say "Done"')

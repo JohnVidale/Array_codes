@@ -86,6 +86,11 @@ def pro5stack(eq_file, plot_scale_fac = 0.05, slowR_lo = -0.1, slowR_hi = 0.1, s
 		st_names.append(split_line[0])
 		st_lats.append( split_line[1])
 		st_lons.append( split_line[2])
+	if ARRAY == 0:  # shorten and make upper case Hi-net station names to match station list
+		for ii in station_index:
+			this_name = st_names[ii]
+			this_name_truc = this_name[0:5]
+			st_names[ii]  = this_name_truc.upper()
 
 #%% Name file, read data
 	# date_label = '2018-04-02' # date for filename
@@ -129,57 +134,51 @@ def pro5stack(eq_file, plot_scale_fac = 0.05, slowR_lo = -0.1, slowR_hi = 0.1, s
 #%% Select traces by distance, window and adjust start time to align picked times
 	done = 0
 	for tr in st: # traces one by one, find lat-lon by searching entire inventory.  Inefficient but cheap
-		for ii in station_index:
-			if ARRAY == 0:  # for hi-net, have to chop off last letter, always 'h'
-				this_name = st_names[ii]
-				this_name_truc = this_name[0:5]
-				name_truc_cap  = this_name_truc.upper()
-			elif ARRAY == 1 or ARRAY == 2:
-				name_truc_cap = st_names[ii]
-			if (tr.stats.station == name_truc_cap): # find station in inventory
-				if norm == 1:
-					tr.normalize()
-				stalat = float(st_lats[ii])
-				stalon = float(st_lons[ii]) # look up lat & lon again to find distance
-				distance = gps2dist_azimuth(stalat,stalon,ev_lat,ev_lon) # Get traveltimes again, hard to store
-				tr.stats.distance=distance[0] # distance in m
-				del_dist = (ref_distance[0] - distance[0])/(1000) # in km
+		if tr.stats.station in st_names:  # find station in station list
+			ii = st_names.index(tr.stats.station)
+			if norm == 1:
+				tr.normalize()
+			stalat = float(st_lats[ii])
+			stalon = float(st_lons[ii]) # look up lat & lon again to find distance
+			distance = gps2dist_azimuth(stalat,stalon,ev_lat,ev_lon) # Get traveltimes again, hard to store
+			tr.stats.distance=distance[0] # distance in m
+			del_dist = (ref_distance[0] - distance[0])/(1000) # in km
 
 #			for(k=0;k<nslow;k++){
 #				slow = 110.*(LOWSLOW + k*DELTASLOW);
-				for slow_i in range(slow_n):  # for this station, loop over slownesses
-					time_lag = -del_dist * stack_slows[slow_i]  # time shift due to slowness, flipped to match 2D
-					time_correction = ((t-tr.stats.starttime) + (time_lag + start_buff))/dt
+			for slow_i in range(slow_n):  # for this station, loop over slownesses
+				time_lag = -del_dist * stack_slows[slow_i]  # time shift due to slowness, flipped to match 2D
+				time_correction = ((t-tr.stats.starttime) + (time_lag + start_buff))/dt
 
-					if stack_option == 0:
-						for it in range(stack_nt):  # check points one at a time
-							it_in = int(it + time_correction)
-							if it_in >= 0 and it_in < nt - 1: # does data lie within seismogram?
-								stack[slow_i].data[it] += tr[it_in]
+				if stack_option == 0:
+					for it in range(stack_nt):  # check points one at a time
+						it_in = int(it + time_correction)
+						if it_in >= 0 and it_in < nt - 1: # does data lie within seismogram?
+							stack[slow_i].data[it] += tr[it_in]
 
-					if stack_option == 1:
-						arr = tr.data
-						nshift = int(time_correction)
-						if time_correction < 0:
-							nshift = nshift-1
-						if nshift <= 0:
-							nbeg1 = -nshift
-							nend1 = stack_nt
-							nbeg2 = 0
-							nend2 = stack_nt + nshift;
-						elif nshift > 0:
-							nbeg1 = 0
-							nend1 = stack_nt - nshift
-							nbeg2 = nshift
-							nend2 = stack_nt
-#						print(tr.stats.station + ' ' + str(slow_i) + ' slow_i ' + str(nshift) + ' nshift ' + str(time_correction) + ' t-corr ' + str(slow_i) + ' nbeg1 nend1 ' + str(nbeg1) + ' ' + str(nend1) + ' ' + 'nbeg2 nend2 '+ str(nbeg2) + ' ' + str(nend2))
-
+				if stack_option == 1:
+					arr = tr.data
+					nshift = int(time_correction)
+					if time_correction < 0:
+						nshift = nshift-1
+					if nshift <= 0:
+						nbeg1 = -nshift
+						nend1 = stack_nt
+						nbeg2 = 0
+						nend2 = stack_nt + nshift;
+					elif nshift > 0:
+						nbeg1 = 0
+						nend1 = stack_nt - nshift
+						nbeg2 = nshift
+						nend2 = stack_nt
 						if nend1 >= 0 and nbeg1 <= stack_nt:
 							stack[slow_i].data[nbeg1:nend1] += arr[nbeg2:nend2]
 
 				done += 1
 				if done % 50 == 0:
 					print('Done stacking ' + str(done) + ' out of ' + str(len(st)) + ' stations.')
+		else:
+			print(tr.stats.station + ' not found in station list')
 
 #%% Plot traces
 	global_max = 0
@@ -259,5 +258,5 @@ def pro5stack(eq_file, plot_scale_fac = 0.05, slowR_lo = -0.1, slowR_hi = 0.1, s
 #	stack.write(fname,format = 'MSEED')
 
 	elapsed_time_wc = time.time() - start_time_wc
-	print('This job took ' + str(elapsed_time_wc) + ' seconds')
+	print(f'This job took   {elapsed_time_wc:.1f}   seconds')
 	os.system('say "Done"')

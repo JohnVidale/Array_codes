@@ -115,12 +115,14 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
 	if stat_corr == 1:  # load static terms, only applies to Hinet and LASA
 		if ARRAY == 0:
 			if alt_statics == 0: # standard set
-				sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/hinet_sta_statics.txt'
+				sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_statics_hinet.txt'
 			else: # custom set made by this event for this event
-				sta_file = ('/Users/vidale/Documents/GitHub/Array_codes/Files/' + 'HA' +
-				   date_label1[:10] + 'pro4_' + dphase + '.statics')
+				sta_file = ('/Users/vidale/Documents/PyCode/Hinet/Array_codes/Files/' + 'HA' +
+				   date_label[:10] + 'pro4_' + dphase + '.statics')
 		elif ARRAY == 1:
-			sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/L_sta_statics.txt'
+			sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_statics_LASA.txt'
+		elif ARRAY == 2:
+			sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_statics_ch.txt'
 		with open(sta_file, 'r') as file:
 			lines = file.readlines()
 		print(str(len(lines)) + ' stations read from ' + sta_file)
@@ -143,11 +145,13 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
 			st_corr.append(split_line[5])
 	else: # no static terms, always true for LASA or NORSAR
 		if ARRAY == 0: # Hinet set
-			sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/hinet_sta.txt'
+			sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_hinet.txt'
 		elif ARRAY == 1: #         LASA set
-			sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/LASA_sta.txt'
+			sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_LASA.txt'
+		elif ARRAY == 2: #         LASA set
+			sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_ch.txt'
 		else: #         NORSAR set
-			sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/NORSAR_sta.txt'
+			sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_NORSAR.txt'
 		with open(sta_file, 'r') as file:
 			lines = file.readlines()
 		print(str(len(lines)) + ' stations read from ' + sta_file)
@@ -162,6 +166,11 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
 			st_names.append(split_line[0])
 			st_lats.append( split_line[1])
 			st_lons.append( split_line[2])
+	if ARRAY == 0:  # shorten and make upper case Hi-net station names to match station list
+		for ii in station_index:
+			this_name = st_names[ii]
+			this_name_truc = this_name[0:5]
+			st_names[ii]  = this_name_truc.upper()
 
 #%% Is taper too long compared to noise estimation window?
 	totalt = end_buff - start_buff
@@ -206,30 +215,43 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
 			temp_t = str(tr.stats.starttime)
 			temp_tt = '19' + temp_t[2:]
 			tr.stats.starttime = UTCDateTime(temp_tt)
-		for ii in station_index:
-			if ARRAY == 0:  # have to chop off last letter, always 'h'
-				this_name = st_names[ii]
-				this_name_truc = this_name[0:5]
-				name_truc_cap  = this_name_truc.upper()
-			elif ARRAY == 1:
-				name_truc_cap = st_names[ii]
-			if (tr.stats.station == name_truc_cap): # find station in inventory
-#			if (tr.stats.station == st_names[ii]): # find station in inventory
-				if stat_corr != 1 or float(st_corr[ii]) > corr_threshold: # if using statics, reject low correlations
-					stalat = float(st_lats[ii])
-					stalon = float(st_lons[ii]) # look up lat & lon again to find distance
-					if ref_loc == 1:
-						ref_distance = gps2dist_azimuth(stalat,stalon,ref_lat,ref_lon)
-						ref_dist = ref_distance[0]/(1000*111)
-					distance = gps2dist_azimuth(stalat,stalon,ev_lat1,ev_lon1) # Get traveltimes again, hard to store
-					tr.stats.distance=distance[0] # distance in km
-					dist = distance[0]/(1000*111)
-					if ref_loc != 1 and min_dist < dist and dist < max_dist: # select distance range from earthquake
-						try:
+		if tr.stats.station in st_names:  # find station in station list
+			ii = st_names.index(tr.stats.station)
+			if stat_corr != 1 or float(st_corr[ii]) > corr_threshold: # if using statics, reject low correlations
+				stalat = float(st_lats[ii])
+				stalon = float(st_lons[ii]) # look up lat & lon again to find distance
+				if ref_loc == 1:
+					ref_distance = gps2dist_azimuth(stalat,stalon,ref_lat,ref_lon)
+					ref_dist = ref_distance[0]/(1000*111)
+				distance = gps2dist_azimuth(stalat,stalon,ev_lat1,ev_lon1) # Get traveltimes again, hard to store
+				tr.stats.distance=distance[0] # distance in km
+				dist = distance[0]/(1000*111)
+				if ref_loc != 1 and min_dist < dist and dist < max_dist: # select distance range from earthquake
+					try:
 #							print('Phase ' + dphase + ', depth ' + str(ev_depth1) + ' distance ' + str(dist))
+						arrivals = model.get_travel_times(source_depth_in_km=ev_depth1,distance_in_degree=dist,phase_list=[dphase])
+						atime = arrivals[0].time
+#							print(dphase + ' arrival time is ' + str(atime))
+						if stat_corr == 1: # apply static station corrections
+							tr.stats.starttime -= float(st_shift[ii])
+						if rel_time == 1:
+							s_t = t1 + atime + start_buff
+							e_t = t1 + atime + end_buff
+						else:
+							s_t = t1 + start_buff
+							e_t = t1 + end_buff
+						tr.trim(starttime=s_t,endtime = e_t)
+						# deduct theoretical traveltime and start_buf from starttime
+						if rel_time == 1:
+							tr.stats.starttime -= atime
+						st_pickalign1 += tr
+					except:
+						pass
+				elif ref_loc == 1:
+					if ref_dist < ref_rad: # alternatively, select based on distance from ref location
+						try:
 							arrivals = model.get_travel_times(source_depth_in_km=ev_depth1,distance_in_degree=dist,phase_list=[dphase])
 							atime = arrivals[0].time
-#							print(dphase + ' arrival time is ' + str(atime))
 							if stat_corr == 1: # apply static station corrections
 								tr.stats.starttime -= float(st_shift[ii])
 							if rel_time == 1:
@@ -245,53 +267,46 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
 							st_pickalign1 += tr
 						except:
 							pass
-					elif ref_loc == 1:
-						if ref_dist < ref_rad: # alternatively, select based on distance from ref location
-							try:
-								arrivals = model.get_travel_times(source_depth_in_km=ev_depth1,distance_in_degree=dist,phase_list=[dphase])
-								atime = arrivals[0].time
-								if stat_corr == 1: # apply static station corrections
-									tr.stats.starttime -= float(st_shift[ii])
-								if rel_time == 1:
-									s_t = t1 + atime + start_buff
-									e_t = t1 + atime + end_buff
-								else:
-									s_t = t1 + start_buff
-									e_t = t1 + end_buff
-								tr.trim(starttime=s_t,endtime = e_t)
-								# deduct theoretical traveltime and start_buf from starttime
-								if rel_time == 1:
-									tr.stats.starttime -= atime
-								st_pickalign1 += tr
-							except:
-								pass
-	#				if len(tr.data) == 0:
-	#					print('Event 1 - empty window.  Trace starts at ' + str(tr.stats.starttime) + ', event at ' + str(t1))
+		else:
+			print(tr.stats.station + ' not found in station list')
 
 	for tr in st2: # traces one by one
 		if float(year2) < 1970: # fix the damn 1969 -> 2069 bug in Gibbon's LASA data
 			temp_t = str(tr.stats.starttime)
 			temp_tt = '19' + temp_t[2:]
 			tr.stats.starttime = UTCDateTime(temp_tt)
-		for ii in station_index:
-			if ARRAY == 0:  # have to chop off last letter, always 'h'
-				this_name = st_names[ii]
-				this_name_truc = this_name[0:5]
-				name_truc_cap  = this_name_truc.upper()
-			elif ARRAY == 1:
-				name_truc_cap = st_names[ii]
-			if (tr.stats.station == name_truc_cap): # find station in inventory
-#			if (tr.stats.station == st_names[ii]): # find station in inventory
-				if stat_corr != 1 or float(st_corr[ii]) > corr_threshold: # if using statics, reject low correlations
-					stalat = float(st_lats[ii])
-					stalon = float(st_lons[ii])
-					if ref_loc == 1:
-						ref_distance = gps2dist_azimuth(stalat,stalon,ref_lat,ref_lon)
-						ref_dist = ref_distance[0]/(1000*111)
-					distance = gps2dist_azimuth(stalat,stalon,ev_lat2,ev_lon2) # Get traveltimes again, hard to store
-					tr.stats.distance=distance[0] # distance in km
-					dist = distance[0]/(1000*111)
-					if ref_loc != 1 and min_dist < dist and dist < max_dist: # select distance range from earthquake
+		if tr.stats.station in st_names:  # find station in station list
+			ii = st_names.index(tr.stats.station)
+			if stat_corr != 1 or float(st_corr[ii]) > corr_threshold: # if using statics, reject low correlations
+				stalat = float(st_lats[ii])
+				stalon = float(st_lons[ii])
+				if ref_loc == 1:
+					ref_distance = gps2dist_azimuth(stalat,stalon,ref_lat,ref_lon)
+					ref_dist = ref_distance[0]/(1000*111)
+				distance = gps2dist_azimuth(stalat,stalon,ev_lat2,ev_lon2) # Get traveltimes again, hard to store
+				tr.stats.distance=distance[0] # distance in km
+				dist = distance[0]/(1000*111)
+				if ref_loc != 1 and min_dist < dist and dist < max_dist: # select distance range from earthquake
+					try:
+						arrivals = model.get_travel_times(source_depth_in_km=ev_depth2,distance_in_degree=dist,phase_list=[dphase])
+						atime = arrivals[0].time
+						if stat_corr == 1: # apply static station corrections
+							tr.stats.starttime -= float(st_shift[ii])
+						if rel_time == 1:
+							s_t = t2 + atime + start_buff
+							e_t = t2 + atime + end_buff
+						else:
+							s_t = t2 + start_buff
+							e_t = t2 + end_buff
+						tr.trim(starttime=s_t,endtime = e_t)
+						# deduct theoretical traveltime and start_buf from starttime
+						if rel_time == 1:
+							tr.stats.starttime -= atime
+						st_pickalign2 += tr
+					except:
+						pass
+				elif ref_loc == 1:
+					if ref_dist < ref_rad: # alternatively, select based on distance from ref location
 						try:
 							arrivals = model.get_travel_times(source_depth_in_km=ev_depth2,distance_in_degree=dist,phase_list=[dphase])
 							atime = arrivals[0].time
@@ -310,28 +325,8 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
 							st_pickalign2 += tr
 						except:
 							pass
-					elif ref_loc == 1:
-						if ref_dist < ref_rad: # alternatively, select based on distance from ref location
-							try:
-								arrivals = model.get_travel_times(source_depth_in_km=ev_depth2,distance_in_degree=dist,phase_list=[dphase])
-								atime = arrivals[0].time
-								if stat_corr == 1: # apply static station corrections
-									tr.stats.starttime -= float(st_shift[ii])
-								if rel_time == 1:
-									s_t = t2 + atime + start_buff
-									e_t = t2 + atime + end_buff
-								else:
-									s_t = t2 + start_buff
-									e_t = t2 + end_buff
-								tr.trim(starttime=s_t,endtime = e_t)
-								# deduct theoretical traveltime and start_buf from starttime
-								if rel_time == 1:
-									tr.stats.starttime -= atime
-								st_pickalign2 += tr
-							except:
-								pass
-	#				if len(tr.data) == 0:
-	#					print('Event 2 - empty window.  Trace starts at ' + str(tr.stats.starttime) + ', event at ' + str(t2))
+		else:
+			print(tr.stats.station + ' not found in station list')
 
 	print('After alignment and range selection: ' + str(len(st_pickalign1)) + ' traces')
 
@@ -406,7 +401,6 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
 				distance = gps2dist_azimuth(stalat,stalon,ev_lat2,ev_lon2)
 				tr.stats.distance=distance[0] # distance in km
 
-	print('Made it to here.')
 	#%%
 	# plot traces
 	fig_index = 3
@@ -424,8 +418,6 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
 		plt.plot(ttt, (tr.data - np.median(tr.data))*plot_scale_fac /(tr.data.max()
 			- tr.data.min()) + dist_offset, color = 'green')
 	#plt.title(fname1)
-
-	print('And made it to here?')
 
 	for tr in st2good:
 		dist_offset = tr.stats.distance/(1000*111) # trying for approx degrees
