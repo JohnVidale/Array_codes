@@ -3,7 +3,7 @@
 
 import os
 os.environ['PATH'] += os.pathsep + '/usr/local/bin'
-os.chdir('/Users/vidale/Documents/GitHub/Array_codes')
+os.chdir('/Users/vidale/Documents/GitHub/Array_codes/Run_ICS')
 
 #%% Import functions
 from run_each_L_PKiKP import run_each_L_PKiKP

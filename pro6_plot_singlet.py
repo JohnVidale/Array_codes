@@ -9,7 +9,7 @@ def pro6stacked_singlet(eq_file, plot_scale_fac = 0.03, slow_delta = 0.0005,
 			  slowR_lo = -0.1, slowR_hi = 0.1, slowT_lo = -0.1, slowT_hi = 0.1,
 			  start_buff = -50, end_buff = 50, start_beam = 0, end_beam = 0,
 			  norm = 0, dphase = 'PKiKP',
-			  plot_dyn_range = 1000, fig_index = 401, get_stf = 0, ref_phase = 'blank',
+			  plot_dyn_range = 1000, fig_index = 401, get_stf = 0,
 			  ARRAY = 0, R_slow_plot = 0, T_slow_plot = 0, event_no = 0,
 			  ref_loc = 0, ref_lat = 36.3, ref_lon = 138.5, NS = 1):
 

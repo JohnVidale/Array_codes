@@ -171,12 +171,12 @@ def pro5stack(eq_file, plot_scale_fac = 0.05, slowR_lo = -0.1, slowR_hi = 0.1, s
 						nend1 = stack_nt - nshift
 						nbeg2 = nshift
 						nend2 = stack_nt
-						if nend1 >= 0 and nbeg1 <= stack_nt:
-							stack[slow_i].data[nbeg1:nend1] += arr[nbeg2:nend2]
+					if nend1 >= 0 and nbeg1 <= stack_nt:
+						stack[slow_i].data[nbeg1:nend1] += arr[nbeg2:nend2]
 
-				done += 1
-				if done % 50 == 0:
-					print('Done stacking ' + str(done) + ' out of ' + str(len(st)) + ' stations.')
+			done += 1
+			if done % 50 == 0:
+				print('Done stacking ' + str(done) + ' out of ' + str(len(st)) + ' stations.')
 		else:
 			print(tr.stats.station + ' not found in station list')
 

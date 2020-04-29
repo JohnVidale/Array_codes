@@ -5,12 +5,12 @@
 # Write out tdiff, ave_amp, amp_ratio results
 # John Vidale 3/2019
 
-def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0005,
+def pro6stacked_pair(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0005,
 			  slowR_lo = -0.1, slowR_hi = 0.1, slowT_lo = -0.1, slowT_hi = 0.1,
 			  start_buff = -50, end_buff = 50, norm = 0, freq_corr = 1.0,
-			  plot_dyn_range = 1000, fig_index = 401, get_stf = 0,
+			  plot_dyn_range = 1000, fig_index = 401, get_stf = 0, start_beam = 0, end_beam = 0,
 			  ARRAY = 0, max_rat = 1.8, min_amp = 0.2, turn_off_black = 0,
-			  R_slow_plot = 0, T_slow_plot = 0, tdiff_clip = 1, event_no = 0,
+			  R_slow_plot = 0, T_slow_plot = 0, tdiff_clip = 0.5, event_no = 0,
 			  ref_loc = 0, ref_lat = 36.3, ref_lon = 138.5, dphase = 'PKiKP'):
 
 	import obspy
@@ -330,7 +330,7 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0
 			plt.plot(ttt, (centralR_amp[slowR_i].data)*0.0 + dist_offset, color = 'lightgray') # reference lines
 	plt.xlabel('Time (s)')
 	plt.ylabel('R Slowness (s/km)')
-	plt.title(ref_phase + ' seismograms and tdiff at ' + str(T_slow_plot) + ' T slowness, green is event1, red is event2')
+	plt.title(dphase + ' seismograms and tdiff at ' + str(T_slow_plot) + ' T slowness, green is event1, red is event2')
 	# Plot transverse amp and tdiff vs time plots
 	fig_index = 7
 #	plt.close(fig_index)
@@ -350,17 +350,30 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0
 			plt.plot(ttt, (centralT_amp[slowT_i].data)*0.0 + dist_offset, color = 'lightgray') # reference lines
 	plt.xlabel('Time (s)')
 	plt.ylabel('T Slowness (s/km)')
-	plt.title(str(event_no) + '  ' + date_label1 + '  ' +ref_phase + ' seismograms and tdiff ' + str(R_slow_plot) + ' R slowness, green is event1, red is event2')
+	plt.title(str(event_no) + '  ' + date_label1 + '  ' + dphase + ' seismograms and tdiff ' + str(R_slow_plot) + ' R slowness, green is event1, red is event2')
 	os.chdir('/Users/vidale/Documents/PyCode/Plots')
 #	plt.savefig(date_label1 + '_' + str(start_buff) + '_' + str(end_buff) + '_stack.png')
 
 #%% R-T tshift averaged over time window
 	fig_index = 8
 	stack_slice = np.zeros((slowR_n,slowT_n))
+
+	if start_beam == 0 and end_beam == 0:
+		full_beam = 1
+	else:  # beam just part of stack volume
+		full_beam = 0
+		start_index = int((start_beam - start_buff) / dt1)
+		end_index   = int((end_beam   - start_buff) / dt1)
+		print('beam is ' + str(start_beam) + ' to ' + str(end_beam) + 's, out of ' + str(start_buff)
+			+ ' to ' + str(end_buff) + 's, dt is ' + str(dt1)  + 's, and indices are '+ str(start_index) + ' ' + str(end_index))
+
 	for slowR_i in range(slowR_n):  # loop over radial slownesses
 		for slowT_i in range(slowT_n):  # loop over transverse slownesses
 			index = slowR_i*slowT_n + slowT_i
-			num_val = np.nanmedian(tshift[index].data)
+			if full_beam == 1:
+				num_val = np.nanmedian(tshift[index].data)
+			else:
+				num_val = np.nanmedian(tshift[index].data[start_index:end_index])
 #			num_val = statistics.median(tshift_full[index].data)
 			stack_slice[slowR_i, slowT_i] = num_val # adjust for dominant frequency of 1.2 Hz, not 1 Hz
 #	stack_slice[0,0] = -0.25
@@ -384,7 +397,7 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0
 	ax.add_artist(circle2)  #outer core limit
 	fig.colorbar(c, ax=ax)
 	plt.ylabel('R Slowness (s/km)')
-	plt.title(ref_phase + ' time shift')
+	plt.title(dphase + ' time shift')
 #	plt.title('T-R average time shift ' + date_label1 + ' ' + date_label2)
 	plt.show()
 
@@ -395,7 +408,10 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0
 	for slowR_i in range(slowR_n):  # loop over radial slownesses
 		for slowT_i in range(slowT_n):  # loop over transverse slownesses
 			index = slowR_i*slowT_n + slowT_i
-			num_val = np.nanmedian(amp_ave[index].data)
+			if full_beam == 1:
+				num_val = np.nanmedian(amp_ave[index].data)
+			else:
+				num_val = np.nanmedian(amp_ave[index].data[start_index:end_index])
 			stack_slice[slowR_i, slowT_i] = num_val
 			if num_val > smax:
 				smax = num_val
@@ -422,7 +438,7 @@ def pro6stacked_seis(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0
 
 	plt.xlabel('Transverse Slowness (s/km)')
 	plt.ylabel('Radial Slowness (s/km)')
-	plt.title(str(event_no) + '  ' + date_label1 + '  ' + ref_phase + ' beam amplitude')
+	plt.title(str(event_no) + '  ' + date_label1 + '  ' + dphase + ' beam amplitude')
 #	plt.title('Beam amplitude ' + date_label1 + ' ' + date_label2)
 	os.chdir('/Users/vidale/Documents/PyCode/Plots')
 	plt.savefig(date_label1 + '_' + str(start_buff) + '_' + str(end_buff) + '_beam.png')
