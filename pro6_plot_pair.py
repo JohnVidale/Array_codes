@@ -397,8 +397,9 @@ def pro6stacked_pair(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0
 	ax.add_artist(circle2)  #outer core limit
 	fig.colorbar(c, ax=ax)
 	plt.ylabel('R Slowness (s/km)')
-	plt.title(dphase + ' time shift')
-#	plt.title('T-R average time shift ' + date_label1 + ' ' + date_label2)
+	plt.title(dphase + ' time shift ' + date_label1 + ' ' + date_label2)
+	os.chdir('/Users/vidale/Documents/PyCode/Plots')
+	plt.savefig(date_label1 + '_' + date_label2 + '_' + str(start_buff) + '_' + str(end_buff) + '_tshift.png')
 	plt.show()
 
 #%% R-T amplitude averaged over time window
@@ -432,16 +433,15 @@ def pro6stacked_pair(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0
 	circle2 = plt.Circle((0, 0), 0.040, color='black', fill=False)
 	ax.add_artist(circle2)  #outer core limit
 
-	c = ax.scatter(pred_Eslo, pred_Nslo, color='blue'  , s=100, alpha=0.75)
-	c = ax.scatter( obs_Eslo,  obs_Nslo, color='purple', s=100, alpha=0.75)
+	c = ax.scatter(pred_Eslo, pred_Nslo, color='black'  , s=50, alpha=0.75)
+#	c = ax.scatter( obs_Eslo,  obs_Nslo, color='purple', s=100, alpha=0.75)
 	c = ax.scatter(        0,         0, color='black' , s=50,  alpha=0.75)
 
 	plt.xlabel('Transverse Slowness (s/km)')
 	plt.ylabel('Radial Slowness (s/km)')
-	plt.title(str(event_no) + '  ' + date_label1 + '  ' + dphase + ' beam amplitude')
-#	plt.title('Beam amplitude ' + date_label1 + ' ' + date_label2)
+	plt.title(str(event_no) + '  ' + date_label1 + ' ' + date_label2 + '  ' + dphase + ' beam amplitude')
 	os.chdir('/Users/vidale/Documents/PyCode/Plots')
-	plt.savefig(date_label1 + '_' + str(start_buff) + '_' + str(end_buff) + '_beam.png')
+	plt.savefig(date_label1 + '_' + date_label2 + '_' + str(start_buff) + '_' + str(end_buff) + '_beam.png')
 	plt.show()
 
 #%%  Save processed files

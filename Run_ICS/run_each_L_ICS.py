@@ -5,7 +5,7 @@
 # plots against traveltime curves, either raw or reduced against traveltimes
 # John Vidale 2/2019
 
-def run_each_L(start_buff = 20, end_buff = 100, event_no = 0, min_dist = 0,
+def run_each_L_ICS(start_buff = 20, end_buff = 100, event_no = 0, min_dist = 0,
 			  max_dist = 180, freq_min = 1, freq_max = 3, slow_delta = 0.001):
 	import os
 	os.environ['PATH'] += os.pathsep + '/usr/local/bin'
@@ -82,17 +82,16 @@ def run_each_L(start_buff = 20, end_buff = 100, event_no = 0, min_dist = 0,
 				ref_loc = ref_loc, fig_index = 102)
 
 	#%% --1D stack
-#	pro5stack(ARRAY = ARRAY, eq_file = eq_file, plot_scale_fac = 0.05,
-#				slowR_lo = slowR_lo_1D, slowR_hi = slowR_hi_1D, slow_delta = slow_delta_1D,
-#				start_buff = start_buff, end_buff = end_buff,
-#				log_plot = 0, envelope = 1, plot_dyn_range = 50,
-#				norm = 1, global_norm_plot = 1, color_plot = 1, fig_index = 302)
+	pro5stack(ARRAY = ARRAY, eq_file = eq_file, plot_scale_fac = 0.05,
+				slowR_lo = slowR_lo_1D, slowR_hi = slowR_hi_1D, slow_delta = slow_delta_1D,
+				start_buff = start_buff, end_buff = end_buff, event_no = event_no,
+				log_plot = 0, envelope = 1, plot_dyn_range = 50,
+				norm = 1, global_norm_plot = 1, color_plot = 1, fig_index = 302)
 
 	##%%  --2D stack
 	pro5stack2d(eq_file = eq_file, plot_scale_fac = 0.05,
 				slowR_lo = slowR_lo, slowR_hi = slowR_hi, slowT_lo = slowT_lo, slowT_hi = slowT_hi, slow_delta = slow_delta,
-				start_buff = start_buff, end_buff = end_buff,
-				norm = 1, global_norm_plot = 1,
+				start_buff = start_buff, end_buff = end_buff, norm = 1,
 				ARRAY = ARRAY, decimate_fac = decimate_fac, NS = NS)
 
 	#%% --Compare 2D stack results with themselves

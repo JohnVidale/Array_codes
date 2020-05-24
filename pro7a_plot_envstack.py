@@ -27,7 +27,7 @@ def pro7plotstack(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 	start_time_wc = time.time()
 
 
-	goto = '/Users/vidale/Documents/PyCode/LASA/EvLocs'
+	goto = '/Users/vidale/Documents/PyCode/EvLocs'
 	os.chdir(goto)
 	file = open(eq_file, 'r')
 	lines=file.readlines()
@@ -39,7 +39,7 @@ def pro7plotstack(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 	#%% Input parameters
 	# #%% Get saved event info, also used to name files
 	# date_label = '2018-04-02' # date for filename
-	goto = '/Users/vidale/Documents/PyCode/LASA/Pro_Files'
+	goto = '/Users/vidale/Documents/PyCode/Pro_Files'
 	fname = 'HD' + date_label + '_2dstack_env.mseed'
 	os.chdir(goto)
 	st = Stream()
@@ -207,7 +207,7 @@ def pro7plotstack(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 		fig.colorbar(c, ax=ax)
 		plt.xlabel('Time (s)')
 		plt.ylabel('Slowness (s/km)')
-		plt.title('Radial stack at 0 T slow, ' + fname[12:22])
+		plt.title('Radial stack at 0 T slow, ' + fname[2:12])
 		plt.show()
 
 #%%  Transverse-time stacks
@@ -232,7 +232,7 @@ def pro7plotstack(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 		fig.colorbar(c, ax=ax)
 		plt.xlabel('Time (s)')
 		plt.ylabel('Slowness (s/km)')
-		plt.title('Transverse stack at 0.000 R slow, ' + fname[12:22])
+		plt.title('Transverse stack at 0.000 R slow, ' + fname[2:12])
 		plt.show()
 
 		fig_index += 1
@@ -256,7 +256,7 @@ def pro7plotstack(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 		fig.colorbar(c, ax=ax)
 		plt.xlabel('Time (s)')
 		plt.ylabel('Slowness (s/km)')
-		plt.title('Transverse stack at 0.005 R slow, ' + fname[12:22])
+		plt.title('Transverse stack at 0.005 R slow, ' + fname[2:12])
 		plt.show()
 
 		fig_index += 1
@@ -280,7 +280,7 @@ def pro7plotstack(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 		fig.colorbar(c, ax=ax)
 		plt.xlabel('Time (s)')
 		plt.ylabel('Slowness (s/km)')
-		plt.title('Transverse stack at 0.010 R slow, ' + fname[12:22])
+		plt.title('Transverse stack at 0.010 R slow, ' + fname[2:12])
 		plt.show()
 
 		fig_index += 1
@@ -304,7 +304,7 @@ def pro7plotstack(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 		fig.colorbar(c, ax=ax)
 		plt.xlabel('Time (s)')
 		plt.ylabel('Slowness (s/km)')
-		plt.title('Transverse stack at 0.015 R slow, ' + fname[12:22])
+		plt.title('Transverse stack at 0.015 R slow, ' + fname[2:12])
 		plt.show()
 
 #%% R-T stack
@@ -334,7 +334,7 @@ def pro7plotstack(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 			ax.add_artist(circle1)
 			plt.xlabel('T Slowness (s/km)')
 			plt.ylabel('R Slowness (s/km)')
-			plt.title('T-R stack at rel time ' + str(snaptime + snap_num*dt) + '  ' + fname[12:22])
+			plt.title('T-R stack at rel time ' + str(snaptime + snap_num*dt) + '  ' + fname[2:12])
 			plt.show()
 
 	#  Save processed files

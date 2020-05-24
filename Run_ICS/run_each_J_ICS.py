@@ -46,11 +46,11 @@ def run_eachICS(start_buff = 980, end_buff = 1180, event_no = 1, min_dist = 0,
 #	min_dist = 17
 #	max_dist = 23
 
-	slowR_lo   = -0.03
-	slowR_hi   =  0.03
-	slowT_lo   = -0.03
-	slowT_hi   =  0.03
-	slow_delta =  0.0005
+	slowR_lo   = -0.04
+	slowR_hi   =  0.04
+	slowT_lo   = -0.04
+	slowT_hi   =  0.04
+	slow_delta =  0.002
 
 	slowR_lo_1D = -0.04
 	slowR_hi_1D =  0.04
@@ -79,28 +79,27 @@ def run_eachICS(start_buff = 980, end_buff = 1180, event_no = 1, min_dist = 0,
 	# decimate, in 100 sps, out 10 sps
 	#pro2_decimate(eq_file, decimate_fac = decimate_fac)
 
-	pro3singlet(ARRAY = ARRAY, stat_corr = stat_corr, eq_file = eq_file, simple_taper = simple_taper,
-				rel_time = rel_time, start_buff = start_buff, end_buff = end_buff,
-				plot_scale_fac = 0.1, skip_SNR = skip_SNR,
-				dphase = dphase, dphase2 = dphase2, dphase3 = dphase3, dphase4 = dphase4,
-				freq_min = freq_min, freq_max = freq_max,
-				min_dist = min_dist, max_dist = max_dist, auto_dist = auto_dist,
-				qual_threshold = qual_threshold, corr_threshold = corr_threshold,
-				ref_loc = ref_loc, ref_lat = ref_lat, ref_lon = ref_lon, ref_rad = ref_rad,
-				fig_index = 102, JST = 1)
-
-	pro5stack(ARRAY = ARRAY, eq_file = eq_file, plot_scale_fac = 0.05,
-				slowR_lo = slowR_lo_1D, slowR_hi = slowR_hi_1D, slow_delta = slow_delta_1D,
-				start_buff = start_buff, end_buff = end_buff,
-				ref_loc = ref_loc, ref_lat = ref_lat, ref_lon = ref_lon,
-				log_plot = 0, envelope = 1, plot_dyn_range = 50,
-				norm = 1, global_norm_plot = 1, color_plot = 1, fig_index = 302)
+#	pro3singlet(ARRAY = ARRAY, stat_corr = stat_corr, eq_file = eq_file, simple_taper = simple_taper,
+#				rel_time = rel_time, start_buff = start_buff, end_buff = end_buff,
+#				plot_scale_fac = 0.1, skip_SNR = skip_SNR,
+#				dphase = dphase, dphase2 = dphase2, dphase3 = dphase3, dphase4 = dphase4,
+#				freq_min = freq_min, freq_max = freq_max,
+#				min_dist = min_dist, max_dist = max_dist, auto_dist = auto_dist,
+#				qual_threshold = qual_threshold, corr_threshold = corr_threshold,
+#				ref_loc = ref_loc, ref_lat = ref_lat, ref_lon = ref_lon, ref_rad = ref_rad,
+#				fig_index = 102, JST = 1)
+#
+#	pro5stack(ARRAY = ARRAY, eq_file = eq_file, plot_scale_fac = 0.05,
+#				slowR_lo = slowR_lo_1D, slowR_hi = slowR_hi_1D, slow_delta = slow_delta_1D,
+#				start_buff = start_buff, end_buff = end_buff,
+#				ref_loc = ref_loc, ref_lat = ref_lat, ref_lon = ref_lon,
+#				log_plot = 0, envelope = 1, plot_dyn_range = 50,
+#				norm = 1, global_norm_plot = 1, color_plot = 1, fig_index = 302)
 
 	#%%  --2D stacks
 	pro5stack2d(eq_file = eq_file, plot_scale_fac = 0.05,
 				slowR_lo = slowR_lo, slowR_hi = slowR_hi, slowT_lo = slowT_lo, slowT_hi = slowT_hi, slow_delta = slow_delta,
-				start_buff = start_buff, end_buff = end_buff,
-				norm = 1, global_norm_plot = 1,
+				start_buff = start_buff, end_buff = end_buff, norm = 1,
 				ref_loc = ref_loc, ref_lat = ref_lat, ref_lon = ref_lon,
 				ARRAY = ARRAY, decimate_fac = decimate_fac, NS = NS)
 

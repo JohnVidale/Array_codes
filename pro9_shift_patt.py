@@ -22,7 +22,7 @@ from obspy.taup import TauPyModel
 model = TauPyModel(model='iasp91')
 from scipy.interpolate import griddata
 
-source = 2  # 0 Amchitka, 1 is Northern NZ, 2 is southern NZ
+source = 0  # 0 Amchitka, 1 is Northern NZ, 2 is southern NZ
 mark_long = 1 # 1 will make longitudes of 0, 90, 180, and 270 plain, lat of 45 a divot
 LASA_lat =   46.7    # °N
 LASA_lon = -106.22   # °E
@@ -41,7 +41,7 @@ if source == 0:
 elif source == 1:
 	s_lat = NZN_lat
 	s_lon = NZN_lon
-else: source ==2
+elif source == 2:
 	s_lat = NZS_lat
 	s_lon = NZS_lon
 

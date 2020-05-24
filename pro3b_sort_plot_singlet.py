@@ -47,6 +47,7 @@ def pro3singlet(eq_file, stat_corr = 0, rel_time = 1, simple_taper = 0, skip_SNR
 #			ids.append(split_line[0])  ignore label for now
 	t           = UTCDateTime(split_line[1])
 	date_label  = split_line[1][0:10]
+	date_long   = split_line[1][0:22]
 	year        = split_line[1][0:4]
 	ev_lat      = float(      split_line[2])
 	ev_lon      = float(      split_line[3])
@@ -176,11 +177,15 @@ def pro3singlet(eq_file, stat_corr = 0, rel_time = 1, simple_taper = 0, skip_SNR
 
 #%% Load waveforms and decimate to 10 sps
 	st = Stream()
-	fname     = '/Users/vidale/Documents/PyCode/Mseed/HD' + date_label + '.mseed'
+	if ARRAY == 0 or ARRAY == 2:
+		fname     = '/Users/vidale/Documents/PyCode/Mseed/HD' + date_label + '.mseed'
+	if ARRAY == 1:
+		fname     = '/Users/vidale/Documents/PyCode/Mseed/L' + date_long[2:4] + date_long[5:7] + date_long[8:10] + '_' + date_long[11:13] + date_long[14:16] + '.mseed'
 	st=read(fname)
 	if do_decimate != 0:
 		st.decimate(do_decimate, no_filter=True)
 
+	print(fname)
 	print('Read in: ' + str(len(st)) + ' traces')
 	print('First trace has : ' + str(len(st[0].data)) + ' time pts ')
 	print('Start time : ' + str(st[0].stats.starttime) + '  event time : ' + str(t))

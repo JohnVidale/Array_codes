@@ -46,11 +46,11 @@ def run_eachPKiKP(start_buff = 980, end_buff = 1180, event_no = 35, min_dist = 0
 	min_dist = 0
 	max_dist = 180
 
-	slowR_lo   = -0.01
-	slowR_hi   =  0.01
-	slowT_lo   = -0.01
-	slowT_hi   =  0.01
-	slow_delta =  0.0005
+	slowR_lo   = -0.04
+	slowR_hi   =  0.04
+	slowT_lo   = -0.04
+	slowT_hi   =  0.04
+	slow_delta =  0.002
 
 	slowR_lo_1D = -0.02
 	slowR_hi_1D =  0.02
@@ -97,8 +97,7 @@ def run_eachPKiKP(start_buff = 980, end_buff = 1180, event_no = 35, min_dist = 0
 	#%%  --2D stacks
 	pro5stack2d(eq_file = eq_file, plot_scale_fac = 0.05,
 				slowR_lo = slowR_lo, slowR_hi = slowR_hi, slowT_lo = slowT_lo, slowT_hi = slowT_hi, slow_delta = slow_delta,
-				start_buff = start_buff, end_buff = end_buff,
-				norm = 1, global_norm_plot = 1,
+				start_buff = start_buff, end_buff = end_buff, norm = 1,
 				ARRAY = ARRAY, decimate_fac = decimate_fac, NS = NS)
 
 	#%% --Compare pair of 2D stack results

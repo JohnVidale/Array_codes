@@ -191,9 +191,12 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
 #%% Select by distance, window and adjust start time to align picked times
 	st_pickalign1 = Stream()
 	st_pickalign2 = Stream()
-	tra_in_range  = 0
-	tra_sta_found = 0
-	nodata        = 0
+	tra1_in_range  = 0
+	tra1_sta_found = 0
+	nodata1        = 0
+	tra2_in_range  = 0
+	tra2_sta_found = 0
+	nodata2        = 0
 	min_dist_auto = 180
 	max_dist_auto = 0
 	min_time_plot =  1000000
@@ -218,7 +221,7 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
 			tr.stats.starttime = UTCDateTime(temp_tt)
 		if tr.stats.station in st_names:  # find station in station list
 			ii = st_names.index(tr.stats.station)
-			tra_sta_found += 1
+			tra1_sta_found += 1
 
 			if stat_corr != 1 or float(st_corr[ii]) > corr_threshold: # if using statics, reject low correlations
 				stalat = float(st_lats[ii]) # look up lat & lon again to find distance
@@ -232,13 +235,13 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
 				if ref_loc == 0:  # check whether trace is in distance range from earthquake
 					if min_dist < dist and dist < max_dist:
 						in_range = 1
-						tra_in_range += 1
+						tra1_in_range += 1
 				elif ref_loc == 1:  # alternately, check whether trace is close enough to ref_location
 					ref_distance = gps2dist_azimuth(ref_lat,ref_lon,stalat,stalon)
 					ref2_dist = ref_distance[0]/(1000*111)
 					if ref2_dist < ref_rad:
 						in_range = 1
-						tra_in_range += 1
+						tra1_in_range += 1
 				if in_range == 1:   # trace fulfills the specified criteria for being in range
 					s_t = t1 + start_buff
 					e_t = t1 + end_buff
@@ -275,16 +278,10 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
 					if len(tr.data) > 0:
 						st_pickalign1 += tr
 					else:
-						nodata += 1
+						nodata1 += 1
 		else:
 			print(tr.stats.station + ' not found in station list ')
 #			sys.exit()
-
-	print('After alignment + range and correlation selection - event: ' + str(len(st_pickalign1)) + ' traces')
-	print('Traces found: ' + str(tra_sta_found) + ' Traces in range: ' + str(tra_in_range) + ' Traces with no data: ' + str(nodata))
-	print(f'ref1_distance  {ref1_dist:.3f}  relative start time  {atime_ref:.3f}')
-	print('ref_loc == 1, ref_lat: ' + str(ref_lat) + ' ref_lon: ' + str(ref_lon))
-	print(f'last station: distance {dist:.3f}  last station lat: {stalat:.3f}   last station lon: {stalat:.3f}')
 
 	for tr in st2: # find lat-lon from list, chop, statics, traces one by one
 		if float(year2) < 1970: # fix the damn 1969 -> 2069 bug in Gibbon's LASA data
@@ -293,7 +290,7 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
 			tr.stats.starttime = UTCDateTime(temp_tt)
 		if tr.stats.station in st_names:  # find station in station list
 			ii = st_names.index(tr.stats.station)
-			tra_sta_found += 1
+			tra2_sta_found += 1
 
 			if stat_corr != 1 or float(st_corr[ii]) > corr_threshold: # if using statics, reject low correlations
 				stalat = float(st_lats[ii]) # look up lat & lon again to find distance
@@ -307,13 +304,13 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
 				if ref_loc == 0:  # check whether trace is in distance range from earthquake
 					if min_dist < dist and dist < max_dist:
 						in_range = 1
-						tra_in_range += 1
+						tra2_in_range += 1
 				elif ref_loc == 1:  # alternately, check whether trace is close enough to ref_location
 					ref_distance = gps2dist_azimuth(ref_lat,ref_lon,stalat,stalon)
 					ref2_dist = ref_distance[0]/(1000*111)
 					if ref2_dist < ref_rad:
 						in_range = 1
-						tra_in_range += 1
+						tra2_in_range += 1
 				if in_range == 1:   # trace fulfills the specified criteria for being in range
 					s_t = t2 + start_buff
 					e_t = t2 + end_buff
@@ -350,18 +347,22 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
 					if len(tr.data) > 0:
 						st_pickalign2 += tr
 					else:
-						nodata += 1
+						nodata2 += 1
 		else:
 			print(tr.stats.station + ' not found in station list')
 
-	print('After alignment + range and correlation selection - event: ' + str(len(st_pickalign2)) + ' traces')
-	print('Traces found: ' + str(tra_sta_found) + ' Traces in range: ' + str(tra_in_range) + ' Traces with no data: ' + str(nodata))
+
+	print('After alignment + range and correlation selection')
+	print('1st event, Traces found: ' + str(tra1_sta_found) + ' Traces in range: ' + str(tra1_in_range) + ' Traces with no data: ' + str(nodata1))
+	print('2nd event, Traces found: ' + str(tra2_sta_found) + ' Traces in range: ' + str(tra2_in_range) + ' Traces with no data: ' + str(nodata2))
+
 	print(f'ref1_distance  {ref1_dist:.3f}  relative start time  {atime_ref:.3f}')
+	if ref_loc == 1:
+		print(f'ref2_distance  {ref2_dist:.3f}  relative start time  {atime_ref:.3f}')
+
 	print('ref_loc == 1, ref_lat: ' + str(ref_lat) + ' ref_lon: ' + str(ref_lon))
 	print(f'last station: distance {dist:.3f}  last station lat: {stalat:.3f}   last station lon: {stalat:.3f}')
 
-	print('After alignment and range selection: ' + str(len(st_pickalign1)) + ' traces')
-	print('After alignment and range selection: ' + str(len(st_pickalign2)) + ' traces')
 
 	#%%
 	#print(st) # at length
@@ -373,6 +374,7 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
 			print(st_pickalign2.__str__(extended=True))
 
 #%%  Detrend, taper, filter
+	print('Taper fraction is ' + str(taper_frac) + ' bandpass is ' + str(freq_min) + ' to ' + str(freq_max))
 	st_pickalign1.detrend(type='simple')
 	st_pickalign2.detrend(type='simple')
 	st_pickalign1.taper(taper_frac)

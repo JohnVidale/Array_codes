@@ -42,22 +42,24 @@ def runR_each_duet(start_buff = 980, end_buff = 1180, min_dist = 0,
 #	rel_time == 4  use same window around chosen phase for all stations, using ref distance
 
 	ref_loc  = 0   # 0 select stations by distance from epicenter, 1 select stations by distance from ref location
-	ref_rad  = 2.0 # radius of stations around ref_loc chosen
-	ref_lat  =  36
-	ref_lon  = 138
+	ref_rad  = 0.4 # radius of stations around ref_loc chosen
+#	ref_lat  =  36 # Japan
+#	ref_lon  = 138
+	ref_lat = 46.7      # LASA °N keep only inner rings A-D if radius is 0.4°
+	ref_lon = -106.22   # °E
 	NS       = 1   # 0 plot slowness R-T, 1 plot slowness N-S
 
 	auto_dist = 1  #  automatically plot only real distance range
 	min_dist = 0
 	max_dist = 180
 
-	slowR_lo   = -0.04
-	slowR_hi   =  0.04
-	slowT_lo   = -0.04
-	slowT_hi   =  0.04
+	slowR_lo   = -0.03
+	slowR_hi   =  0.03
+	slowT_lo   = -0.03
+	slowT_hi   =  0.03
 	slow_delta =  0.001
 
-	slowR_lo_1D = -0.1
+	slowR_lo_1D = -0.05
 	slowR_hi_1D =  0.1
 	slow_delta_1D = 0.001
 
@@ -86,7 +88,7 @@ def runR_each_duet(start_buff = 980, end_buff = 1180, min_dist = 0,
 	#pro2_decimate(eq_file2, decimate_fac = decimate_fac)
 
 	pro3pair(ARRAY = ARRAY, eq_file1 = eq1_file, eq_file2 = eq2_file, start_buff = start_buff, skip_SNR = skip_SNR,
-				end_buff = end_buff, plot_scale_fac = 0.1, qual_threshold = qual_threshold,
+				end_buff = end_buff, plot_scale_fac = 0.01, qual_threshold = qual_threshold, simple_taper = 1,
 				dphase = dphase, dphase2 = dphase2, dphase3 = dphase3, dphase4 = dphase4,
 				corr_threshold = corr_threshold, freq_min = freq_min, freq_max = freq_max,
 				min_dist = min_dist, max_dist = max_dist, ref_loc = ref_loc, ref_rad = ref_rad, ref_lat = ref_lat, ref_lon = ref_lon)
@@ -106,33 +108,33 @@ def runR_each_duet(start_buff = 980, end_buff = 1180, min_dist = 0,
 				norm = 1, global_norm_plot = 1, color_plot = 1, fig_index = 302)
 
 	#%%  --2D stacks
-	pro5stack2d(eq_file = eq1_file, plot_scale_fac = 0.05,
-				slowR_lo = slowR_lo, slowR_hi = slowR_hi, slowT_lo = slowT_lo, slowT_hi = slowT_hi, slow_delta = slow_delta,
-				start_buff = start_buff, end_buff = end_buff,
-				norm = 1, ref_loc = ref_loc, ref_lat = ref_lat, ref_lon = ref_lon,
-				ARRAY = ARRAY, decimate_fac = decimate_fac, NS = NS)
-	pro5stack2d(eq_file = eq2_file, plot_scale_fac = 0.05,
-				slowR_lo = slowR_lo, slowR_hi = slowR_hi, slowT_lo = slowT_lo, slowT_hi = slowT_hi, slow_delta = slow_delta,
-				start_buff = start_buff, end_buff = end_buff,
-				norm = 1, ref_loc = ref_loc, ref_lat = ref_lat, ref_lon = ref_lon,
-				ARRAY = ARRAY, decimate_fac = decimate_fac, NS = NS)
+#	pro5stack2d(eq_file = eq1_file, plot_scale_fac = 0.05,
+#				slowR_lo = slowR_lo, slowR_hi = slowR_hi, slowT_lo = slowT_lo, slowT_hi = slowT_hi, slow_delta = slow_delta,
+#				start_buff = start_buff, end_buff = end_buff,
+#				norm = 1, ref_loc = ref_loc, ref_lat = ref_lat, ref_lon = ref_lon,
+#				ARRAY = ARRAY, decimate_fac = decimate_fac, NS = NS)
+#	pro5stack2d(eq_file = eq2_file, plot_scale_fac = 0.05,
+#				slowR_lo = slowR_lo, slowR_hi = slowR_hi, slowT_lo = slowT_lo, slowT_hi = slowT_hi, slow_delta = slow_delta,
+#				start_buff = start_buff, end_buff = end_buff,
+#				norm = 1, ref_loc = ref_loc, ref_lat = ref_lat, ref_lon = ref_lon,
+#				ARRAY = ARRAY, decimate_fac = decimate_fac, NS = NS)
 
 	#%% --Compare pair of 2D stack results
-#	pro6stacked_pair(eq_file1 = eq1_file, eq_file2 = eq2_file, plot_scale_fac = 0.003,
+#	pro6stacked_pair(eq_file1 = eq1_file, eq_file2 = eq2_file, plot_scale_fac = 0.003, tdiff_clip = 0.1,
 #				slowR_lo = slowR_lo, slowR_hi = slowR_hi, slowT_lo = slowT_lo, slowT_hi = slowT_hi, slow_delta = slow_delta,
 #				start_buff = start_buff, end_buff = end_buff, R_slow_plot = 0, T_slow_plot = 0, dphase = dphase, freq_corr = freq_corr,
 #				fig_index = 301, plot_dyn_range = 100, ARRAY = ARRAY, event_no = event1_no, start_beam = start_beam, end_beam = end_beam)
 
 	#%% --Examine each one of a pair of 2D stack results
-	pro6stacked_singlet(eq_file = eq1_file, plot_scale_fac = 0.003,
-				slowR_lo = slowR_lo, slowR_hi = slowR_hi, slowT_lo = slowT_lo, slowT_hi = slowT_hi, slow_delta = slow_delta,
-				start_buff = start_buff, end_buff = end_buff, R_slow_plot = 0, T_slow_plot = 0, dphase = dphase,
-				fig_index = 301, plot_dyn_range = 100, ARRAY = ARRAY, event_no = event1_no, start_beam = start_beam, end_beam = end_beam)
-
-	pro6stacked_singlet(eq_file = eq2_file, plot_scale_fac = 0.003,
-				slowR_lo = slowR_lo, slowR_hi = slowR_hi, slowT_lo = slowT_lo, slowT_hi = slowT_hi, slow_delta = slow_delta,
-				start_buff = start_buff, end_buff = end_buff, R_slow_plot = 0, T_slow_plot = 0, dphase = dphase,
-				fig_index = 301, plot_dyn_range = 100, ARRAY = ARRAY, event_no = event2_no, start_beam = start_beam, end_beam = end_beam)
+#	pro6stacked_singlet(eq_file = eq1_file, plot_scale_fac = 0.003,
+#				slowR_lo = slowR_lo, slowR_hi = slowR_hi, slowT_lo = slowT_lo, slowT_hi = slowT_hi, slow_delta = slow_delta,
+#				start_buff = start_buff, end_buff = end_buff, R_slow_plot = 0, T_slow_plot = 0, dphase = dphase,
+#				fig_index = 301, plot_dyn_range = 100, ARRAY = ARRAY, event_no = event1_no, start_beam = start_beam, end_beam = end_beam)
+#
+#	pro6stacked_singlet(eq_file = eq2_file, plot_scale_fac = 0.003,
+#				slowR_lo = slowR_lo, slowR_hi = slowR_hi, slowT_lo = slowT_lo, slowT_hi = slowT_hi, slow_delta = slow_delta,
+#				start_buff = start_buff, end_buff = end_buff, R_slow_plot = -0.015, T_slow_plot = 0, dphase = dphase,
+#				fig_index = 301, plot_dyn_range = 100, ARRAY = ARRAY, event_no = event2_no, start_beam = start_beam, end_beam = end_beam)
 
 	#%% --decimate stacking files to shorten processing time
 	#pro7dec(eq_file1 = eq_file1, eq_file2 = eq_file2, decimate_fac = decimate_fac, ARRAY = ARRAY)
