@@ -5,44 +5,47 @@ Created on Tue Feb 19 14:39:33 2019
 Takes individual mseed files and combines them to a single file
 @author: vidale
 """
-from obspy import Stream
-from obspy import read
-import os
+def collect_mseed_files(dir_name):
 
-#event_yr = '73'
-#event_mo = '12'
-#event_da = '29'
-#event_hrmn = '0019'
-#date_code = 'c' + event_yr + event_mo + event_da + '_' + event_hrmn
-prefix = 'L'
-date_code = '730425_2134'
-path_name = '/Users/vidale/Documents/PyCode/LASA/Raw_unpro/long_range/c' + date_code
-os.chdir(path_name)
+	from obspy import Stream
+	from obspy import read
+	import os
+	print('Starting' + dir_name)
 
-with open('stations', 'r') as file:
-	lines = file.readlines()
+	#event_yr = '73'
+	#event_mo = '12'
+	#event_da = '29'
+	#event_hrmn = '0019'
+	#date_code = 'c' + event_yr + event_mo + event_da + '_' + event_hrmn
+	prefix = 'L'
+#	date_code = '730425_2134'
+	path_name = '/Users/vidale/Documents/PyCode/LASA/Raw/c' + dir_name
+	os.chdir(path_name)
 
-print(str(len(lines)) + ' lines read from file.')
+	with open('stations', 'r') as file:
+		lines = file.readlines()
 
-st   = Stream()
-stfull = Stream()
+	print(str(len(lines)) + ' lines read from file.')
 
-station_index = range(len(lines))
-for ii in station_index:
-	st = read(lines[ii].rstrip())
-	stfull += st
+	st   = Stream()
+	stfull = Stream()
 
-#nt = len(st71[0].data)
-#dt = st71[0].stats.delta
-#print(str(nt) + ' time pts, time sampling of ' + str(dt) + ' and thus duration of ' + str((nt-1)*dt))
+	station_index = range(len(lines))
+	for ii in station_index:
+		st = read(lines[ii].rstrip())
+		stfull += st
 
-print('This event: ' + str(len(stfull)) + ' traces.')
+	#nt = len(st71[0].data)
+	#dt = st71[0].stats.delta
+	#print(str(nt) + ' time pts, time sampling of ' + str(dt) + ' and thus duration of ' + str((nt-1)*dt))
 
-#if do_decimate != 0:
-#	st1.decimate(do_decimate, no_filter=True)
+	print('This event: ' + str(len(stfull)) + ' traces.')
 
-os.chdir('/Users/vidale/Documents/PyCode/Mseed')
+	#if do_decimate != 0:
+	#	st1.decimate(do_decimate, no_filter=True)
 
-#fname = 'HD19' + event_yr + '-' + event_mo + '-' + event_da + '.mseed'
-fname = prefix + date_code + '.mseed'
-stfull.write(fname,format = 'MSEED')
+	os.chdir('/Users/vidale/Documents/PyCode/Mseed')
+
+	#fname = 'HD19' + event_yr + '-' + event_mo + '-' + event_da + '.mseed'
+	fname = prefix + dir_name + '.mseed'
+	stfull.write(fname,format = 'MSEED')

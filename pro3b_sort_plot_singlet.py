@@ -383,7 +383,7 @@ def pro3singlet(eq_file, stat_corr = 0, rel_time = 1, simple_taper = 0, skip_SNR
 			nodata += 1
 			print('Trace ' + tr.stats.station + ' has : ' + str(len(tr.data)) + ' time pts, skip plotting')
 #%% Plot traveltime curves
-	if rel_time != 1:
+	if rel_time != 100:
 		if plot_tt:
 			# first traveltime curve
 			line_pts = 50

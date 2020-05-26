@@ -24,16 +24,16 @@ os.chdir('/Users/vidale/Documents/PyCode/LASA')
 
 #%% Common parameters
 ARRAY      = 1
-eq_file1   = 'event7.txt'
-eq_file2   = 'event8.txt'
+eq_file1   = '/Users/vidale/Documents/PyCode/EvLocs/event7.txt'
+eq_file2   = '/Users/vidale/Documents/PyCode/EvLocs/event8.txt'
 
 # PKiKP
 start_buff = 1000
 end_buff   = 1200 # middle rather than end of ICS
 #end_buff   = 1200
 
-conv_file1 = 'Pro_Files/HD1971-11-06_stf.mseed'
-conv_file2 = 'Pro_Files/HD1969-10-02_stf.mseed'
+conv_file1 = '/Users/vidale/Documents/GitHub/Array_codes/Files/HD1971-11-06_stf.mseed'
+conv_file2 = '/Users/vidale/Documents/GitHub/Array_codes/Files/HD1969-10-02_stf.mseed'
 
 freq_min = 0.5
 freq_max = 2

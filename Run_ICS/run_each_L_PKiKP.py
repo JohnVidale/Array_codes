@@ -29,9 +29,14 @@ def run_each_L_PKiKP(start_buff = 980, end_buff = 1180, event_no = 35, min_dist 
 	slowT_lo   = -0.04
 	slowT_hi   =  0.04
 	slow_delta =  0.0025
+#	slowR_lo   =  0.01 #PKiKP close-up
+#	slowR_hi   =  0.03
+#	slowT_lo   = -0.01
+#	slowT_hi   =  0.01
+#	slow_delta =  0.001
 
-	dphase = 'PKiKP'
-	dphase2 = 'PP'
+#	dphase = 'PKiKP'
+	dphase2 = 'PKiKP'
 	dphase3 = 'PKIKKIKP'
 	dphase4 = 'PKIKPPKIKP'
 
@@ -40,7 +45,7 @@ def run_each_L_PKiKP(start_buff = 980, end_buff = 1180, event_no = 35, min_dist 
 	max_dist = max_dist
 	auto_dist = 1
 
-	rel_time = 1   # phase alignment details
+	rel_time = 0   # phase alignment details
 #	rel_time == 0  window in absolute time after origin time
 #	rel_time == 1  each window has a shift proportional to (dist - ref_dist) at phase slowness at ref_dist
 #	rel_time == 2  each window has a distinct phase-chose shift, but time offset is common to all stations
@@ -76,23 +81,23 @@ def run_each_L_PKiKP(start_buff = 980, end_buff = 1180, event_no = 35, min_dist 
 				ref_loc = ref_loc, fig_index = 102, event_no = event_no)
 
 	#%% --1D stack
-	pro5stack(ARRAY = ARRAY, eq_file = eq_file, plot_scale_fac = 0.05,
-				slowR_lo = slowR_lo_1D, slowR_hi = slowR_hi_1D, slow_delta = slow_delta_1D,
-				start_buff = start_buff, end_buff = end_buff, event_no = event_no,
-				log_plot = 0, envelope = 1, plot_dyn_range = 50,
-				norm = 1, global_norm_plot = 1, color_plot = 1, fig_index = 302, stack_option = 1)
+#	pro5stack(ARRAY = ARRAY, eq_file = eq_file, plot_scale_fac = 0.05,
+#				slowR_lo = slowR_lo_1D, slowR_hi = slowR_hi_1D, slow_delta = slow_delta_1D,
+#				start_buff = start_buff, end_buff = end_buff, event_no = event_no,
+#				log_plot = 0, envelope = 1, plot_dyn_range = 50,
+#				norm = 1, global_norm_plot = 1, color_plot = 1, fig_index = 302, stack_option = 1)
 
 	##%%  --2D stack
-	pro5stack2d(eq_file = eq_file, plot_scale_fac = 0.05,
-				slowR_lo = slowR_lo, slowR_hi = slowR_hi, slowT_lo = slowT_lo, slowT_hi = slowT_hi, slow_delta = slow_delta,
-				start_buff = start_buff, end_buff = end_buff,
-				norm = 1, ARRAY = ARRAY, decimate_fac = decimate_fac, NS = NS)
+#	pro5stack2d(eq_file = eq_file, plot_scale_fac = 0.05,
+#				slowR_lo = slowR_lo, slowR_hi = slowR_hi, slowT_lo = slowT_lo, slowT_hi = slowT_hi, slow_delta = slow_delta,
+#				start_buff = start_buff, end_buff = end_buff,
+#				norm = 1, ARRAY = ARRAY, decimate_fac = decimate_fac, NS = NS)
 
 	#%% --Compare 2D stack results with themselves
-	pro6stacked_singlet(eq_file = eq_file, plot_scale_fac = 0.003, NS = NS,
-				slowR_lo = slowR_lo, slowR_hi = slowR_hi, slowT_lo = slowT_lo, slowT_hi = slowT_hi, slow_delta = slow_delta,
-				start_buff = start_buff, end_buff = end_buff, R_slow_plot = 0, T_slow_plot = 0,
-				fig_index = 301, plot_dyn_range = 100, ARRAY = ARRAY, start_beam = start_beam, end_beam = end_beam, event_no = event_no)
+#	pro6stacked_singlet(eq_file = eq_file, plot_scale_fac = 0.003, NS = NS,
+#				slowR_lo = slowR_lo, slowR_hi = slowR_hi, slowT_lo = slowT_lo, slowT_hi = slowT_hi, slow_delta = slow_delta,
+#				start_buff = start_buff, end_buff = end_buff, R_slow_plot = 1, T_slow_plot = 0, dphase = dphase,
+#				fig_index = 301, plot_dyn_range = 100, ARRAY = ARRAY, start_beam = start_beam, end_beam = end_beam, event_no = event_no)
 
 	#%% --2D envelope stack
 #	pro7plotstack(eq_file = eq_file, plot_scale_fac = 0.05,

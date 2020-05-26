@@ -5,19 +5,29 @@ Created on Sat March 21 2020
 Compares predicted and observed PKiKP slownesses
 @author: vidale
 """
-def map_slo_plot(min_dist = 0, max_dist = 180, plot_J = 1):
+def map_slo_plot(min_dist = 0, max_dist = 180, ARRAY = 0):
 	import numpy as np
 	import matplotlib.pyplot as plt
 	from obspy.taup import TauPyModel
+	from obspy.geodetics import gps2dist_azimuth
 
 	print('Starting')
 	model = TauPyModel(model='iasp91')
 	dphase = 'PKiKP'
 
-	if plot_J == 0:
-		sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/events_best_PKiKP.txt'
-	else:
+#%% Get location file
+	if ARRAY == 0: # Hinet set
 		sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/events_best_PKiKP_J.txt'
+		ref_lat = 36.3
+		ref_lon = 138.5
+	elif ARRAY == 1:         # LASA set
+		sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/events_best_PKiKP.txt'
+		ref_lat = 46.69
+		ref_lon = -106.22
+	elif ARRAY == 2: # China set and center
+		sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/events_best_PKiKP_C.txt'
+		ref_lat = 38      # °N
+		ref_lon = 104.5   # °E
 	with open(sta_file, 'r') as file:
 		lines = file.readlines()
 	event_count = len(lines)
@@ -92,16 +102,22 @@ def map_slo_plot(min_dist = 0, max_dist = 180, plot_J = 1):
 		arrivals2 = model.get_travel_times(source_depth_in_km=event_dep[ii],distance_in_degree=event_gcdist[ii]+0.5,phase_list=[dphase])
 		dtime = arrivals2[0].time - arrivals1[0].time
 		event_pred_slo[ii]  = dtime/111.  # s/km
+
 		#  find observed slowness
 		rad2 = event_PKiKP_radslo[ii]*event_PKiKP_radslo[ii]
 		tra2 = event_PKiKP_traslo[ii]*event_PKiKP_traslo[ii]
 		event_obs_slo[ii]   = np.sqrt(rad2 + tra2)
+
+		#  predicted back-azimuth
+		rel_dist_az = gps2dist_azimuth(ref_lat,ref_lon,event_lat[ii],event_lon[ii])
+		rel_dist    = rel_dist_az[0]/1000  # km
+		rel_back_az = rel_dist_az[1]       # radians
+		event_pred_bazi[ii] = rel_back_az
+
 		#  find observed back-azimuth
 		bazi_rad = np.arctan(event_PKiKP_traslo[ii]/event_PKiKP_radslo[ii])
-		event_obs_bazi[ii]  = event_baz[ii] + (bazi_rad * 180 / np.pi)
-		#  predicted back-azimuth
-		event_pred_bazi[ii] = event_baz[ii]
-
+#		event_obs_bazi[ii]  = event_baz[ii] + (bazi_rad * 180 / np.pi)
+		event_obs_bazi[ii]  = event_pred_bazi[ii] + (bazi_rad * 180 / np.pi)
 #		print('t1 t2 dtime: ' + str(arrivals1[0].time) + '  ' + str(arrivals2[0].time) + '  ' + str(dtime))
 #		print('rslo tslo in_bazi : ' + str(event_PKiKP_radslo[ii]) + '  ' + str(event_PKiKP_traslo[ii]) + '  ' + str(event_baz[ii]))
 #		print('pred: slo bazi  obs: slo bazi : ' + str(event_pred_slo[ii]) + '  ' + str(event_pred_bazi[ii]) + '  ' +

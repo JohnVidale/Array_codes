@@ -113,7 +113,7 @@ from run_each_L_ICS   import run_each_L_ICS
 #run_each_L_PKiKP(start_beam =    6, end_beam =10, start_buff = -20,  end_buff = 150,   event_no = 85, dphase = 'PKiKP')
 #run_each_L_PKiKP(start_beam =    1, end_beam = 6, start_buff = -20,  end_buff = 150,   event_no = 86, dphase = 'PKiKP')
 #run_each_L_PKiKP(start_beam =    2, end_beam =10, start_buff = -20,  end_buff = 150,   event_no = 87, dphase = 'PKiKP')
-run_each_L_PKiKP(start_beam =   -260, end_beam = -230, start_buff = -270,  end_buff = -200,   event_no = 88, dphase = 'PKiKP') # PKiKP interference
+#run_each_L_PKiKP(start_beam =   -260, end_beam = -230, start_buff = -270,  end_buff = -200,   event_no = 88, dphase = 'PKiKP') # PKiKP interference
 #run_each_L_PKiKP(start_beam =    2, end_beam =10, start_buff = -20,  end_buff = 150,   event_no = 89, dphase = 'PKiKP')
 #run_each_L_PKiKP(start_beam =   10, end_beam =13, start_buff = -20,  end_buff = 150,   event_no = 90, dphase = 'PKiKP')
 #run_each_L_PKiKP(start_beam =    4, end_beam = 8, start_buff = -20,  end_buff = 150,   event_no = 91, dphase = 'PKiKP')
@@ -128,8 +128,10 @@ run_each_L_PKiKP(start_beam =   -260, end_beam = -230, start_buff = -270,  end_b
 #run_each_L_PKiKP(start_beam =   -1, end_beam = 1, start_buff = -20,  end_buff = 150,   event_no = 302, dphase = 'PKiKP')
 #run_each_L_PKiKP(start_beam =   -2, end_beam = 4, start_buff = -20,  end_buff = 150,   event_no = 303, dphase = 'PKiKP')
 #run_each_L_PKiKP(start_beam =    1, end_beam = 4, start_buff = -20,  end_buff = 150,   event_no = 304, dphase = 'PKiKP')
-#run_each_L_PKiKP(start_beam =   -2, end_beam = 2, start_buff = -20,  end_buff = 150,   event_no = 11, dphase = 'PKiKP')
+#run_each_L_PKiKP(start_beam =   -2, end_beam = 2, start_buff = -20,  end_buff = 150,   event_no = 11, dphase = 'PKiKP') # M7.5 too big
 #run_each_L_PKiKP(start_beam =    1, end_beam = 6, start_buff = -20,  end_buff = 150,   event_no = 305, dphase = 'PKiKP')
+
+run_each_L_PKiKP(start_beam =    1, end_beam = 6, start_buff = 0,  end_buff = 3000,   event_no = 3, dphase = 'P', freq_min = 0.25, freq_max = 1)
 
 #  DUPES NOT YET PROCESSED AND NAMED
 #run_each_L(event_no = 56)
