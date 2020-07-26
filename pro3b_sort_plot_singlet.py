@@ -6,10 +6,10 @@
 # plot lines are blue, orange, yellow, purple for phases 1 through 4
 # John Vidale 2/2019
 
-def pro3singlet(eq_file, stat_corr = 0, rel_time = 1, simple_taper = 0, skip_SNR = 0,
-			dphase = 'PKiKP', dphase2 = 'PKKP', dphase3 = 'PKIKP', dphase4 = 'PPP',
-			start_buff = -10, end_buff = 30,
-			plot_scale_fac = 0.05, qual_threshold = 0, corr_threshold = 0,
+def pro3singlet(eq_file, stat_corr = 1, rel_time = 1, fine_stats = 0, simple_taper = 0, skip_SNR = 0,
+			dphase = 'P', dphase2 = '', dphase3 = '', dphase4 = '',
+			start_buff = -10, end_buff = 10, start_beam = 0, end_beam = 0,
+			plot_scale_fac = 0.2, qual_threshold = 0, corr_threshold = 0,
 			freq_min = 0.25, freq_max = 1, do_filt = 1,
 			min_dist = 0, max_dist = 180, auto_dist = 0, do_decimate = 0,
 			alt_statics = 0, statics_file = 'nothing', ARRAY = 0, JST = 0, ref_loc = 0, ref_rad = 0.4,
@@ -35,7 +35,7 @@ def pro3singlet(eq_file, stat_corr = 0, rel_time = 1, simple_taper = 0, skip_SNR
 #	if not sys.warnoptions:
 #	    warnings.simplefilter("ignore")
 
-	print('Running pro3b_sort_plot_singlet')
+	print('    Running pro3b_sort_plot_singlet')
 	start_time_wc = time.time()
 
 #%% Get saved event info, also used to name files
@@ -94,12 +94,43 @@ def pro3singlet(eq_file, stat_corr = 0, rel_time = 1, simple_taper = 0, skip_SNR
 				st_shift.append(split_line[3])
 				st_corr.append(split_line[4]) # but really std dev
 
+		# static refinement
+		if fine_stats == 1:
+			fsta_file = '/Users/vidale/Documents/PyCode/Mseed/H.fine_statics.txt'
+		with open(sta_file, 'r') as file:
+			lines = file.readlines()
+		print(str(len(lines)) + ' stations read from ' + sta_file)
+		# Load station coords into arrays
+		station_index = range(len(lines))
+		stf_names = []
+		stf_dist  = []
+		stf_lats  = []
+		stf_lons  = []
+		stf_shift = []
+		stf_corr  = []
+		for ii in station_index:
+			line = lines[ii]
+			split_line = line.split()
+			stf_names.append(split_line[0])
+			if ARRAY == 0 or ARRAY == 1:
+				stf_dist.append(split_line[1])
+				stf_lats.append( split_line[2])
+				stf_lons.append( split_line[3])
+				stf_shift.append(split_line[4])
+				stf_corr.append(split_line[5])
+			elif ARRAY == 2:
+#				stf_dist.append(split_line[1])
+				stf_lats.append( split_line[1])
+				stf_lons.append( split_line[2])
+				stf_shift.append(split_line[3])
+				stf_corr.append(split_line[4]) # but really std dev
+
 	else: # no static terms, always true for NORSAR
 		if ARRAY == 0: # Hinet set
 			sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_hinet.txt'
 		elif ARRAY == 1: #         LASA set
 			sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_LASA.txt'
-		elif ARRAY == 2: #         LASA set
+		elif ARRAY == 2: #         China set
 			sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_ch.txt'
 		else: #         NORSAR set
 			sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_NORSAR.txt'
@@ -131,8 +162,8 @@ def pro3singlet(eq_file, stat_corr = 0, rel_time = 1, simple_taper = 0, skip_SNR
 #	dphase2 = 'PKiKP'      # another phase to have traveltime plotted
 #	dphase3 = 'PKP'        # another phase to have traveltime plotted
 #	dphase4 = 'pP'        # another phase to have traveltime plotted
-	taper_frac = .05      #Fraction of window tapered on both ends
-	signal_dur = 10.       # signal length used in SNR calculation
+	taper_frac = .05      # Fraction of window tapered on both ends
+	noise_win_max = 20    # maximum length of noise window for SNR estimation, seconds
 #	plot_scale_fac = 0.5    #  Bigger numbers make each trace amplitude bigger on plot
 #	qual_threshold =  2 # minimum SNR
 #	corr_threshold = 0.7  # minimum correlation in measuring shift to use station
@@ -235,62 +266,77 @@ def pro3singlet(eq_file, stat_corr = 0, rel_time = 1, simple_taper = 0, skip_SNR
 			ii = st_names.index(tr.stats.station)
 			tra_sta_found += 1
 
-			if stat_corr != 1 or float(st_corr[ii]) > corr_threshold: # if using statics, reject low correlations
-				stalat = float(st_lats[ii]) # look up lat & lon again to find distance
-				stalon = float(st_lons[ii])
+			skip = 0
+			if fine_stats != 0:  # refine static correction?
+				if tr.stats.station in stf_names:  # find station in refining station list
+					iii = stf_names.index(tr.stats.station)
+				else:
+					skip = 1  # wanted it but it wasn't there
 
-				distance = gps2dist_azimuth(stalat,stalon,ev_lat,ev_lon) # Get traveltimes again, hard to store
-				tr.stats.distance=distance[0] # distance in km
-				dist = distance[0]/(1000*111)
+			corr = 1
+			if stat_corr == 1:
+				corr = float(st_corr[ii])
+			if fine_stats == 1:  #overwrite correlation if finer corrections are made
+				corr = float(stf_corr[iii])
+			if skip == 0:  # if fine adjustment sought and is missing, skip station
+				if corr > corr_threshold: # if using statics, reject low correlations
+					stalat = float(st_lats[ii]) # look up lat & lon again to find distance
+					stalon = float(st_lons[ii])
 
-				in_range = 0  # flag for whether this trace goes into stack
-				if ref_loc == 0:  # check whether trace is in distance range from earthquake
-					if min_dist < dist and dist < max_dist:
-						in_range = 1
-						tra_in_range += 1
-				elif ref_loc == 1:  # alternately, check whether trace is close enough to ref_location
-					ref_distance = gps2dist_azimuth(ref_lat,ref_lon,stalat,stalon)
-					ref2_dist = ref_distance[0]/(1000*111)
-					if ref2_dist < ref_rad:
-						in_range = 1
-						tra_in_range += 1
-				if in_range == 1:   # trace fulfills the specified criteria for being in range
-					s_t = t + start_buff
-					e_t = t + end_buff
-					if stat_corr == 1: # apply static station corrections
-						tr.stats.starttime -= float(st_shift[ii])
-					if rel_time == 0:  #  don't adjust absolute time
-						tr.trim(starttime=s_t,endtime = e_t)
-					else:              # shift relative to a chosen phase
-						arrivals_each = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree=dist,phase_list=[dphase])
-						atime_each = arrivals_each[0].time
-						if rel_time == 1: # each window has a shift proportional to ref_dist at phase slowness at ref_dist
-							s_t += atime_each
-							e_t += atime_each
-							tr.trim( starttime=s_t, endtime = e_t)
-							tr.stats.starttime -= atime_each - (dist-ref1_dist) * ref_slow
-						elif rel_time == 2: # each window has a distinct shift, but offset is common to all stations
-							s_t += atime_each
-							e_t += atime_each
-							tr.trim( starttime=s_t, endtime = e_t)
-							tr.stats.starttime -= atime_ref
-						elif rel_time == 3:  # each station has an individual, chosen-phase shift, phase arrival set to zero
-							s_t += atime_each
-							e_t += atime_each
-							tr.trim( starttime=s_t, endtime = e_t)
-							tr.stats.starttime -= atime_each
-						elif rel_time == 4: # use same window around chosen phase for all stations, phase arrival set to zero
-							s_t += atime_ref
-							e_t += atime_ref
-							tr.trim( starttime=s_t, endtime = e_t)
-							tr.stats.starttime -= atime_ref
+					distance = gps2dist_azimuth(stalat,stalon,ev_lat,ev_lon) # Get traveltimes again, hard to store
+					tr.stats.distance=distance[0] # distance in km
+					dist = distance[0]/(1000*111)
+
+					in_range = 0  # flag for whether this trace goes into stack
+					if ref_loc == 0:  # check whether trace is in distance range from earthquake
+						if min_dist < dist and dist < max_dist:
+							in_range = 1
+							tra_in_range += 1
+					elif ref_loc == 1:  # alternately, check whether trace is close enough to ref_location
+						ref_distance = gps2dist_azimuth(ref_lat,ref_lon,stalat,stalon)
+						ref2_dist = ref_distance[0]/(1000*111)
+						if ref2_dist < ref_rad:
+							in_range = 1
+							tra_in_range += 1
+					if in_range == 1:   # trace fulfills the specified criteria for being in range
+						s_t = t + start_buff
+						e_t = t + end_buff
+						if stat_corr == 1: # apply static station corrections
+							tr.stats.starttime -= float(st_shift[ii])
+							if fine_stats == 1:
+								tr.stats.starttime -= float(stf_shift[iii])
+						if rel_time == 0:  #  don't adjust absolute time
+							tr.trim(starttime=s_t,endtime = e_t)
+						else:              # shift relative to a chosen phase
+							arrivals_each = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree=dist,phase_list=[dphase])
+							atime_each = arrivals_each[0].time
+							if rel_time == 1: # each window has a shift proportional to ref_dist at phase slowness at ref_dist
+								s_t += atime_each
+								e_t += atime_each
+								tr.trim( starttime=s_t, endtime = e_t)
+								tr.stats.starttime -= atime_each - (dist-ref1_dist) * ref_slow
+							elif rel_time == 2: # each window has a distinct shift, but offset is common to all stations
+								s_t += atime_each
+								e_t += atime_each
+								tr.trim( starttime=s_t, endtime = e_t)
+								tr.stats.starttime -= atime_ref
+							elif rel_time == 3:  # each station has an individual, chosen-phase shift, phase arrival set to zero
+								s_t += atime_each
+								e_t += atime_each
+								tr.trim( starttime=s_t, endtime = e_t)
+								tr.stats.starttime -= atime_each
+							elif rel_time == 4: # use same window around chosen phase for all stations, phase arrival set to zero
+								s_t += atime_ref
+								e_t += atime_ref
+								tr.trim( starttime=s_t, endtime = e_t)
+								tr.stats.starttime -= atime_ref
+							else:
+								print('invalid rel_time, must be integer 0 to 4')
+								sys.exit()
+						if len(tr.data) > 0:
+							st_pickalign += tr
 						else:
-							print('invalid rel_time, must be integer 0 to 4')
-							sys.exit()
-					if len(tr.data) > 0:
-						st_pickalign += tr
-					else:
-						nodata += 1
+							nodata += 1
 		else:
 			print(tr.stats.station + ' not found in station list')
 	print('After alignment + range and correlation selection - event: ' + str(len(st_pickalign)) + ' traces')
@@ -313,22 +359,36 @@ def pro3singlet(eq_file, stat_corr = 0, rel_time = 1, simple_taper = 0, skip_SNR
 		st_pickalign.filter('bandpass', freqmin=freq_min, freqmax=freq_max, corners=4, zerophase=True)
 	st_pickalign.taper(taper_frac)
 
-#%%  Cull further by imposing SNR threshold on both traces
+#%%  Cull further by imposing SNR threshold
 	if skip_SNR == 1:
 		stgood = st_pickalign.copy()
 	else:
 		stgood = Stream()
 		for tr in st_pickalign:
-		# estimate median noise
-			t_noise_start  = int(len(tr.data) * taper_frac)
-			t_noise_end    = int(len(tr.data) * start_buff/(start_buff-end_buff))
-			noise          = np.median(abs(tr.data[t_noise_start:t_noise_end]))
-		# estimate median signal
-			t_signal_start = int(len(tr.data) * start_buff/(start_buff-end_buff))
-			t_signal_end   = t_signal_start + int(len(tr.data) * signal_dur/(end_buff - start_buff))
-			signal         = np.median(abs(tr.data[t_signal_start:t_signal_end]))
-		#			test SNR
+			# estimate median noise
+			time_to_beam_start = (start_beam - start_buff)
+			if time_to_beam_start - taper_frac * (end_buff - start_buff) < noise_win_max: # noise window < max length
+				t_noise_start  = int(len(tr.data) * taper_frac)  # start just after taper
+				t_noise_end    = int(len(tr.data) * time_to_beam_start / (end_buff - start_buff))  # end at beam start
+			else:  # plenty of leader, set noise window to max length
+				time_to_noise_start = time_to_beam_start - noise_win_max
+				t_noise_start  = int(len(tr.data) *  time_to_noise_start / (end_buff - start_buff))  # start just after taper
+				t_noise_end    = int(len(tr.data) *  time_to_beam_start  / (end_buff - start_buff))  # end at beam start
+			noise = np.median(abs(tr.data[t_noise_start:t_noise_end]))
+
+			# estimate median signal
+			t_signal_start = t_noise_end
+			t_signal_end    = int(len(tr.data) * (end_beam - start_buff)/(end_buff - start_buff))
+# old			t_signal_start = int(len(tr.data) * start_buff/(start_buff-end_buff))
+# old			t_signal_end   = t_signal_start + int(len(tr.data) * signal_dur/(end_buff - start_buff))
+			signal = np.median(abs(tr.data[t_signal_start:t_signal_end]))
+
+			# test SNR
 			SNR = signal/noise;
+#			print('set noise window to max length: ' + str(t_noise_start) + ' start   ' + str(t_noise_end) + ' end')
+#			print('set signal window: ' + str(t_signal_start) + ' start   ' + str(t_signal_end) + ' end')
+#			print('SNR: ' + str(SNR))
+#			sys.exit()
 			if (SNR > qual_threshold):
 				stgood += tr
 
@@ -421,6 +481,7 @@ def pro3singlet(eq_file, stat_corr = 0, rel_time = 1, simple_taper = 0, skip_SNR
 				plt.plot(time_vec2,dist_vec, color = 'orange')
 			# third traveltime curve
 			if dphase3 != 'no':
+				print('dphase3 ' + dphase3 + ' min_dist ' + str(min_dist) + ' max_dist_auto ' + str(max_dist_auto) + ' line_pts ' + str(line_pts))
 				time_vec3 = np.arange(min_dist_auto, max_dist_auto, (max_dist_auto - min_dist_auto)/line_pts) # empty time grid of same length (filled with -1000)
 				for i in range(0,line_pts):
 					arrivals = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree
@@ -440,7 +501,8 @@ def pro3singlet(eq_file, stat_corr = 0, rel_time = 1, simple_taper = 0, skip_SNR
 				plt.plot(time_vec3,dist_vec, color = 'yellow')
 			# fourth traveltime curve
 			if dphase4 != 'no':
-				time_vec4 = np.arange(min_dist, max_dist_auto, (max_dist_auto - min_dist)/line_pts) # empty time grid of same length (filled with -1000)
+				print('dphase4 ' + dphase4 + ' min_dist ' + str(min_dist) + ' max_dist_auto ' + str(max_dist_auto) + ' line_pts ' + str(line_pts))
+				time_vec4 = np.arange(min_dist_auto, max_dist_auto, (max_dist_auto - min_dist_auto)/line_pts) # empty time grid of same length (filled with -1000)
 				for i in range(0,line_pts):
 					arrivals = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree
 												=dist_vec[i],phase_list=[dphase4])
@@ -467,7 +529,7 @@ def pro3singlet(eq_file, stat_corr = 0, rel_time = 1, simple_taper = 0, skip_SNR
 
 	plt.xlabel('Time (s)')
 	plt.ylabel('Epicentral distance from event (°)')
-	plt.title(dphase + ' for ' + date_label + ' event # ' + str(event_no))
+	plt.title(dphase + ' for ' + date_label + ' event #' + str(event_no))
 	os.chdir('/Users/vidale/Documents/PyCode/Plots')
 #	plt.savefig(date_label + '_' + str(event_no) + '_raw.png')
 	plt.show()

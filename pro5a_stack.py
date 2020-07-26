@@ -30,6 +30,8 @@ def pro5stack(eq_file, plot_scale_fac = 0.05, slowR_lo = -0.1, slowR_hi = 0.1, s
 	import math
 	import time
 
+	env_stack = 0  # flag to stack envelopes instead of oscillating seismograms
+
 #	import sys # don't show any warnings
 #	import warnings
 
@@ -133,6 +135,10 @@ def pro5stack(eq_file, plot_scale_fac = 0.05, slowR_lo = -0.1, slowR_hi = 0.1, s
 
 #%% Select traces by distance, window and adjust start time to align picked times
 	done = 0
+	if env_stack == 1: #convert oscillating seismograms to envelopes
+		for tr in st:
+			tr.data = np.abs(hilbert(tr.data))
+
 	for tr in st: # traces one by one, find lat-lon by searching entire inventory.  Inefficient but cheap
 		if tr.stats.station in st_names:  # find station in station list
 			ii = st_names.index(tr.stats.station)
@@ -219,7 +225,7 @@ def pro5stack(eq_file, plot_scale_fac = 0.05, slowR_lo = -0.1, slowR_hi = 0.1, s
 	#	y, x = np.mgrid[ stack_slows , time ]  # make underlying x-y grid for plot
 		plt.close(fig_index)
 
-		fig, ax = plt.subplots(1, figsize=(9,2))
+		fig, ax = plt.subplots(1, figsize=(9,9))
 		fig.subplots_adjust(bottom=0.3)
 #		c = ax.pcolormesh(x, y, stack_array, cmap=plt.cm.gist_yarg)
 #		c = ax.pcolormesh(x, y, stack_array, cmap=plt.cm.gist_rainbow_r)

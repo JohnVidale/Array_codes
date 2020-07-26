@@ -3,7 +3,7 @@
 
 def run_eachICS(start_buff = 980, end_buff = 1180, event_no = 1, min_dist = 0,
 			  max_dist = 180, freq_min = 1, freq_max = 3, slow_delta = 0.0025,
-			  start_beam = 0, end_beam = 0, dphase  = 'PKiKP'):
+			  start_SNRbeam = 0, end_SNRbeam = 0, start_beam = 0, end_beam = 0, dphase  = 'PKiKP'):
 
 	import os
 	os.environ['PATH'] += os.pathsep + '/usr/local/bin'
@@ -36,8 +36,8 @@ def run_eachICS(start_buff = 980, end_buff = 1180, event_no = 1, min_dist = 0,
 #	rel_time == 3  each station has an individual, chosen-phase shift, phase arrival set to common time
 #	rel_time == 4  use same window around chosen phase for all stations, using ref distance
 
-	ref_loc  = 0   # 0 select stations by distance from epicenter, 1 select stations by distance from ref location
-	ref_rad  = 0.3 # radius of stations around ref_loc chosen
+	ref_loc  = 1   # 0 select stations by distance from epicenter, 1 select stations by distance from ref location
+	ref_rad  = 1.5 # radius of stations around ref_loc chosen
 	ref_lat = 36
 	ref_lon = 138
 	NS       = 1   # 0 plot slowness R-T, 1 plot slowness N-S
@@ -46,14 +46,14 @@ def run_eachICS(start_buff = 980, end_buff = 1180, event_no = 1, min_dist = 0,
 #	min_dist = 17
 #	max_dist = 23
 
-	slowR_lo   = -0.04
-	slowR_hi   =  0.04
-	slowT_lo   = -0.04
-	slowT_hi   =  0.04
-	slow_delta =  0.002
+	slowR_lo   = -0.1
+	slowR_hi   =  0.1
+	slowT_lo   = -0.1
+	slowT_hi   =  0.1
+	slow_delta =  0.005
 
-	slowR_lo_1D = -0.04
-	slowR_hi_1D =  0.04
+	slowR_lo_1D = -0.1
+	slowR_hi_1D =  0.1
 	slow_delta_1D = 0.0005
 
 	decimate_fac   =  10
@@ -64,7 +64,7 @@ def run_eachICS(start_buff = 980, end_buff = 1180, event_no = 1, min_dist = 0,
 	stat_corr      = 1
 	corr_threshold = 0.6
 	skip_SNR       = 1
-	qual_threshold = 1.5
+	qual_threshold = 3
 
 #	dphase  = 'PKiKP'
 	dphase2 = 'PP'
@@ -79,22 +79,23 @@ def run_eachICS(start_buff = 980, end_buff = 1180, event_no = 1, min_dist = 0,
 	# decimate, in 100 sps, out 10 sps
 	#pro2_decimate(eq_file, decimate_fac = decimate_fac)
 
-#	pro3singlet(ARRAY = ARRAY, stat_corr = stat_corr, eq_file = eq_file, simple_taper = simple_taper,
-#				rel_time = rel_time, start_buff = start_buff, end_buff = end_buff,
-#				plot_scale_fac = 0.1, skip_SNR = skip_SNR,
-#				dphase = dphase, dphase2 = dphase2, dphase3 = dphase3, dphase4 = dphase4,
-#				freq_min = freq_min, freq_max = freq_max,
-#				min_dist = min_dist, max_dist = max_dist, auto_dist = auto_dist,
-#				qual_threshold = qual_threshold, corr_threshold = corr_threshold,
-#				ref_loc = ref_loc, ref_lat = ref_lat, ref_lon = ref_lon, ref_rad = ref_rad,
-#				fig_index = 102, JST = 1)
+	pro3singlet(ARRAY = ARRAY, stat_corr = stat_corr, eq_file = eq_file, simple_taper = simple_taper,
+				rel_time = rel_time, start_buff = start_buff, end_buff = end_buff,
+				start_beam = start_SNRbeam, end_beam = end_SNRbeam,
+				plot_scale_fac = 0.1, skip_SNR = skip_SNR,
+				dphase = dphase, dphase2 = dphase2, dphase3 = dphase3, dphase4 = dphase4,
+				freq_min = freq_min, freq_max = freq_max,
+				min_dist = min_dist, max_dist = max_dist, auto_dist = auto_dist,
+				qual_threshold = qual_threshold, corr_threshold = corr_threshold,
+				ref_loc = ref_loc, ref_lat = ref_lat, ref_lon = ref_lon, ref_rad = ref_rad,
+				fig_index = 102, JST = 1)
 #
-#	pro5stack(ARRAY = ARRAY, eq_file = eq_file, plot_scale_fac = 0.05,
-#				slowR_lo = slowR_lo_1D, slowR_hi = slowR_hi_1D, slow_delta = slow_delta_1D,
-#				start_buff = start_buff, end_buff = end_buff,
-#				ref_loc = ref_loc, ref_lat = ref_lat, ref_lon = ref_lon,
-#				log_plot = 0, envelope = 1, plot_dyn_range = 50,
-#				norm = 1, global_norm_plot = 1, color_plot = 1, fig_index = 302)
+	pro5stack(ARRAY = ARRAY, eq_file = eq_file, plot_scale_fac = 0.05,
+				slowR_lo = slowR_lo_1D, slowR_hi = slowR_hi_1D, slow_delta = slow_delta_1D,
+				start_buff = start_buff, end_buff = end_buff,
+				ref_loc = ref_loc, ref_lat = ref_lat, ref_lon = ref_lon,
+				log_plot = 0, envelope = 1, plot_dyn_range = 50,
+				norm = 1, global_norm_plot = 1, color_plot = 1, fig_index = 302)
 
 	#%%  --2D stacks
 	pro5stack2d(eq_file = eq_file, plot_scale_fac = 0.05,
@@ -103,7 +104,7 @@ def run_eachICS(start_buff = 980, end_buff = 1180, event_no = 1, min_dist = 0,
 				ref_loc = ref_loc, ref_lat = ref_lat, ref_lon = ref_lon,
 				ARRAY = ARRAY, decimate_fac = decimate_fac, NS = NS)
 
-	#%% --Compare pair of 2D stack results
+	#%% --Sum beams over time windows
 	pro6stacked_singlet(eq_file = eq_file, plot_scale_fac = 0.003,
 				slowR_lo = slowR_lo, slowR_hi = slowR_hi, slowT_lo = slowT_lo, slowT_hi = slowT_hi, slow_delta = slow_delta,
 				start_buff = start_buff, end_buff = end_buff, R_slow_plot = 0, T_slow_plot = 0, dphase = dphase,

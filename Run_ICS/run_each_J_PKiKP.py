@@ -3,7 +3,7 @@
 
 def run_eachPKiKP(start_buff = 980, end_buff = 1180, event_no = 35, min_dist = 0,
 			  max_dist = 180, freq_min = 1, freq_max = 3, slow_delta = 0.001,
-			  start_beam = 0, end_beam = 0, dphase  = 'PKiKP'):
+			  start_SNRbeam = 0, end_SNRbeam = 0, start_beam = 0, end_beam = 0, dphase  = 'PKiKP'):
 
 	import os
 	os.environ['PATH'] += os.pathsep + '/usr/local/bin'
@@ -63,8 +63,8 @@ def run_eachPKiKP(start_buff = 980, end_buff = 1180, event_no = 35, min_dist = 0
 
 	stat_corr      = 1
 	corr_threshold = 0.6
-	skip_SNR       = 1
-	qual_threshold = 1.5
+	skip_SNR       = 0
+	qual_threshold = 5
 
 #	dphase  = 'PKiKP'
 	dphase2 = 'PP'
@@ -81,6 +81,7 @@ def run_eachPKiKP(start_buff = 980, end_buff = 1180, event_no = 35, min_dist = 0
 
 	pro3singlet(ARRAY = ARRAY, stat_corr = stat_corr, eq_file = eq_file, simple_taper = simple_taper,
 				rel_time = rel_time, start_buff = start_buff, end_buff = end_buff,
+				start_beam = start_SNRbeam, end_beam = end_SNRbeam,
 				plot_scale_fac = 0.1, skip_SNR = skip_SNR,
 				dphase = dphase, dphase2 = dphase2, dphase3 = dphase3, dphase4 = dphase4,
 				freq_min = freq_min, freq_max = freq_max,

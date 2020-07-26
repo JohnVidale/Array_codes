@@ -25,6 +25,8 @@ def pro5stack2d(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 	import sys # don't show any warnings
 	import warnings
 
+	env_stack = 0  # flag to stack envelopes instead of oscillating seismograms
+
 #	norm = 1 # norm by dividing by max(abs)
 #	global_norm_plot = 1 # not used, only used in pro5stack
 
@@ -131,6 +133,10 @@ def pro5stack2d(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 
 #%% select by distance, window and adjust start time to align picked times
 	done = 0
+	if env_stack == 1:
+		for tr in st: #  #convert oscillating seismograms to envelopes
+			tr.data = np.abs(hilbert(tr.data))
+
 	for tr in st: # traces one by one, find lat-lon by searching entire inventory.  Inefficient but cheap
 		if tr.stats.station in st_names:  # find station in station list
 			ii = st_names.index(tr.stats.station)

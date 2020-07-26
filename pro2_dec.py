@@ -2,7 +2,7 @@
 # this program only detrends, tapers and decimates
 # John Vidale 2/2019
 
-def pro2_decimate(eq_file, decimate_fac = 10, ARRAY = 0):
+def pro2decimate(eq_file, decimate_fac = 10, ARRAY = 0):
 
 	from obspy import UTCDateTime
 	from obspy import Stream
