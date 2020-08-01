@@ -1,10 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Mar 17 11:32:10 2020
-
-@author: vidale
-"""
-
+#!/usr/bin/env python
 import matplotlib.pyplot as plt
 plt.close('all')

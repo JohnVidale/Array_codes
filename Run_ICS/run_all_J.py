@@ -6,47 +6,132 @@ os.environ['PATH'] += os.pathsep + '/usr/local/bin'
 os.chdir('/Users/vidale/Documents/GitHub/Array_codes/Run_ICS')
 
 #%% Import functions
-from run_each_J_PKiKP import run_eachPKiKP
-from run_each_J_PcP   import run_eachPcP
-from run_each_J_ICS   import run_eachICS
-from run_align        import run_get_shift_PKiKP
+from run_align_J      import run_get_shift_J
 
-#run_eachPKiKP(start_buff = -20,  end_buff = 25, start_beam =  1,   end_beam = 3,   event_no = 102)
-#run_eachPKiKP(start_buff = -20,  end_buff = 25, start_beam = -2,   end_beam = 0,   event_no = 103)
-#run_eachPKiKP(start_buff = -20,  end_buff = 25, start_beam = -1,   end_beam = 1,   event_no = 104)
-#run_eachPKiKP(start_buff = -20,  end_buff = 25, start_beam =  0,   end_beam = 2,   event_no = 105)
-#run_eachPKiKP(start_buff = -20,  end_buff = 25, start_beam =  2,   end_beam = 4,   event_no = 106)
-#run_eachPKiKP(start_buff = -20,  end_buff = 25, start_beam = -1,   end_beam = 1,   event_no = 107)
-#run_eachPKiKP(start_buff = -20,  end_buff = 25, start_beam =  0,   end_beam = 2,   event_no = 108)
-#run_eachPKiKP(start_buff = -20,  end_buff = 25, start_beam = -1,   end_beam = 1,   event_no = 109)
-#run_eachPKiKP(start_buff = -20,  end_buff = 25, start_beam = -0.5, end_beam = 1.5, event_no = 110)
-#run_eachPKiKP(start_buff = -20,  end_buff = 25, start_beam = -2,   end_beam = 0,   event_no = 111)
+#%% PKiKP alignment
+# run_get_shift_J(
+#     start_buff_align = -10, end_buff_align = 10, start_beam_align = -1, end_beam_align = 4,
+#     start_buff_stack =   0, end_buff_stack = 80, start_beam_stack = 20, end_beam_stack = 60, event_no = 102, dphase = 'PKiKP')
+# run_get_shift_J(
+#     start_buff_align = -10, end_buff_align = 10, start_beam_align = -4, end_beam_align = 1,
+#     start_buff_stack =   0, end_buff_stack = 80, start_beam_stack = 20, end_beam_stack = 60, event_no = 103, dphase = 'PKiKP')
+# run_get_shift_J(
+#     start_buff_align = -10, end_buff_align = 10, start_beam_align = -2, end_beam_align = 4,
+#     start_buff_stack =   0, end_buff_stack = 80, start_beam_stack = 20, end_beam_stack = 60, event_no = 104, dphase = 'PKiKP')
+# run_get_shift_J(
+#     start_buff_align = -10, end_buff_align = 10, start_beam_align = -3, end_beam_align = 2,
+#     start_buff_stack =   0, end_buff_stack = 80, start_beam_stack = 20, end_beam_stack = 60, event_no = 105, dphase = 'PKiKP')
+# run_get_shift_J(
+#     start_buff_align = -10, end_buff_align = 10, start_beam_align = 2, end_beam_align = 5,
+#     start_buff_stack =   0, end_buff_stack = 80, start_beam_stack = 20, end_beam_stack = 60, event_no = 106, dphase = 'PKiKP')
+# run_get_shift_J(
+#     start_buff_align = -10, end_buff_align = 10, start_beam_align = -2, end_beam_align = 4,
+#     start_buff_stack =   0, end_buff_stack = 80, start_beam_stack = 20, end_beam_stack = 60, event_no = 107, dphase = 'PKiKP')
+# run_get_shift_J(
+#     start_buff_align = -10, end_buff_align = 10, start_beam_align = -2, end_beam_align = 3,
+#     start_buff_stack =   0, end_buff_stack = 80, start_beam_stack = 20, end_beam_stack = 60, event_no = 108, dphase = 'PKiKP')
+# run_get_shift_J(
+#     start_buff_align = -10, end_buff_align = 10, start_beam_align = -2, end_beam_align = 4,
+#     start_buff_stack =   0, end_buff_stack = 80, start_beam_stack = 20, end_beam_stack = 60, event_no = 109, dphase = 'PKiKP')
+# run_get_shift_J(
+#     start_buff_align = -10, end_buff_align = 10, start_beam_align = -2, end_beam_align = 4,
+#     start_buff_stack =   0, end_buff_stack = 80, start_beam_stack = 20, end_beam_stack = 60, event_no = 110, dphase = 'PKiKP')
+# run_get_shift_J(
+#     start_buff_align = -10, end_buff_align = 10, start_beam_align = -4, end_beam_align = 1,
+#     start_buff_stack =   0, end_buff_stack = 80, start_beam_stack = 20, end_beam_stack = 60, event_no = 111, dphase = 'PKiKP')
 
-#run_eachICS(start_buff = 10,   end_buff = 70, start_beam = 20,   end_beam = 60,   event_no = 102)
-#run_eachICS(start_buff = 10,   end_buff = 70, start_beam = 20,   end_beam = 60,   event_no = 103)
-#run_eachICS(start_buff = 10,   end_buff = 70, start_beam = 20,   end_beam = 60,   event_no = 104)
-#run_eachICS(start_buff = 10,   end_buff = 70, start_beam = 20,   end_beam = 60,   event_no = 105)
-#run_eachICS(start_buff = 10,   end_buff = 70, start_beam = 20,   end_beam = 60,   event_no = 106)
-#run_eachICS(start_buff = 10,   end_buff = 70, start_beam = 20,   end_beam = 60,   event_no = 107)
-#run_eachICS(start_buff = 10,   end_buff = 70, start_beam = 20,   end_beam = 60,   event_no = 108)
-#run_eachICS(start_buff = 10,   end_buff = 70, start_beam = 20,   end_beam = 60,   event_no = 109)
-#run_eachICS(start_buff = 10,   end_buff = 70, start_beam = 20,   end_beam = 60,   event_no = 110)
-#run_eachICS(start_buff = -20,   end_buff = 80, start_beam = 20,   end_beam = 60,   event_no = 111)
-# run_eachICS(start_buff = -50,   end_buff = 50, start_SNRbeam = -2,   end_SNRbeam = 0, start_beam = 0,   end_beam = 5,   event_no = 111)
-# run_eachICS(start_buff = -50,   end_buff = 50, start_SNRbeam = -1,   end_SNRbeam = 2, start_beam = 10,   end_beam = 20,   event_no = 111, dphase = 'PcP')
+#%% PKiKP precursor
+# run_get_shift_J(
+#     start_buff_align = -10, end_buff_align = 10, start_beam_align = -9, end_beam_align = 9,
+#     start_buff_stack = -20, end_buff_stack = 20, start_beam_stack = -10, end_beam_stack = 10, event_no = 102, dphase = 'PKiKP')
+# run_get_shift_J(
+#     start_buff_align = -10, end_buff_align = 10, start_beam_align = -9, end_beam_align = 9,
+#     start_buff_stack = -20, end_buff_stack = 20, start_beam_stack = -10, end_beam_stack = 10, event_no = 103, dphase = 'PKiKP')
+# run_get_shift_J(
+#     start_buff_align = -10, end_buff_align = 10, start_beam_align = -9, end_beam_align = 9,
+#     start_buff_stack = -20, end_buff_stack = 20, start_beam_stack = -10, end_beam_stack = 10, event_no = 104, dphase = 'PKiKP')
+# run_get_shift_J(
+#     start_buff_align = -10, end_buff_align = 10, start_beam_align = -9, end_beam_align = 9,
+#     start_buff_stack = -20, end_buff_stack = 20, start_beam_stack = -10, end_beam_stack = 10, event_no = 105, dphase = 'PKiKP')
+# run_get_shift_J(
+#     start_buff_align = -10, end_buff_align = 10, start_beam_align = -9, end_beam_align = 9,
+#     start_buff_stack = -20, end_buff_stack = 20, start_beam_stack = -10, end_beam_stack = 10, event_no = 106, dphase = 'PKiKP')
+# run_get_shift_J(
+#     start_buff_align = -10, end_buff_align = 10, start_beam_align = -9, end_beam_align = 9,
+#     start_buff_stack = -20, end_buff_stack = 20, start_beam_stack = -10, end_beam_stack = 10, event_no = 107, dphase = 'PKiKP')
+# run_get_shift_J(
+#     start_buff_align = -10, end_buff_align = 10, start_beam_align = -9, end_beam_align = 9,
+#     start_buff_stack = -20, end_buff_stack = 20, start_beam_stack = -10, end_beam_stack = 10, event_no = 108, dphase = 'PKiKP')
+# run_get_shift_J(
+#     start_buff_align = -10, end_buff_align = 10, start_beam_align = -9, end_beam_align = 9,
+#     start_buff_stack = -20, end_buff_stack = 20, start_beam_stack = -10, end_beam_stack = 10, event_no = 109, dphase = 'PKiKP')
+# run_get_shift_J(
+#     start_buff_align = -10, end_buff_align = 10, start_beam_align = -9, end_beam_align = 9,
+#     start_buff_stack = -20, end_buff_stack = 20, start_beam_stack = -10, end_beam_stack = 10, event_no = 110, dphase = 'PKiKP')
+# run_get_shift_J(
+#     start_buff_align = -10, end_buff_align = 10, start_beam_align = -9, end_beam_align = 9,
+#     start_buff_stack = -20, end_buff_stack = 20, start_beam_stack = -10, end_beam_stack = 10, event_no = 111, dphase = 'PKiKP')
 
-#run_eachPcP(start_buff = -20,   end_buff = 25, start_beam =  1,   end_beam = 5,   event_no = 102)
-#run_eachPcP(start_buff = -20,   end_buff = 25, start_beam = -0.5, end_beam = 3,   event_no = 103)
-#run_eachPcP(start_buff = -20,   end_buff = 25, start_beam =  0.5, end_beam = 3.5, event_no = 104)
-#run_eachPcP(start_buff = -20,   end_buff = 25, start_beam =  0,   end_beam = 3,   event_no = 105)
-#run_eachPcP(start_buff = -20,   end_buff = 25, start_beam =  4,   end_beam = 7,   event_no = 106)
-#run_eachPcP(start_buff = -20,   end_buff = 25, start_beam =  0.5, end_beam = 3.5, event_no = 107)
-#run_eachPcP(start_buff = -20,   end_buff = 25, start_beam = -1,   end_beam = 3,   event_no = 108)
-#run_eachPcP(start_buff = -20,   end_buff = 25, start_beam =  1,   end_beam = 4,   event_no = 109)
-#run_eachPcP(start_buff = -20,   end_buff = 25, start_beam =  1,   end_beam = 4,   event_no = 110)
-#run_eachPcP(start_buff = -20,   end_buff = 25, start_beam = -1,   end_beam = 2,   event_no = 111)
+#%% P precursor
+# run_get_shift_J(
+#     start_buff_align = -10, end_buff_align = 10, start_beam_align = -9, end_beam_align = 9,
+#     start_buff_stack = -20, end_buff_stack = 20, start_beam_stack = -10, end_beam_stack = 10, event_no = 102, dphase = 'P')
+# run_get_shift_J(
+#     start_buff_align = -10, end_buff_align = 10, start_beam_align = -9, end_beam_align = 9,
+#     start_buff_stack = -20, end_buff_stack = 20, start_beam_stack = -10, end_beam_stack = 10, event_no = 103, dphase = 'P')
+# run_get_shift_J(
+#     start_buff_align = -10, end_buff_align = 10, start_beam_align = -9, end_beam_align = 9,
+#     start_buff_stack = -20, end_buff_stack = 20, start_beam_stack = -10, end_beam_stack = 10, event_no = 104, dphase = 'P')
+# run_get_shift_J(
+#     start_buff_align = -10, end_buff_align = 10, start_beam_align = -9, end_beam_align = 9,
+#     start_buff_stack = -20, end_buff_stack = 20, start_beam_stack = -10, end_beam_stack = 10, event_no = 105, dphase = 'P')
+run_get_shift_J(
+    start_buff_align = -10, end_buff_align = 10, start_beam_align = -9, end_beam_align = 9,
+    start_buff_stack = -20, end_buff_stack = 20, start_beam_stack = -10, end_beam_stack = 10, event_no = 106, dphase = 'P')
+# run_get_shift_J(
+#     start_buff_align = -10, end_buff_align = 10, start_beam_align = -9, end_beam_align = 9,
+#     start_buff_stack = -20, end_buff_stack = 20, start_beam_stack = -10, end_beam_stack = 10, event_no = 107, dphase = 'P')
+# run_get_shift_J(
+#     start_buff_align = -10, end_buff_align = 10, start_beam_align = -9, end_beam_align = 9,
+#     start_buff_stack = -20, end_buff_stack = 20, start_beam_stack = -10, end_beam_stack = 10, event_no = 108, dphase = 'P')
+run_get_shift_J(
+    start_buff_align = -10, end_buff_align = 10, start_beam_align = -9, end_beam_align = 9,
+    start_buff_stack = -20, end_buff_stack = 20, start_beam_stack = -10, end_beam_stack = 10, event_no = 109, dphase = 'P')
+# run_get_shift_J(
+#     start_buff_align = -10, end_buff_align = 10, start_beam_align = -9, end_beam_align = 9,
+#     start_buff_stack = -20, end_buff_stack = 20, start_beam_stack = -10, end_beam_stack = 10, event_no = 110, dphase = 'P')
+run_get_shift_J(
+    start_buff_align = -10, end_buff_align = 10, start_beam_align = -9, end_beam_align = 9,
+    start_buff_stack = -20, end_buff_stack = 20, start_beam_stack = -10, end_beam_stack = 10, event_no = 111, dphase = 'P')
 
-# run_eachICS(start_buff = -50,   end_buff = 50, start_SNRbeam = -1,   end_SNRbeam = 2, start_beam = 10,   end_beam = 20,   event_no = 111, dphase = 'PcP')
-
-run_get_shift_PKiKP(start_buff = -10, end_buff = 10, start_SNRbeam = -1, end_SNRbeam = 2, start_beam = 10, end_beam = 20, event_no = 111, dphase = 'PKiKP')
-
+#%% PcP precursor
+# run_get_shift_J(
+#     start_buff_align = -10, end_buff_align = 10, start_beam_align = -9, end_beam_align = 9,
+#     start_buff_stack = -20, end_buff_stack = 20, start_beam_stack = -10, end_beam_stack = 10, event_no = 102, dphase = 'PcP')
+# run_get_shift_J(
+#     start_buff_align = -10, end_buff_align = 10, start_beam_align = -9, end_beam_align = 9,
+#     start_buff_stack = -20, end_buff_stack = 20, start_beam_stack = -10, end_beam_stack = 10, event_no = 103, dphase = 'PcP')
+# run_get_shift_J(
+#     start_buff_align = -10, end_buff_align = 10, start_beam_align = -9, end_beam_align = 9,
+#     start_buff_stack = -20, end_buff_stack = 20, start_beam_stack = -10, end_beam_stack = 10, event_no = 104, dphase = 'PcP')
+# run_get_shift_J(
+#     start_buff_align = -10, end_buff_align = 10, start_beam_align = -9, end_beam_align = 9,
+#     start_buff_stack = -20, end_buff_stack = 20, start_beam_stack = -10, end_beam_stack = 10, event_no = 105, dphase = 'PcP')
+# run_get_shift_J(
+#     start_buff_align = -10, end_buff_align = 10, start_beam_align = -9, end_beam_align = 9,
+#     start_buff_stack = -20, end_buff_stack = 20, start_beam_stack = -10, end_beam_stack = 10, event_no = 106, dphase = 'PcP')
+# run_get_shift_J(
+#     start_buff_align = -10, end_buff_align = 10, start_beam_align = -9, end_beam_align = 9,
+#     start_buff_stack = -20, end_buff_stack = 20, start_beam_stack = -10, end_beam_stack = 10, event_no = 107, dphase = 'PcP')
+# run_get_shift_J(
+#     start_buff_align = -10, end_buff_align = 10, start_beam_align = -9, end_beam_align = 9,
+#     start_buff_stack = -20, end_buff_stack = 20, start_beam_stack = -10, end_beam_stack = 10, event_no = 108, dphase = 'PcP')
+# run_get_shift_J(
+#     start_buff_align = -10, end_buff_align = 10, start_beam_align = -9, end_beam_align = 9,
+#     start_buff_stack = -20, end_buff_stack = 20, start_beam_stack = -10, end_beam_stack = 10, event_no = 109, dphase = 'PcP')
+# run_get_shift_J(
+#     start_buff_align = -10, end_buff_align = 10, start_beam_align = -9, end_beam_align = 9,
+#     start_buff_stack = -20, end_buff_stack = 20, start_beam_stack = -10, end_beam_stack = 10, event_no = 110, dphase = 'PcP')
+# run_get_shift_J(
+#     start_buff_align = -10, end_buff_align = 10, start_beam_align = -9, end_beam_align = 9,
+#     start_buff_stack = -20, end_buff_stack = 20, start_beam_stack = -10, end_beam_stack = 10, event_no = 111, dphase = 'PcP')

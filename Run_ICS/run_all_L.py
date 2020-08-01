@@ -1,140 +1,28 @@
 #!/usr/bin/env python
-# input is set of LASA traces from NTS event
-# This programs deals with a single event.
-# this program tapers, filters, selects range and SNR
-# plots against traveltime curves, either raw or reduced against traveltimes
-# John Vidale 2/2019
+# John Vidale 4/2020
 
 import os
 os.environ['PATH'] += os.pathsep + '/usr/local/bin'
 os.chdir('/Users/vidale/Documents/GitHub/Array_codes/Run_ICS')
 
 #%% Import functions
-from run_each_L_PKiKP import run_each_L_PKiKP
-#from run_each_L_PcP   import run_each_L_PcP
-from run_each_L_ICS   import run_each_L_ICS
+from run_align_L      import run_get_shift_L
 
-#run_each_L(event_no = 12)
-#run_each_L(event_no = 13)
-#run_each_L(event_no = 14)
-#run_each_L(event_no = 15)
-#run_each_L(event_no = 16)
-#run_each_L(event_no = 17)
-#run_each_L(event_no = 18)
-#run_each_L(event_no = 19)
-#run_each_L(event_no = 20)
-#run_each_L(event_no = 21)
-#run_each_L(event_no = 23)
-#run_each_L(event_no = 22)
-#run_each_L(event_no = 24)
-#run_each_L(event_no = 25)
-#run_each_L(event_no = 26)
-#run_each_L(event_no = 27)
-#run_each_L(event_no = 29)
-#run_each_L(event_no =  7)
-#run_each_L(event_no =  8)
-#run_each_L(event_no = 30)
-#run_each_L(event_no = 31)
-#run_each_L(event_no = 32)
-#run_each_L(event_no = 33)
-#run_each_L(event_no = 34)
-#run_each_L(event_no = 35)
-#run_each_L(event_no = 36)
-#run_each_L(event_no = 37)
-#run_each_L(event_no = 38)
-#run_each_L(event_no = 39)
-#run_each_L(event_no = 40)
-#run_each_L(event_no = 41)
-#run_each_L(event_no = 42)
-#run_each_L(event_no = 1)
-#run_each_L(event_no = 2)
-#run_each_L(event_no = 43)
-#run_each_L(event_no = 44)
-#run_each_L(event_no = 45)
-#run_each_L(event_no = 46)
-#run_each_L(event_no = 4)
-#run_each_L(event_no = 5)
-#run_each_L(event_no = 47)
-#run_each_L(event_no = 48)
-#run_each_L(event_no = 49)
-#run_each_L(event_no = 50)
-#run_each_L(event_no = 51)
-#run_each_L(event_no = 52)
-#run_each_L(event_no = 53)
-#run_each_L(event_no = 54)
-#run_each_L(event_no = 55)
-#run_each_L(event_no = 57)
-#run_each_L(event_no = 58)
-#run_each_L(event_no = 59)
-#run_each_L(event_no = 60)
-#run_each_L(event_no = 61)
-#run_each_L(event_no = 63)
-#run_each_L(event_no = 64)
-#run_each_L(event_no = 65)
-#run_each_L(event_no = 66)
-#run_each_L(event_no = 67)
-#run_each_L(event_no = 68)
-#run_each_L(event_no = 69)
-#run_each_L(event_no = 70)
-#run_each_L(event_no = 71)
-#run_each_L(event_no = 72)
-#run_each_L(event_no = 73)
-#run_each_L(event_no = 74)
-#run_each_L(event_no = 75)
-#run_each_L(event_no = 76)
-#run_each_L(event_no = 77)
-#run_each_L(event_no = 79)
-#run_each_L(event_no = 80)
-#run_each_L(event_no = 81)
-#run_each_L(event_no = 83)
-#run_each_L(event_no = 84)
-#run_each_L(event_no = 85)
-#run_each_L(event_no = 86)
-#run_each_L(event_no = 87)
-#run_each_L(event_no = 88)
-#run_each_L(event_no = 89)
-#run_each_L(event_no = 90)
-#run_each_L(event_no = 91)
-#run_each_L(event_no = 92)
-#run_each_L(event_no = 93)
-#run_each_L(event_no = 94)
-#run_each_L(event_no = 95)
-#run_each_L(event_no = 96)
-#run_each_L(event_no = 97)
-#run_each_L(event_no = 300)
-#run_each_L(event_no = 301)
-#run_each_L(event_no = 302)
-#run_each_L(event_no = 303)
-#run_each_L(event_no = 304)
-#run_each_L(event_no = 11)
-#run_each_L(event_no = 305)
+#%% explosion PcP precursors
+# run_get_shift_L(
+#     start_buff_align = -40, end_buff_align = 40, start_beam_align =  -4, end_beam_align = 3,
+#     start_buff_stack = -30, end_buff_stack =  0, start_beam_stack = -30, end_beam_stack = -4, event_no = 1, dphase = 'PcP')
+# run_get_shift_L(
+#     start_buff_align = -40, end_buff_align = 40, start_beam_align =   0, end_beam_align = 5,
+#     start_buff_stack = -30, end_buff_stack =  0, start_beam_stack = -30, end_beam_stack = -2, event_no = 4, dphase = 'PcP')
+# run_get_shift_L(
+#     start_buff_align = -40, end_buff_align = 40, start_beam_align =  -4, end_beam_align = 3,
+#     start_buff_stack = -15, end_buff_stack =  0, start_beam_stack = -7, end_beam_stack = -4, event_no = 7, dphase = 'PcP')
+# run_get_shift_L(
+#     start_buff_align = -40, end_buff_align = 40, start_beam_align =  -4, end_beam_align = 15,
+#     start_buff_stack = -15, end_buff_stack =  0, start_beam_stack = -7, end_beam_stack = -4, event_no = 8, dphase = 'PcP')
 
-#run_each_L_PKiKP(start_beam =  1.5, end_beam = 5, start_buff = -20,  end_buff = 150,   event_no = 84, dphase = 'PKiKP')
-#run_each_L_PKiKP(start_beam =    6, end_beam =10, start_buff = -20,  end_buff = 150,   event_no = 85, dphase = 'PKiKP')
-#run_each_L_PKiKP(start_beam =    1, end_beam = 6, start_buff = -20,  end_buff = 150,   event_no = 86, dphase = 'PKiKP')
-#run_each_L_PKiKP(start_beam =    2, end_beam =10, start_buff = -20,  end_buff = 150,   event_no = 87, dphase = 'PKiKP')
-#run_each_L_PKiKP(start_beam =   -260, end_beam = -230, start_buff = -270,  end_buff = -200,   event_no = 88, dphase = 'PKiKP') # PKiKP interference
-#run_each_L_PKiKP(start_beam =    2, end_beam =10, start_buff = -20,  end_buff = 150,   event_no = 89, dphase = 'PKiKP')
-#run_each_L_PKiKP(start_beam =   10, end_beam =13, start_buff = -20,  end_buff = 150,   event_no = 90, dphase = 'PKiKP')
-#run_each_L_PKiKP(start_beam =    4, end_beam = 8, start_buff = -20,  end_buff = 150,   event_no = 91, dphase = 'PKiKP')
-#run_each_L_PKiKP(start_beam =    0, end_beam = 4, start_buff = -20,  end_buff = 150,   event_no = 92, dphase = 'PKiKP')
-#run_each_L_PKiKP(start_beam =    0, end_beam = 4, start_buff = -20,  end_buff = 150,   event_no = 93, dphase = 'PKiKP')
-#run_each_L_PKiKP(start_beam =    0, end_beam = 4, start_buff = -20,  end_buff = 150,   event_no = 94, dphase = 'PKiKP')
-#run_each_L_PKiKP(start_beam =   -1, end_beam = 3, start_buff = -20,  end_buff = 150,   event_no = 95, dphase = 'PKiKP')
-#run_each_L_PKiKP(start_beam =    1, end_beam = 3, start_buff = -20,  end_buff = 150,   event_no = 96, dphase = 'PKiKP')
-#run_each_L_PKiKP(start_beam =    1, end_beam = 4, start_buff = -20,  end_buff = 150,   event_no = 97, dphase = 'PKiKP')
-#run_each_L_PKiKP(start_beam =   -2, end_beam = 2, start_buff = -20,  end_buff = 150,   event_no = 300, dphase = 'PKiKP')
-#run_each_L_PKiKP(start_beam =   -2, end_beam = 1, start_buff = -20,  end_buff = 150,   event_no = 301, dphase = 'PKiKP')
-#run_each_L_PKiKP(start_beam =   -1, end_beam = 1, start_buff = -20,  end_buff = 150,   event_no = 302, dphase = 'PKiKP')
-#run_each_L_PKiKP(start_beam =   -2, end_beam = 4, start_buff = -20,  end_buff = 150,   event_no = 303, dphase = 'PKiKP')
-#run_each_L_PKiKP(start_beam =    1, end_beam = 4, start_buff = -20,  end_buff = 150,   event_no = 304, dphase = 'PKiKP')
-#run_each_L_PKiKP(start_beam =   -2, end_beam = 2, start_buff = -20,  end_buff = 150,   event_no = 11, dphase = 'PKiKP') # M7.5 too big
-#run_each_L_PKiKP(start_beam =    1, end_beam = 6, start_buff = -20,  end_buff = 150,   event_no = 305, dphase = 'PKiKP')
-
-run_each_L_PKiKP(start_beam =    1, end_beam = 6, start_buff = 0,  end_buff = 3000,   event_no = 3, dphase = 'P', freq_min = 0.25, freq_max = 1)
-
-#  DUPES NOT YET PROCESSED AND NAMED
-#run_each_L(event_no = 56)
-#run_each_L(event_no = 62)
-#run_each_L(event_no = 78)
-#run_each_L(event_no = 82)
+#%% earthquake PcP precursors
+run_get_shift_L(
+    start_buff_align = -40, end_buff_align = 40, start_beam_align =  -4, end_beam_align = 3,
+    start_buff_stack = -30, end_buff_stack =  0, start_beam_stack = -30, end_beam_stack = -4, event_no = 16, dphase = 'PcP')
