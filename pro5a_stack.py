@@ -231,7 +231,10 @@ def pro5stack(eq_file, plot_scale_fac = 0.05, slowR_lo = -0.1, slowR_hi = 0.1, s
         # c = ax.pcolormesh(x, y, stack_array, cmap=plt.cm.gist_yarg)
         # c = ax.pcolormesh(x, y, stack_array, cmap=plt.cm.binary)
         ax.axis([x.min(), x.max(), y.min(), y.max()])
-        fig.colorbar(c, ax=ax)
+        if log_plot == 1:
+            fig.colorbar(c, ax=ax, label='log amplitude')
+        else:
+            fig.colorbar(c, ax=ax, label='linear amplitude')
         plt.figure(fig_index,figsize=(6,8))
         plt.close(fig_index)
     else: # line plot
@@ -247,7 +250,7 @@ def pro5stack(eq_file, plot_scale_fac = 0.05, slowR_lo = -0.1, slowR_hi = 0.1, s
         plt.xlim(start_buff,end_buff)
     plt.xlabel('Time (s)')
     plt.ylabel('Slowness (s/km)')
-    plt.title(str(event_no) + '  ' + date_label)
+    plt.title('1Dstack   ' + str(event_no) + '  ' + date_label)
     os.chdir('/Users/vidale/Documents/PyCode/Plots')
     plt.savefig(date_label + '_' + str(start_buff) + '_' + str(end_buff) + '_1D.png')
     plt.show()

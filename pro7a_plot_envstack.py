@@ -184,8 +184,7 @@ def pro7plotstack(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
     #%% compute timing time series
     ttt = (np.arange(len(st[0].data)) * st[0].stats.delta + start_buff) # in units of seconds
 
-#%%  Plotting
-# Regular radial-time stack
+#%% Plot radial-time stack
     if skip_R != 1:
         stack_array = np.zeros((slowR_n,stack_nt))
 
@@ -210,7 +209,7 @@ def pro7plotstack(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
         plt.title('Radial stack at 0 T slow, ' + fname[2:12])
         plt.show()
 
-#%%  Transverse-time stacks
+#%%  Plot transverse-time stacks
     if skip_T != 1:
         stack_array = np.zeros((slowT_n,stack_nt))
 
@@ -307,35 +306,40 @@ def pro7plotstack(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
         plt.title('Transverse stack at 0.015 R slow, ' + fname[2:12])
         plt.show()
 
-#%% R-T stack
+#%% Plot R-T stack
     if snaps > 0:
         stack_slice = np.zeros((slowR_n,slowT_n))
         for snap_num in range(snaps):
             fig_index += 1
             it = int((snaptime - start_buff)/dt) + snap_num
-            for slowR_i in range(slowR_n):  # loop over radial slownesses
-                for slowT_i in range(slowT_n):  # loop over transverse slownesses
-                    index = slowR_i*slowT_n + slowT_i
-                    num_val = st[index].data[it]
-                    if num_val < min_allowed:
-                        num_val = min_allowed
-                    stack_slice[slowR_i, slowT_i] = math.log10(num_val)
-            stack_slice[0,0] = math.log10(global_max)
-            stack_slice[0,1] = math.log10(min_allowed)
+            if snaptime >= start_buff and snaptime + snap_num * dt <= end_buff:
+                for slowR_i in range(slowR_n):  # loop over radial slownesses
+                    for slowT_i in range(slowT_n):  # loop over transverse slownesses
+                        indy = slowR_i*slowT_n + slowT_i
+                        num_val = st[indy].data[it]
+                        if num_val < min_allowed:
+                            num_val = min_allowed
+                        stack_slice[slowR_i, slowT_i] = math.log10(num_val)
+                stack_slice[0,0] = math.log10(global_max)
+                stack_slice[0,1] = math.log10(min_allowed)
 
-            y1, x1 = np.mgrid[slice(stack_Rslows[0], stack_Rslows[-1] + slow_delta, slow_delta),
-                         slice(stack_Tslows[0], stack_Tslows[-1] + slow_delta, slow_delta)]
+                y1, x1 = np.mgrid[slice(stack_Rslows[0], stack_Rslows[-1] + slow_delta, slow_delta),
+                             slice(stack_Tslows[0], stack_Tslows[-1] + slow_delta, slow_delta)]
 
-            fig, ax = plt.subplots(1)
-            c = ax.pcolormesh(x1, y1, stack_slice, cmap=plt.cm.gist_rainbow_r)
-            ax.axis([x1.min(), x1.max(), y1.min(), y1.max()])
-            fig.colorbar(c, ax=ax)
-            circle1 = plt.Circle((0, 0), 0.019, color='black', fill=False)
-            ax.add_artist(circle1)
-            plt.xlabel('T Slowness (s/km)')
-            plt.ylabel('R Slowness (s/km)')
-            plt.title('T-R stack at rel time ' + str(snaptime + snap_num*dt) + '  ' + fname[2:12])
-            plt.show()
+                fig, ax = plt.subplots(1)
+                c = ax.pcolormesh(x1, y1, stack_slice, cmap=plt.cm.gist_rainbow_r)
+                ax.axis([x1.min(), x1.max(), y1.min(), y1.max()])
+                fig.colorbar(c, ax=ax)
+                circle1 = plt.Circle((0, 0), 0.019, color='black', fill=False)
+                ax.add_artist(circle1)
+                plt.xlabel('T Slowness (s/km)')
+                plt.ylabel('R Slowness (s/km)')
+                plt.title('T-R stack at rel time ' + str(snaptime + snap_num*dt) + '  ' + fname[2:12])
+                plt.show()
+            else:
+                this_snap = snaptime + snap_num * dt
+                print('Skipped at least some snaps that are out of buffer: buffer start and end, this snap  ' +
+                      str(start_buff) + '   ' + str(end_buff) + '   ' + str(this_snap) + '   ')
 
     #  Save processed files
 #    fname = 'HD' + date_label + '_slice.mseed'
