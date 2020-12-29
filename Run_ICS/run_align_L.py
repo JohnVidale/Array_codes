@@ -22,7 +22,7 @@ def run_get_shift_L(start_buff = 980, end_buff = 1180, event_no = 1, min_dist = 
     import matplotlib.pyplot as plt
 
 #%%  Parameters - basic
-    ev_directory = '/Users/vidale/Documents/PyCode/Hinet/Tian_events'
+    ev_directory = '/Users/vidale/Documents/Research/IC/EvLocs'
     os.chdir(ev_directory)
 
     eq_file   = 'event' + str(event_no) + '.txt'

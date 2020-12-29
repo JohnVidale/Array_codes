@@ -36,20 +36,14 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
         print('Zend_buff of '   + str(Zend_buff)   + 'cannot  be > end_buff of '   + str(end_buff))
         Zend_buff   = end_buff
 
-    if ARRAY == 0:
-        file = open(eq_file1, 'r')
-    elif ARRAY == 1:
-        file = open('EvLocs/' + eq_file1, 'r')
+    file = open('/Users/vidale/Documents/Research/IC/EvLocs/' + eq_file1, 'r')
     lines=file.readlines()
     split_line = lines[0].split()
 #            ids.append(split_line[0])  ignore label for now
     t1           = UTCDateTime(split_line[1])
     date_label1  = split_line[1][0:10]
 
-    if ARRAY == 0:
-        file = open(eq_file2, 'r')
-    elif ARRAY == 1:
-        file = open('EvLocs/' + eq_file2, 'r')
+    file = open('/Users/vidale/Documents/Research/IC/EvLocs/' + eq_file2, 'r')
     lines=file.readlines()
     split_line = lines[0].split()
 #            ids.append(split_line[0])  ignore label for now
@@ -58,24 +52,9 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
     #%% Input parameters
     # #%% Get saved event info, also used to name files
     # date_label = '2018-04-02' # date for filename
-    if ARRAY == 0:
-        if in_dec == 0:
-            fname1 = 'HD' + date_label1 + '_' + date_label2 + '_tshift.mseed'
-            fname2 = 'HD' + date_label1 + '_' + date_label2 + '_amp_ave.mseed'
-            fname3 = 'HD' + date_label1 + '_' + date_label2 + '_amp_ratio.mseed'
-        else:
-            fname1 = 'HD' + date_label1 + '_' + date_label2 + '_tshift_dec.mseed'
-            fname2 = 'HD' + date_label1 + '_' + date_label2 + '_amp_ave_dec.mseed'
-            fname3 = 'HD' + date_label1 + '_' + date_label2 + '_amp_ratio_dec.mseed'
-    elif ARRAY == 1:
-        if in_dec == 0:
-            fname1 = 'Pro_files/HD' + date_label1 + '_' + date_label2 + '_tshift.mseed'
-            fname2 = 'Pro_files/HD' + date_label1 + '_' + date_label2 + '_amp_ave.mseed'
-            fname3 = 'Pro_files/HD' + date_label1 + '_' + date_label2 + '_amp_ratio.mseed'
-        else:
-            fname1 = 'Pro_files/HD' + date_label1 + '_' + date_label2 + '_tshift_dec.mseed'
-            fname2 = 'Pro_files/HD' + date_label1 + '_' + date_label2 + '_amp_ave_dec.mseed'
-            fname3 = 'Pro_files/HD' + date_label1 + '_' + date_label2 + '_amp_ratio_dec.mseed'
+    fname1 = '/Users/vidale/Documents/Research/IC/Pro_files/HD' + date_label1 + '_' + date_label2 + '_tshift.mseed'
+    fname2 = '/Users/vidale/Documents/Research/IC/Pro_files/HD' + date_label1 + '_' + date_label2 + '_amp_ave.mseed'
+    fname3 = '/Users/vidale/Documents/Research/IC/Pro_files/HD' + date_label1 + '_' + date_label2 + '_amp_ratio.mseed'
 
     tdiff     = Stream()
     amp_ave   = Stream()
@@ -85,14 +64,14 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
     amp_ratio = read(fname3)
     print('Read in: ' + str(len(tdiff)) + '  ' + str(len(amp_ave)) + '  ' + str(len(amp_ratio)) + ' traces for tdiff, amp_ave, amp_ratio')
 
-    for i in range(len(tdiff)):  # loop over traces, probably already decimated in previous step, pro7dec
-            if decimate_fac != 0:
-                tdiff[i].decimate(decimate_fac, no_filter=True)
-                amp_ave[i].decimate(decimate_fac, no_filter=True)
-                amp_ratio[i].decimate(decimate_fac, no_filter=True)
+    # for i in range(len(tdiff)):  # loop over traces, probably already decimated in previous step, pro7dec
+    #         if decimate_fac != 0:
+    #             tdiff[i].decimate(decimate_fac, no_filter=True)
+    #             amp_ave[i].decimate(decimate_fac, no_filter=True)
+    #             amp_ratio[i].decimate(decimate_fac, no_filter=True)
 
-    elapsed_time_wc = time.time() - start_time_wc
-    print('Decimation took ' + str(elapsed_time_wc) + ' seconds')
+    # elapsed_time_wc = time.time() - start_time_wc
+    # print('Decimation took ' + str(elapsed_time_wc) + ' seconds')
 
     nt = len(tdiff[0].data)
     dt = tdiff[0].stats.delta

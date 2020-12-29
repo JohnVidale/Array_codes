@@ -5,13 +5,20 @@
 # Write out tdiff, ave_amp, amp_ratio results
 # John Vidale 3/2019
 
-def pro6stacked_pair(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0005,
+def pro6_cc_pair(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0005,
               slowR_lo = -0.1, slowR_hi = 0.1, slowT_lo = -0.1, slowT_hi = 0.1,
-              start_buff = -50, end_buff = 50, norm = 0, freq_corr = 1.0,
-              plot_dyn_range = 1000, fig_index = 401, get_stf = 0, start_beam = 0, end_beam = 0,
+              start_buff = 1040, end_buff = 1180, freq_corr = 1.0,
+              get_stf = 0, start_beam = 0, end_beam = 0,
               ARRAY = 0, max_rat = 1.8, min_amp = 0.2, turn_off_black = 0,
               R_slow_plot = 0, T_slow_plot = 0, tdiff_clip = 0.5, decimate_fac = 0,
-              ref_loc = 0, ref_lat = 36.3, ref_lon = 138.5, dphase = 'PKiKP'):
+              ref_loc = False, ref_lat = 36.3, ref_lon = 138.5, dphase = 'PKiKP',
+              cc_twin = 2, cc_len = 0.5, cc_interp1d = 5):
+
+    # cc_twin     - time window for cross-correlation (s)
+    # cc_len      - time window shift to compute CC (fraction of whole time window)
+    # cc_delta    - time interval for cc (s)
+    # cc_interp1d - interpolation factor
+    new_delay_method = False
 
     import obspy
     import obspy.signal
@@ -29,6 +36,7 @@ def pro6stacked_pair(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0
     import math
     import time
     import statistics
+    from pro_proceed_function import cc_measure_tshift
 
 #%% Get info
     #%% get locations
@@ -106,7 +114,7 @@ def pro6stacked_pair(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0
 #        print('Event ' + str(ii) + ' is ' + str(event_index[ii]))
 
     #  find predicted slowness
-    if ref_loc == 0:
+    if ref_loc == False:
         if ARRAY == 0:
             ref_lat = 36.3  # °N, around middle of Japan
             ref_lon = 138.5 # °E
@@ -167,9 +175,10 @@ def pro6stacked_pair(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0
     st1 = read(fname1)
     st2 = read(fname2)
 
-    tshift    = st1.copy()  # make array for time shift
-    amp_ratio = st1.copy()  # make array for relative amplitude
-    amp_ave   = st1.copy()  # make array for average amplitude
+    tshift        = st1.copy()  # make array for time shift
+    cc            = st1.copy()  # make array for cc coefficient
+    amp_ratio     = st1.copy()  # make array for relative amplitude
+    amp_ave       = st1.copy()  # make array for average amplitude
 
     print('Read in: event 1 ' + str(len(st1)) + ' event 2 ' + str(len(st2)) + ' traces')
     nt1 = len(st1[0].data)
@@ -185,12 +194,15 @@ def pro6stacked_pair(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0
         exit(-1)
 
     #%% Make grid of slownesses
+    # count rows and columns
     slowR_n = int(1 + (slowR_hi - slowR_lo)/slow_delta)  # number of slownesses
     slowT_n = int(1 + (slowT_hi - slowT_lo)/slow_delta)  # number of slownesses
     print(str(slowT_n) + ' trans slownesses, hi and lo are ' + str(slowT_hi) + '  ' + str(slowT_lo))
+    # enumerate indices for slowness rows and columns
     # In English, stack_slows = range(slow_n) * slow_delta - slow_lo
     a1R = range(slowR_n)
     a1T = range(slowT_n)
+    # define R and T slownesses for each beam
     stack_Rslows = [(x * slow_delta + slowR_lo) for x in a1R]
     stack_Tslows = [(x * slow_delta + slowT_lo) for x in a1T]
     print(str(slowR_n) + ' radial slownesses, ' + str(slowT_n) + ' trans slownesses, ')
@@ -201,36 +213,49 @@ def pro6stacked_pair(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0
     for slow_i in range(total_slows): # find envelope, phase, tshift, and global max
         if slow_i % 200 == 0:
             print('At line 101, ' +str(slow_i) + ' slowness out of ' + str(total_slows))
-        if len(st1[slow_i].data) == 0: # test for zero-length traces
+        if len(st1[slow_i].data) == 0: # test for zero-length traces, indexing errors
                 print('%d data has zero length ' % (slow_i))
 
         seismogram1 = hilbert(st1[slow_i].data)  # make analytic seismograms
         seismogram2 = hilbert(st2[slow_i].data)
 
-        env1 = np.abs(seismogram1) # amplitude
+        env1 = np.abs(seismogram1) # amplitude and amp ratio
         env2 = np.abs(seismogram2)
         amp_ave[slow_i].data    = 0.5 * (env1 + env2)
         amp_ratio[slow_i].data  = env1/env2
 
-        angle1 = np.angle(seismogram1) # time shift
-        angle2 = np.angle(seismogram2)
-        phase1 = np.unwrap(angle1)
-        phase2 = np.unwrap(angle2)
-        d_phase = (angle1 - angle2)
-#        d_phase = phase1 - phase2
-        for it in range(nt1):
-            if d_phase[it] > math.pi:
-                d_phase[it] -= 2 * math.pi
-            elif d_phase[it] < -1 * math.pi:
-                d_phase[it] += 2 * math.pi
-            if d_phase[it] > math.pi or d_phase[it] < -math.pi:
-                print(f'Bad d_phase value {d_phase[it]:.2f}  {it:4d}')
-        # freq1 = np.diff(phase1) # observed freq in radians/sec
-        # freq2 = np.diff(phase2)
-        # ave_freq = 0.5*(freq1 + freq2)
-        # ave_freq_plus = np.append(ave_freq,[1]) # ave_freq one element too short
-        # tshift[slow_i].data     = d_phase / ave_freq_plus # 2*pi top and bottom cancels
-        tshift[slow_i].data     = d_phase/(2*math.pi*freq_corr)
+        # old pointwise method
+        if new_delay_method == False:
+            angle1 = np.angle(seismogram1) # time shift
+            angle2 = np.angle(seismogram2)
+            d_phase = (angle1 - angle2)
+            for it in range(nt1):
+                if d_phase[it] > math.pi:
+                    d_phase[it] -= 2 * math.pi
+                elif d_phase[it] < -1 * math.pi:
+                    d_phase[it] += 2 * math.pi
+                if d_phase[it] > math.pi or d_phase[it] < -math.pi:
+                    print(f'Bad d_phase value {d_phase[it]:.2f}  {it:4d}')
+
+            # Calculate average frequency
+            # freq1 = np.diff(phase1) # observed freq in radians/sec, fluctuates too much
+            # freq2 = np.diff(phase2)
+            # ave_freq = 0.5*(freq1 + freq2)
+            # ave_freq_plus = np.append(ave_freq,[1]) # ave_freq one element too short
+            # tshift[slow_i].data     = d_phase / ave_freq_plus # 2*pi top and bottom cancels
+
+            # Specify average frequency
+            tshift[slow_i].data     = d_phase/(2*math.pi*freq_corr)
+
+        elif new_delay_method == True:
+            twin_beg      =  start_buff      # trace array time start time
+            cc_delta = st1[slow_i].stats.delta
+            tr1 = st1[slow_i]
+            tr2 = st2[slow_i]
+          # ??   cc_ttt, cc_coef, tshift_new will be returned as simple arrays
+
+            cc_ttt, cc_coef, tshift = cc_measure_tshift( tr1=tr1, tr2=tr2, tarr_beg = twin_beg,
+                              cc_twin=cc_twin, cc_len=cc_len, cc_delta=cc_delta, cc_interp1d=cc_interp1d)
 
         local_max = max(abs(amp_ave[slow_i].data))
         if local_max > global_max:
@@ -297,7 +322,7 @@ def pro6stacked_pair(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0
     ttt = (np.arange(len(st1[0].data)) * st1[0].stats.delta + start_buff) # in units of seconds
 
 #%% Plot radial amp and tdiff vs time plots
-    fig_index = 6
+    fig_index = 16
 #    plt.close(fig_index)
     plt.figure(fig_index,figsize=(30,10))
     plt.xlim(start_buff,end_buff)
@@ -321,7 +346,7 @@ def pro6stacked_pair(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0
     plt.ylabel('R Slowness (s/km)')
     plt.title(dphase + ' seismograms and tdiff at ' + str(T_slow_plot) + ' T slowness, green is event1, red is event2')
     # Plot transverse amp and tdiff vs time plots
-    fig_index = 7
+    fig_index = 17
 #    plt.close(fig_index)
     plt.figure(fig_index,figsize=(30,10))
     plt.xlim(start_buff,end_buff)
@@ -344,7 +369,7 @@ def pro6stacked_pair(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0
 #    plt.savefig(date_label1 + '_' + str(start_buff) + '_' + str(end_buff) + '_stack.png')
 
 #%% R-T tshift averaged over time window
-    fig_index = 8
+    fig_index = 18
     stack_slice = np.zeros((slowR_n,slowT_n))
 
     if start_beam == 0 and end_beam == 0:
@@ -365,9 +390,8 @@ def pro6stacked_pair(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0
                 num_val = np.nanmedian(tshift[index].data[start_index:end_index])
 #            num_val = statistics.median(tshift_full[index].data)
             stack_slice[slowR_i, slowT_i] = num_val # adjust for dominant frequency of 1.2 Hz, not 1 Hz
-#    stack_slice[0,0] = -0.25
+#    stack_slice[0,0] = -0.25  # in case plot amplitude needs normalization by an extreme value
 #    stack_slice[0,1] =  0.25
-#    tdiff_clip = 0.4/1.2
     tdiff_clip_max =  tdiff_clip  # DO NOT LEAVE COMMENTED OUT!!
     tdiff_clip_min = -tdiff_clip
 
@@ -393,7 +417,7 @@ def pro6stacked_pair(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0
     plt.show()
 
 #%% R-T amplitude averaged over time window
-    fig_index = 9
+    fig_index = 19
     stack_slice = np.zeros((slowR_n,slowT_n))
     smax = 0
     for slowR_i in range(slowR_n):  # loop over radial slownesses

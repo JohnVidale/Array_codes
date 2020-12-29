@@ -46,8 +46,8 @@ elif source == 2:
 	s_lon = NZS_lon
 
 min_lat = 0
-dlat = 10
-dlon = 10
+dlat = 5
+dlon = 5
 min_slow = -0.02
 max_slow =  0.02
 nslow    =  21

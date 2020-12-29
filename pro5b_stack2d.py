@@ -7,8 +7,7 @@
 # saves 2D stack "_2Dstack.mseed" and envelope of 2D stack "_2Dstack_env.mseed"
 # John Vidale 2/2019
 
-def pro5stack2d(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
-              slowR_lo = -0.1, slowR_hi = 0.1, slowT_lo = -0.1, slowT_hi = 0.1,
+def pro5stack2d(eq_file, slow_delta = 0.0005, slowR_lo = -0.1, slowR_hi = 0.1, slowT_lo = -0.1, slowT_hi = 0.1,
               start_buff = -50, end_buff = 50, norm = 1, ARRAY = 0, NS = 0, decimate_fac = 0,
               ref_loc = 0, ref_lat = 36.3, ref_lon = 138.5, stack_option = 1):
 
@@ -33,7 +32,7 @@ def pro5stack2d(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
     print('Running pro5b_stack2d')
     start_time_wc = time.time()
 
-    goto = '/Users/vidale/Documents/PyCode/EvLocs'
+    goto = '/Users/vidale/Documents/Research/IC/EvLocs'
     os.chdir(goto)
     file = open(eq_file, 'r')
 
@@ -88,7 +87,7 @@ def pro5stack2d(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
 #%% Input parameters
     # date_label = '2018-04-02' # date for filename
     fname = 'HD' + date_label + 'sel.mseed'
-    goto = '/Users/vidale/Documents/PyCode/Pro_Files'
+    goto = '/Users/vidale/Documents/Research/IC/Pro_Files'
     os.chdir(goto)
 
     st = Stream()
@@ -161,14 +160,15 @@ def pro5stack2d(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
                     time_lag += del_distT * stack_Tslows[slowT_i]  # time shift due to transverse slowness
                     time_correction = ((t-tr.stats.starttime) + (time_lag + start_buff))/dt
                     indx = int(slowR_i*slowT_n + slowT_i)
+                    # could do a little better by sampling finer, 20 sps?, before applying statics in pro3
 
-                    if stack_option == 0:
+                    if stack_option == 0:  # my old inefficient method
                         for it in range(stack_nt):  # check points one at a time
                             it_in = int(it + time_correction)
                             if it_in >= 0 and it_in < nt - 1: # does data lie within seismogram?
                                 stack[indx].data[it] += tr[it_in]
 
-                    if stack_option == 1:
+                    if stack_option == 1:  #  Wei's much faster method
                         arr = tr.data
                         nshift = round(time_correction)
                         if time_correction < 0:

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # Read in 2D stacks for two events
-# Compute tdiff, ave_amp, amp_ratio
+# Compute ave_amp
 # Plot radial and transverse cuts through stack, plus beam sum
 # Write out tdiff, ave_amp, amp_ratio results
 # John Vidale 3/2019
@@ -337,16 +337,16 @@ def pro6stacked_singlet(eq_file, plot_scale_fac = 0.03, slow_delta = 0.0005,
         plt.title(str(event_no) + '  ' + date_label + '  ' + dphase + ' beam amplitude' + ' ' + str(start_buff) + ' to ' + str(end_buff) + 's')
     else:
         plt.title(str(event_no) + '  ' + date_label + '  ' + dphase + ' selected beam amplitude' + ' ' + str(start_beam) + ' to ' + str(end_beam) + 's')
-    os.chdir('/Users/vidale/Documents/PyCode/Plots')
+    os.chdir('/Users/vidale/Documents/Research/IC/Plots')
     plt.savefig(date_label + '_' + str(start_buff) + '_' + str(end_buff) + '_' + str(start_beam) + '-' + str(end_beam) + '_beam.png')
     plt.show()
 
 #%%  Save processed files
-#    goto = '/Users/vidale/Documents/PyCode/Pro_Files'
-#    os.chdir(goto)
-#
-#    fname = 'HD' + date_label + '_amp_ave.mseed'
-#    amp_ave.write(fname,format = 'MSEED')
+    goto = '/Users/vidale/Documents/Research/IC/Pro_Files'
+    os.chdir(goto)
+
+    fname = 'HD' + date_label + '_amp_ave.mseed'
+    amp_ave.write(fname,format = 'MSEED')
 
 #%% Option to write out stf
     elapsed_time_wc = time.time() - start_time_wc

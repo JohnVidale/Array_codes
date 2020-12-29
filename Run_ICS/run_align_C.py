@@ -24,7 +24,7 @@ def run_get_shift_C(start_buff = -50, end_buff = 200, event_no = 1, min_dist = 0
     import matplotlib.pyplot as plt
 
 #%%  Parameters - basic
-    ev_directory = '/Users/vidale/Documents/PyCode/Hinet/Tian_events'
+    ev_directory = '/Users/vidale/Documents/Research/IC/EvLocs'
     os.chdir(ev_directory)
 
     eq_file   = 'event' + str(event_no) + '.txt'
