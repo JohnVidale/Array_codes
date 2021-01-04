@@ -23,13 +23,14 @@ def pro5stack2d(eq_file, slow_delta = 0.0005, slowR_lo = -0.1, slowR_hi = 0.1, s
 
     import sys # don't show any warnings
     import warnings
+    from termcolor import colored
+    print(colored('Running pro5b_stack2d', 'cyan'))
 
     env_stack = 0  # flag to stack envelopes instead of oscillating seismograms
 
 #    norm = 1 # norm by dividing by max(abs)
 #    global_norm_plot = 1 # not used, only used in pro5stack
 
-    print('Running pro5b_stack2d')
     start_time_wc = time.time()
 
     goto = '/Users/vidale/Documents/Research/IC/EvLocs'
@@ -107,7 +108,12 @@ def pro5stack2d(eq_file, slow_delta = 0.0005, slowR_lo = -0.1, slowR_hi = 0.1, s
     a1T = range(slowT_n)
     stack_Rslows = [(x * slow_delta + slowR_lo) for x in a1R]
     stack_Tslows = [(x * slow_delta + slowT_lo) for x in a1T]
+
+    # testing slownesses in indexing
     print(str(slowR_n) + ' radial slownesses, ' + str(slowT_n) + ' trans slownesses, ')
+    print('Radial     slownesses 0' + ' ' + str(stack_Rslows[0]) + '   ' 'end' + ' ' + str(stack_Rslows[-1]))
+    print('Transverse slownesses 1' + ' ' + str(stack_Tslows[0]) + '   ' 'end' + ' ' + str(stack_Tslows[-1]))
+
 
 #%% Build empty Stack array
     stack = Stream()

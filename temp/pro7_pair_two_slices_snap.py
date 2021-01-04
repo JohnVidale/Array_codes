@@ -2,19 +2,15 @@
 # looks at envelope stack differential parameters from pro6
 # Reads in tdiff, ave_amp, amp_ratio computed from a pair of events
 # window by quality signals
-# plots snapshots at a range of lag times
-# plus plots sections at 4 radial slownesses (0.0, 0.05, 0.01, 0.015)
-# plus plots 1 transverse slowness at 0 slowness
+# plots one radial and one transverse plot, plus snaps
 # John Vidale 2/2019
 
-def pro7plotstack3(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.0005,
+def pro7_pair_two_slices_snap(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.0005,
               slowR_lo = -0.1, slowR_hi = 0.1, slowT_lo = -0.1, slowT_hi = 0.1,
-              start_buff = -50, end_buff = 50,
-              R_slow_plot = 0.06, T_slow_plot = 0.0,
-              snaptime = 8, snaps = 10, tdiff_clip = 1,
-              plot_dyn_range = 1000, fig_index = 401, skip_T = 0, skip_R = 0, skip_snaps = 0,
-              decimate_fac = 0, in_dec = 0, ref_phase = 'blank', ARRAY = 0,
-              max_rat = 1.8, min_amp = 0.3):
+              start_buff = -50, end_buff = 50, R_slow_plot = 0.06, T_slow_plot = 0.0,
+              snaptime = 8, snaps = 10, skip_snaps = 0, tdiff_clip = 1,
+              plot_dyn_range = 1000, fig_index = 401, skip_T = 0, skip_R = 0,
+              decimate_fac = 0, in_dec = 0, ref_phase = 'blank', cc_thres = 0.8):
 
     from obspy import read
     import numpy as np
@@ -23,25 +19,21 @@ def pro7plotstack3(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
     import time
     from obspy import UTCDateTime
     from obspy import Stream
+    from termcolor import colored
 
-    print('Running pro7b_plot_stack')
+    print(colored('Running pro7b_plot_stack', 'cyan'))
 
     start_time_wc = time.time()
 
-    if ARRAY == 0:
-        file = open(eq_file1, 'r')
-    elif ARRAY == 1:
-        file = open('EvLocs/' + eq_file1, 'r')
+    file = open('/Users/vidale/Documents/Research/IC/EvLocs/' + eq_file1, 'r')
+
     lines=file.readlines()
     split_line = lines[0].split()
 #            ids.append(split_line[0])  ignore label for now
     t1           = UTCDateTime(split_line[1])
     date_label1  = split_line[1][0:10]
 
-    if ARRAY == 0:
-        file = open(eq_file2, 'r')
-    elif ARRAY == 1:
-        file = open('EvLocs/' + eq_file2, 'r')
+    file = open('/Users/vidale/Documents/Research/IC/EvLocs/' + eq_file2, 'r')
     lines=file.readlines()
     split_line = lines[0].split()
 #            ids.append(split_line[0])  ignore label for now
@@ -50,24 +42,15 @@ def pro7plotstack3(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
     #%% Input parameters
     # #%% Get saved event info, also used to name files
     # date_label = '2018-04-02' # date for filename
-    if ARRAY == 0:
-        if in_dec == 0:
-            fname1 = 'HD' + date_label1 + '_' + date_label2 + '_tshift.mseed'
-            fname2 = 'HD' + date_label1 + '_' + date_label2 + '_amp_ave.mseed'
-            fname3 = 'HD' + date_label1 + '_' + date_label2 + '_amp_ratio.mseed'
-        else:
-            fname1 = 'HD' + date_label1 + '_' + date_label2 + '_tshift_dec.mseed'
-            fname2 = 'HD' + date_label1 + '_' + date_label2 + '_amp_ave_dec.mseed'
-            fname3 = 'HD' + date_label1 + '_' + date_label2 + '_amp_ratio_dec.mseed'
-    elif ARRAY == 1:
-        if in_dec == 0:
-            fname1 = 'Pro_files/HD' + date_label1 + '_' + date_label2 + '_tshift.mseed'
-            fname2 = 'Pro_files/HD' + date_label1 + '_' + date_label2 + '_amp_ave.mseed'
-            fname3 = 'Pro_files/HD' + date_label1 + '_' + date_label2 + '_amp_ratio.mseed'
-        else:
-            fname1 = 'Pro_files/HD' + date_label1 + '_' + date_label2 + '_tshift_dec.mseed'
-            fname2 = 'Pro_files/HD' + date_label1 + '_' + date_label2 + '_amp_ave_dec.mseed'
-            fname3 = 'Pro_files/HD' + date_label1 + '_' + date_label2 + '_amp_ratio_dec.mseed'
+    holder = '/Users/vidale/Documents/Research/IC/Pro_files/HD' + date_label1 + '_' + date_label2
+    if in_dec == 0:
+        fname1 = holder + '_tshift.mseed'
+        fname2 = holder + '_amp_ave.mseed'
+        fname3 = holder + '_amp_ratio.mseed'
+    else:
+        fname1 = holder + '_tshift_dec.mseed'
+        fname2 = holder + '_amp_ave_dec.mseed'
+        fname3 = holder + '_amp_ratio_dec.mseed'
 
     tdiff     = Stream()
     amp_ave   = Stream()
@@ -197,6 +180,7 @@ def pro7plotstack3(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
         plt.show()
 
         fig_index += 1
+
 #%% R-T stack time difference
     if skip_snaps == 0:
         stack_slice = np.zeros((slowR_n,slowT_n))
@@ -213,7 +197,7 @@ def pro7plotstack3(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
                          slice(stack_Tslows[0], stack_Tslows[-1] + slow_delta, slow_delta)]
 
             fig, ax = plt.subplots(1)
-            c = ax.pcolormesh(x1, y1, stack_slice, cmap=plt.cm.coolwarm, vmin=-tdiff_clip, vmax=tdiff_clip)
+            c = ax.pcolormesh(x1, y1, stack_slice, cmap=plt.cm.gist_rainbow_r, vmin=-tdiff_clip, vmax=tdiff_clip)
             ax.axis([x1.min(), x1.max(), y1.min(), y1.max()])
             fig.colorbar(c, ax=ax)
             circle1 = plt.Circle((0, 0), 0.019, color='black', fill=False)

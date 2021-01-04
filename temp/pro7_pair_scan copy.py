@@ -2,18 +2,16 @@
 # looks at envelope stack differential parameters from pro6
 # Reads in tdiff, ave_amp, amp_ratio computed from a pair of events
 # window by quality signals
-# plots snapshots at a range of lag times
 # plus plots sections at 4 radial slownesses (0.0, 0.05, 0.01, 0.015)
-# plus plots 1 transverse slowness at 0 slowness
-# John Vidale 2/2019
+# plus plots sections at 7 transv slownesses (-0.015 to 0.015)
+# John Vidale 2/2019, fixed 1/2021
 
-def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.0005,
+def pro7_pair_scan(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.0005,
               slowR_lo = -0.1, slowR_hi = 0.1, slowT_lo = -0.1, slowT_hi = 0.1,
-              start_buff = -50, end_buff = 50,
+              start_buff = 50, end_buff = 50,
               ZslowR_lo = -0.1, ZslowR_hi = 0.1, ZslowT_lo = -0.1, ZslowT_hi = 0.1,
-              Zstart_buff = 50, Zend_buff = 50, zoom = 0,
-              snaptime = 8, snaps = 10, tdiff_clip = 1,
-              plot_dyn_range = 1000, fig_index = 401, skip_T = 0, skip_R = 0, skip_snaps = 0,
+              Zstart_buff = 50, Zend_buff = 50, zoom = 0, tdiff_clip = 1,
+              plot_dyn_range = 1000, fig_index = 401, skip_T = 0, skip_R = 0,
               decimate_fac = 0, in_dec = 0, ref_phase = 'blank', ARRAY = 0,
               max_rat = 1.8, min_amp = 0.3):
 
@@ -24,17 +22,18 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
     import time
     from obspy import UTCDateTime
     from obspy import Stream
+    from termcolor import colored
 
-    print('Running pro7b_plot_stack')
-
+    print(colored('Running pro7b_plot_stack', 'cyan'))
     start_time_wc = time.time()
 
-    if Zstart_buff  > -start_buff:
-        print('Zstart_buff of ' + str(Zstart_buff) + 'cannot  be > -start_buff of ' + str(-start_buff))
-        Zstart_buff = -start_buff
-    if Zend_buff    > end_buff:
-        print('Zend_buff of '   + str(Zend_buff)   + 'cannot  be > end_buff of '   + str(end_buff))
-        Zend_buff   = end_buff
+    if zoom == 1:
+        if Zstart_buff  < start_buff:
+            print(f'Zstart_buff of {Zstart_buff:.1f} cannot be < start_buff of {start_buff:.1f}')
+            Zstart_buff = start_buff
+        if Zend_buff    > end_buff:
+            print(f'Zend_buff of {Zend_buff:.1f} cannot be > end_buff of {end_buff:.1f}')
+            Zend_buff   = end_buff
 
     file = open('/Users/vidale/Documents/Research/IC/EvLocs/' + eq_file1, 'r')
     lines=file.readlines()
@@ -118,7 +117,7 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
         slowT_lo   = ZslowT_lo
         slowT_hi   = ZslowT_hi
         end_buff   = Zend_buff
-        start_buff = -Zstart_buff
+        start_buff = Zstart_buff
         slowR_n = int(1 + (slowR_hi - slowR_lo)/slow_delta)  # number of slownesses
         slowT_n = int(1 + (slowT_hi - slowT_lo)/slow_delta)  # number of slownesses
         stack_nt = int(1 + ((end_buff - start_buff)/dt))  # number of time points
@@ -529,59 +528,6 @@ def pro7plotstack2(eq_file1, eq_file2, plot_scale_fac = 0.05, slow_delta = 0.000
         plt.ylabel('Transverse slowness (s/km)')
         plt.title(ref_phase + ' Time lag at 0.015 s/km radial slowness, ' + fname1[12:22] + ' ' + fname1[23:33])
         plt.show()
-#%% R-T stack time difference
-    if skip_snaps == 0:
-        stack_slice = np.zeros((slowR_n,slowT_n))
-        for snap_num in range(snaps):
-            fig_index += 1
-            it = int((snaptime - start_buff)/dt) + snap_num
-            for slowR_i in range(slowR_n):  # loop over radial slownesses
-                for slowT_i in range(slowT_n):  # loop over transverse slownesses
-                    index = slowR_i*slowT_n + slowT_i
-                    num_val = tdiff[index].data[it]
-                    stack_slice[slowR_i, slowT_i] = num_val
-
-            y1, x1 = np.mgrid[slice(stack_Rslows[0], stack_Rslows[-1] + slow_delta, slow_delta),
-                         slice(stack_Tslows[0], stack_Tslows[-1] + slow_delta, slow_delta)]
-
-            fig, ax = plt.subplots(1)
-            c = ax.pcolormesh(x1, y1, stack_slice, cmap=plt.cm.gist_rainbow_r, vmin=-tdiff_clip, vmax=tdiff_clip)
-#            c = ax.pcolormesh(x1, y1, stack_slice, cmap=plt.cm.coolwarm, vmin=-tdiff_clip, vmax=tdiff_clip)
-            ax.axis([x1.min(), x1.max(), y1.min(), y1.max()])
-            fig.colorbar(c, ax=ax)
-            circle1 = plt.Circle((0, 0), 0.019, color='black', fill=False)
-            ax.add_artist(circle1)
-            plt.xlabel('T Slowness (s/km)')
-            plt.ylabel('R Slowness (s/km)')
-            plt.title(ref_phase + ' T-R plot of time lag at rel time ' + str(snaptime + snap_num*dt) + '  ' + fname1[12:22] + ' ' + fname1[23:33])
-            plt.show()
-
-#%% R-T stack amplitude
-    if skip_snaps == 0:
-        stack_slice = np.zeros((slowR_n,slowT_n))
-        for snap_num in range(snaps):
-            fig_index += 1
-            it = int((snaptime - start_buff)/dt) + snap_num
-            for slowR_i in range(slowR_n):  # loop over radial slownesses
-                for slowT_i in range(slowT_n):  # loop over transverse slownesses
-                    index = slowR_i*slowT_n + slowT_i
-                    num_val = amp_ave[index].data[it]
-                    stack_slice[slowR_i, slowT_i] = num_val
-
-            y1, x1 = np.mgrid[slice(stack_Rslows[0], stack_Rslows[-1] + slow_delta, slow_delta),
-                         slice(stack_Tslows[0], stack_Tslows[-1] + slow_delta, slow_delta)]
-
-            fig, ax = plt.subplots(1)
-            c = ax.pcolormesh(x1, y1, stack_slice, cmap=plt.cm.gist_rainbow_r)
-            ax.axis([x1.min(), x1.max(), y1.min(), y1.max()])
-            fig.colorbar(c, ax=ax)
-            circle1 = plt.Circle((0, 0), 0.019, color='black', fill=False)
-            ax.add_artist(circle1)
-            plt.xlabel('T Slowness (s/km)')
-            plt.ylabel('R Slowness (s/km)')
-            plt.title(ref_phase + ' T-R plot of amplitude at rel time ' + str(snaptime + snap_num*dt) + '  ' + fname1[12:22] + ' ' + fname1[23:33])
-            plt.show()
-
     #  Save processed files
 #    fname = 'HD' + date_label + '_slice.mseed'
 #    stack.write(fname,format = 'MSEED')

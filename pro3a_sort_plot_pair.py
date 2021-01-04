@@ -28,11 +28,12 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
 
     import sys # don't show any warnings
     import warnings
+    from termcolor import colored
 
     if not sys.warnoptions:
         warnings.simplefilter("ignore")
 
-    print('Running pro3a_sort_plot_pair')
+    print(colored('Running pro3a_sort_plot_pair', 'cyan'))
     start_time_wc = time.time()
 
 #%%  Set some parameters
