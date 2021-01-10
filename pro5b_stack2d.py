@@ -8,7 +8,7 @@
 # John Vidale 2/2019
 
 def pro5stack2d(eq_file, slow_delta = 0.0005, slowR_lo = -0.1, slowR_hi = 0.1, slowT_lo = -0.1, slowT_hi = 0.1,
-              start_buff = -50, end_buff = 50, norm = 1, ARRAY = 0, NS = 0, decimate_fac = 0,
+              start_buff = -50, end_buff = 50, norm = 1, ARRAY = 0, NS = False, decimate_fac = 0,
               ref_loc = 0, ref_lat = 36.3, ref_lon = 138.5, stack_option = 1):
 
     from obspy import UTCDateTime
@@ -100,9 +100,10 @@ def pro5stack2d(eq_file, slow_delta = 0.0005, slowR_lo = -0.1, slowR_hi = 0.1, s
           + str(dt) + ' and thus duration of ' + str((nt-1)*dt))
 
     #%% Make grid of slownesses
-    slowR_n = int(1 + (slowR_hi - slowR_lo)/slow_delta)  # number of slownesses
-    slowT_n = int(1 + (slowT_hi - slowT_lo)/slow_delta)  # number of slownesses
-    stack_nt = int(1 + ((end_buff - start_buff)/dt))  # number of time points
+    slowR_n = int(round(1 + (slowR_hi - slowR_lo)/slow_delta))  # number of slownesses
+    slowT_n = int(round(1 + (slowT_hi - slowT_lo)/slow_delta))  # number of slownesses
+    stack_nt = int(round(1 + ((end_buff - start_buff)/dt)))  # number of time points
+
     # In English, stack_slows = range(slow_n) * slow_delta - slow_lo
     a1R = range(slowR_n)
     a1T = range(slowT_n)
@@ -153,7 +154,7 @@ def pro5stack2d(eq_file, slow_delta = 0.0005, slowR_lo = -0.1, slowR_hi = 0.1, s
             rel_dist    = rel_dist_az[0]/1000  # km
             rel_back_az = rel_dist_az[1]       # radians
 
-            if NS == 0:
+            if NS == False:
                 del_distR = rel_dist * math.cos((rel_back_az - ref_back_az)* math.pi/180)
                 del_distT = rel_dist * math.sin((rel_back_az - ref_back_az)* math.pi/180)
             # North and east
@@ -165,12 +166,12 @@ def pro5stack2d(eq_file, slow_delta = 0.0005, slowR_lo = -0.1, slowR_hi = 0.1, s
                     time_lag  = del_distR * stack_Rslows[slowR_i]  # time shift due to radial slowness
                     time_lag += del_distT * stack_Tslows[slowT_i]  # time shift due to transverse slowness
                     time_correction = ((t-tr.stats.starttime) + (time_lag + start_buff))/dt
-                    indx = int(slowR_i*slowT_n + slowT_i)
+                    indx = int(round(slowR_i*slowT_n + slowT_i))
                     # could do a little better by sampling finer, 20 sps?, before applying statics in pro3
 
                     if stack_option == 0:  # my old inefficient method
                         for it in range(stack_nt):  # check points one at a time
-                            it_in = int(it + time_correction)
+                            it_in = int(round(it + time_correction))
                             if it_in >= 0 and it_in < nt - 1: # does data lie within seismogram?
                                 stack[indx].data[it] += tr[it_in]
 

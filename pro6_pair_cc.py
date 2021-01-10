@@ -2,42 +2,38 @@
 # Read in 2D stacks for two events
 # Compute tdiff, ave_amp, amp_ratio
 # Plot radial and transverse cuts through stack, plus beam sum
-# Write out tdiff, ave_amp, amp_ratio results
+# Write out tdiff, ave_amp results
 # John Vidale 3/2019
 
 def pro6_cc_pair(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0005,
               slowR_lo = -0.1, slowR_hi = 0.1, slowT_lo = -0.1, slowT_hi = 0.1,
               start_buff = 1040, end_buff = 1180, freq_corr = 1.0,
-              get_stf = 0, start_beam = 0, end_beam = 0,
+              get_stf = 0, NS = False,
               ARRAY = 0, max_rat = 1.8, min_amp = 0.2, turn_off_black = 0,
               R_slow_plot = 0, T_slow_plot = 0, tdiff_clip = 0.5,
               ref_loc = False, ref_lat = 36.3, ref_lon = 138.5, dphase = 'PKiKP',
               cc_twin = 2, cc_len = 0.5, cc_interp1d = 5, cc_delta = 0.1, cc_thres = 0.8):
 
-    # cc_twin     - time window for cross-correlation (s)
-    # cc_len      - max time window shift to compute CC (fraction of whole time window)
-    # cc_delta    - time interval for cc (s)
-    # cc_interp1d - interpolation factor
-    new_delay_method = False
-
-    import obspy
-    import obspy.signal
+    # import obspy
     from obspy import UTCDateTime
-    from obspy import Stream, Trace
     from obspy import read
+    from obspy import Stream
     from obspy.geodetics import gps2dist_azimuth
-    import numpy as np
-    import os
     from obspy.taup import TauPyModel
-    import obspy.signal as sign
-    import matplotlib.pyplot as plt
-    model = TauPyModel(model='iasp91')
     from scipy.signal import hilbert
+    import numpy as np
+    from termcolor import colored
+    import matplotlib.pyplot as plt
+    import os
     import math
     import time
-    import statistics
+    import sys
     from pro_proceed_function import cc_measure_tshift
-    from termcolor import colored
+    model = TauPyModel(model='iasp91')
+    # from obspy import Trace
+    # import obspy.signal
+    # import obspy.signal as sign
+    # import statistics
 
 #%% Get info
     # get locations
@@ -45,75 +41,22 @@ def pro6_cc_pair(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0005,
 
     start_time_wc = time.time()
 
-    sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/events_good.txt'
-    with open(sta_file, 'r') as file:
-        lines = file.readlines()
-    event_count = len(lines)
-
-    print(str(event_count) + ' lines read from ' + sta_file)
-    # Load station coords into arrays
-    # Only lat, lon, depth, baz, radslo's are used
-    station_index = range(event_count)
-    event_names        = []
-
-    event_index = np.zeros(event_count)
-    event_year  = np.zeros(event_count)
-    event_mo    = np.zeros(event_count)
-    event_day   = np.zeros(event_count)
-    event_hr    = np.zeros(event_count)
-    event_min   = np.zeros(event_count)
-    event_sec   = np.zeros(event_count)
-    event_lat   = np.zeros(event_count)
-    event_lon   = np.zeros(event_count)
-    event_dep   = np.zeros(event_count)
-    event_mb    = np.zeros(event_count)
-    event_ms    = np.zeros(event_count)
-    event_tstart       = np.zeros(event_count)
-    event_tend         = np.zeros(event_count)
-    event_gcdist       = np.zeros(event_count)
-    event_dist         = np.zeros(event_count)
-    event_baz          = np.zeros(event_count)
-    event_SNR          = np.zeros(event_count)
-    event_Sflag        = np.zeros(event_count)
-    event_PKiKPflag    = np.zeros(event_count)
-    event_ICSflag      = np.zeros(event_count)
-    event_PKiKP_radslo = np.zeros(event_count)
-    event_PKiKP_traslo = np.zeros(event_count)
-    event_PKiKP_qual   = np.zeros(event_count)
-    event_ICS_qual     = np.zeros(event_count)
-
-    iii = 0
-    for ii in station_index:   # read file
-        line = lines[ii]
-        split_line = line.split()
-
-        event_index[ii]  = float(split_line[0])
-        event_names.append(split_line[1])
-        event_year[ii]   = float(split_line[2])
-        event_mo[ii]     = float(split_line[3])
-        event_day[ii]    = float(split_line[4])
-        event_hr[ii]     = float(split_line[5])
-        event_min[ii]    = float(split_line[6])
-        event_sec[ii]    = float(split_line[7])
-        event_lat[ii]    = float(split_line[8])
-        event_lon[ii]    = float(split_line[9])
-        event_dep[ii]    = float(split_line[10])
-        event_mb[ii]     = float(split_line[11])
-        event_ms[ii]     = float(split_line[12])
-        event_tstart[ii] = float(split_line[13])
-        event_tend[ii]   = float(split_line[14])
-        event_gcdist[ii] = float(split_line[15])
-        event_dist[ii]   = float(split_line[16])
-        event_baz[ii]    = float(split_line[17])
-        event_SNR[ii]    = float(split_line[18])
-        event_Sflag[ii]  = float(split_line[19])
-        event_PKiKPflag[ii]     = float(split_line[20])
-        event_ICSflag[ii]       = float(split_line[21])
-        event_PKiKP_radslo[ii]  = float(split_line[22])
-        event_PKiKP_traslo[ii]  = float(split_line[23])
-        event_PKiKP_qual[ii]    = float(split_line[24])
-        event_ICS_qual[ii]      = float(split_line[25])
-        # print('Event ' + str(ii) + ' is ' + str(event_index[ii]))
+        #%% Input parameters and computed files
+    folder_name = '/Users/vidale/Documents/Research/IC/'
+    file1 = open(folder_name + 'EvLocs/' + eq_file1, 'r')
+    file2 = open(folder_name + 'EvLocs/' + eq_file2, 'r')
+    lines1=file1.readlines()
+    lines2=file2.readlines()
+    split_line1 = lines1[0].split()
+    split_line2 = lines2[0].split()
+    t1          = UTCDateTime(split_line1[1])
+    # t2 = UTCDateTime(split_line2[1])
+    date_label1  = split_line1[1][0:10]
+    date_label2  = split_line2[1][0:10]
+    ev_lat      = float(      split_line1[2])
+    ev_lon      = float(      split_line1[3])
+    ev_depth    = float(      split_line1[4])
+    # date_label = '2018-04-02' # dates in filename
 
     #  find predicted slowness
     if ref_loc == False:
@@ -126,44 +69,27 @@ def pro6_cc_pair(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0005,
         elif ARRAY == 2: # China set and center
             ref_lat = 38      # °N
             ref_lon = 104.5   # °E
-    ref_dist_az = gps2dist_azimuth(event_lat[iii],event_lon[iii],ref_lat,ref_lon)
+    ref_dist_az = gps2dist_azimuth(ev_lat,ev_lon,ref_lat,ref_lon)
     ref_back_az = ref_dist_az[2]
     ref_dist    = ref_dist_az[0]/(1000*111)  # distance in °
 
-    arrivals1 = model.get_travel_times(source_depth_in_km=event_dep[iii],distance_in_degree=ref_dist-0.5,phase_list=[dphase])
-    arrivals2 = model.get_travel_times(source_depth_in_km=event_dep[iii],distance_in_degree=ref_dist+0.5,phase_list=[dphase])
+    arrivals1 = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree=ref_dist-0.5,phase_list=[dphase])
+    arrivals2 = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree=ref_dist+0.5,phase_list=[dphase])
     dtime = arrivals2[0].time - arrivals1[0].time
     event_pred_slo  = dtime/111.  # s/km
 
     # convert to pred rslo and tslo
-    sin_baz = np.sin(ref_back_az * np.pi /180)
-    cos_baz = np.cos(ref_back_az * np.pi /180)
-    pred_Nslo = event_pred_slo * cos_baz
-    pred_Eslo = event_pred_slo * sin_baz
-
-    #  rotate observed slowness to N and E
-    obs_Nslo = (event_PKiKP_radslo[iii] * cos_baz) - (event_PKiKP_traslo[iii] * sin_baz)
-    obs_Eslo = (event_PKiKP_radslo[iii] * sin_baz) + (event_PKiKP_traslo[iii] * cos_baz)
-
-    print(f'Pred R {pred_Nslo:.4f} Pred T {pred_Eslo:.4f} Obs R {obs_Nslo:.4f} Obs T {obs_Eslo:.4f}')
-    #  find observed back-azimuth
-    #    bazi_rad = np.arctan(event_PKiKP_traslo[ii]/event_PKiKP_radslo[ii])
-    #    event_obs_bazi  = event_baz[ii] + (bazi_rad * 180 / np.pi)
-
-    goto = '/Users/vidale/Documents/Research/IC/EvLocs'
-    os.chdir(goto)
-
-    file = open(eq_file1, 'r')
-    lines=file.readlines()
-    split_line = lines[0].split()
-    t1           = UTCDateTime(split_line[1])
-    date_label1  = split_line[1][0:10]
-
-    file = open(eq_file2, 'r')
-    lines=file.readlines()
-    split_line = lines[0].split()
-    t2           = UTCDateTime(split_line[1])
-    date_label2  = split_line[1][0:10]
+    if NS == True:
+        sin_baz = np.sin(ref_back_az * np.pi /180)
+        cos_baz = np.cos(ref_back_az * np.pi /180)
+    #  rotate predicted slowness to N and E
+        pred_Nslo = event_pred_slo * cos_baz
+        pred_Eslo = event_pred_slo * sin_baz
+        print(f'Pred N {pred_Nslo:.4f} Pred E {pred_Eslo:.4f}')
+    else:
+        pred_Nslo = event_pred_slo
+        pred_Eslo = 0
+        print(f'Pred R {pred_Nslo:.4f} Pred T {pred_Eslo:.4f}')
 
     #%% -- read files
     # Get saved event info, also used to name files
@@ -182,14 +108,19 @@ def pro6_cc_pair(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0005,
     cc            = st1.copy()  # make array for cc coefficient
     amp_ratio     = st1.copy()  # make array for relative amplitude
     amp_ave       = st1.copy()  # make array for average amplitude
-    # decimate arrays to sampling of time shift
-    dec_fac = int(cc_delta/st1[0].stats.delta)
+
+    # decimate several arrays to sampling of time shift
+    dec_fac = int(round(cc_delta/st1[0].stats.delta))
+    if (dec_fac - cc_delta/st1[0].stats.delta)/cc_delta/st1[0].stats.delta > 0.00001:
+        print('dec_fac must be an integer, pick more suitable parameters')
+        sys.quit()
     print(f'decimation factor {dec_fac:.3f} original sampling  {st1[0].stats.delta:.3f} correlation sampling  {cc_delta:.3f}.')
+    #%% Decimate some files from input dt to output dt
     if dec_fac > 1:
         tshift_cc.decimate(dec_fac, no_filter=True)
         cc.decimate(dec_fac, no_filter=True)
 
-    print('Traces read: event1: ' + str(len(st1)) + ' event2: ' + str(len(st2)))
+    print('Beams read: event1: ' + str(len(st1)) + ' event2: ' + str(len(st2)))
     nt1 = len(st1[0].data)
     nt2 = len(st2[0].data)
     dt1 = st1[0].stats.delta
@@ -201,12 +132,12 @@ def pro6_cc_pair(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0005,
           + str(dt2) + ' thus duration ' + str((nt2-1)*dt2))
     if nt1 != nt2 or dt1 != dt2:
         print('Trouble, nt or dt not does not match')
-        exit(-1)
+        sys.exit(-1)
 
 #%% -- Make grid of slownesses
     # count rows and columns
-    slowR_n = int(1 + (slowR_hi - slowR_lo)/slow_delta)  # number of slownesses
-    slowT_n = int(1 + (slowT_hi - slowT_lo)/slow_delta)  # number of slownesses
+    slowR_n = int(round(1 + (slowR_hi - slowR_lo)/slow_delta))  # number of slownesses
+    slowT_n = int(round(1 + (slowT_hi - slowT_lo)/slow_delta))  # number of slownesses
     # enumerate indices for slowness rows and columns
     # In English, stack_slows = range(slow_n) * slow_delta - slow_lo
     a1R = range(slowR_n)
@@ -247,7 +178,6 @@ def pro6_cc_pair(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0005,
         amp_ratio[slow_i].data  = env1/env2
 
         # old pointwise method
-        # if new_delay_method == False:
         angle1 = np.angle(seismogram1) # time shift
         angle2 = np.angle(seismogram2)
         d_phase = (angle1 - angle2)
@@ -267,8 +197,9 @@ def pro6_cc_pair(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0005,
         # Plot new method for two slowness points (SloR, SloT) == (0.01, +/-0.01):
             # for reference - index = slowR_i*slowT_n + slowT_i  =>  I = (Ri * Tn) + Ti
         # re-compute radial and transverse slowness from slowness array index
-        SloT = slowT_lo + (int(round(slow_i %  slowT_n)) * slow_delta)
-        SloR = slowR_lo + (int((slow_i / (slowT_n))) * slow_delta)
+        # adjust for dominant frequency of 1.2 Hz, not 1 Hz
+        SloT = slowT_lo + (int(round(slow_i %  (slowT_n)) * slow_delta))
+        SloR = slowR_lo + (int(round(slow_i /  (slowT_n)) * slow_delta))
 
         if (abs(SloR - 0.01) < 0.00001) and (abs(SloT + 0.01) < 0.00001):
                 pt1 = True
@@ -294,14 +225,14 @@ def pro6_cc_pair(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0005,
                     ax1 = fig4.add_subplot(3,1,1)
                     ax2 = fig4.add_subplot(3,1,2)
                     ax3 = fig4.add_subplot(3,1,3)
-                    fig4.suptitle(f'Radial beam slowness {SloR:.2f}s/°  Trans {SloT:.2f}s/°')
+                    fig4.suptitle(f'(R,T) slowness ({SloR:.2f}, {SloT:.2f}) s/°')
                     plt.subplots_adjust(hspace=0.8)
                 if pt2 == True:
                     fig5 = plt.figure(5)
                     ax1 = fig5.add_subplot(3,1,1)
                     ax2 = fig5.add_subplot(3,1,2)
                     ax3 = fig5.add_subplot(3,1,3)
-                    fig5.suptitle(f'Radial beam slowness {SloR:.2f}s/°  Trans {SloT:.2f}s/°')
+                    fig5.suptitle(f'(R,T) slowness ({SloR:.2f}, {SloT:.2f}) s/°')
                     plt.subplots_adjust(hspace=0.8)
                 ax1.title.set_text(f'Correlation, threshold {cc_thres:.2f}')
                 ax2.title.set_text('Time shift (s)')
@@ -331,12 +262,13 @@ def pro6_cc_pair(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0005,
             # tshift_cc.decimate(dec_fac, no_filter=True)
             # cc.decimate(dec_fac, no_filter=True)
             zero_fill = int((len(tshift_cc[0].data) - len(tshift_new)) / 2)  # zeroes or NAN to be added to each end
-            cc_coef_full    = np.concatenate([np.zeros(zero_fill),    cc_coef, np.zeros(zero_fill)])
-            tshift_new_full = np.concatenate([np.zeros(zero_fill), tshift_new, np.zeros(zero_fill)])
-            tshift[slow_i].data = tshift_new_full
+            cc_coef_full    = np.concatenate([np.zeros(zero_fill),    cc_coef, np.zeros(zero_fill + 1)])
+            tshift_new_full = np.concatenate([np.zeros(zero_fill), tshift_new, np.zeros(zero_fill + 1)])
+            tshift[slow_i].data = tshift_new_full  # tshift just gets  NaNs for plotting, full is file that is saved
             cc[slow_i].data = cc_coef_full
 
             if doit_once == False:
+                print(f'tshift_new_full length is {len(tshift_new_full)} tshift[0].data length is {len(tshift[0].data)}')
                 print(f'length of len(tshift_cc[0].data {len(tshift_cc[0].data)} len(tshift_new) {len(tshift_new)}')
                 print(f'length of tester {len(cc_coef_full)} zero-fill {zero_fill}')
                 print(f'time window starts at {ttt[0]:.2f} ends at {ttt[-1]:.2f}')
@@ -345,7 +277,7 @@ def pro6_cc_pair(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0005,
                 print(f'coeff length is {len(cc_coef)} pts')
                 print(f'target cc and tshift_cc length is {len(cc[0].data)} pts')
                 print(f'tshift length is {len(tshift_new)} pts')
-                print(f'correlations start at {cc_ttt[0]:.2f} end at {cc_ttt[-1]:.2f}')
+                print(f'corr timeline starts at {cc_ttt[0]:.2f}, ends at {cc_ttt[-1]:.2f}')
                 print(f'cc_twin {cc_twin:.2f} cc_delta {cc_delta:.2f}')
                 # difference in length is cc_twin/2 + cc_delta
                 doit_once = True
@@ -354,31 +286,38 @@ def pro6_cc_pair(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0005,
         if local_max > global_max:
             global_max = local_max
 
-    # # Mark all the cc>0.9 points
-    # nn=[index for index,x in enumerate(cc_coef) if x>=0.9]
-    # #cc_tshift[nn]=np.nan
-    # plt.subplot(3,1,1)
-    # plt.scatter(cc_ttt[nn],cc_coef[nn]+ii,color='k',s=10)
-    # plt.subplot(3,1,2)
-    # plt.scatter(cc_ttt[nn],cc_tshift[nn]+ii,color='g',s=10)
+    #%% Decimate some files from input dt to output dt
+    if dec_fac > 1:
+        amp_ave_dec = amp_ave.copy()
+        amp_ave_dec.decimate(dec_fac, no_filter=True)
 
-#%% Extract slices to plot
-    for slow_i in range(total_slows): # ignore less robust points
+    #%% -- Flag less robust points as NAN
+    for slow_i in range(total_slows):
         tshift[slow_i].stats.delta = tshift[slow_i].stats.delta * dec_fac
-    tshift_full = tshift.copy()  # make array for time shift
+    tshift_full = tshift.copy()  # preserve full array for saved time shift file
     for slow_i in range(total_slows): # ignore less robust points
         if slow_i % 200 == 0:
             print('Applying nan to low correlations, ' + str(slow_i) + ' finished slownesses out of ' + str(total_slows))
         if old_shift == True:
             for it in range(nt1):
-                if ((amp_ratio[slow_i].data[it] < (1/max_rat)) or (amp_ratio[slow_i].data[it] > max_rat) or (amp_ave[slow_i].data[it] < (min_amp * global_max))):
+                if ((amp_ratio[slow_i].data[it] < (1/max_rat)) or (amp_ratio[slow_i].data[it] > max_rat)
+                    or (amp_ave[slow_i].data[it] < (min_amp * global_max))):
                     tshift[slow_i].data[it] = np.nan
         elif old_shift == False:
+            print(f'cc         .data length is {len(cc[slow_i].data)}          pts')
+            print(f'amp_ave_dec.data length is {len(amp_ave_dec[slow_i].data)} pts')
+            print(f'amp_ave.    data length is {len(amp_ave[slow_i].data)}     pts')
+            print(f'tshift     .data length is {len(tshift[slow_i].data)}      pts')
+            print(f'cc_thres    {cc_thres}')
+            print(f'min_amp     {min_amp}')
+            print(f'global_max  {global_max}')
+            print(f'nt_new  {nt_new}')
             for it in range(nt_new):
-                if cc[slow_i].data[it] < cc_thres:
+                if (cc[slow_i].data[it] < cc_thres) or (amp_ave_dec[slow_i].data[it] < (min_amp * global_max)):
                     tshift[slow_i].data[it] = np.nan
 
-    #%% -- Find transverse slowness nearest T_slow_plot
+#%% Extract slices to plot
+    #%% -- Collect T slowness nearest T_slow
     lowest_Tslow = 1000000
     for slow_i in range(slowT_n):
         if abs(stack_Tslows[slow_i] - T_slow_plot) < lowest_Tslow:
@@ -390,17 +329,15 @@ def pro6_cc_pair(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0005,
     centralR_st1 = Stream()
     centralR_st2 = Stream()
     centralR_amp   = Stream()
-    centralR_ampr  = Stream()
     centralR_tdiff = Stream()
     for slowR_i in range(slowR_n):
         ii = slowR_i*slowT_n + lowest_Tindex
         centralR_st1 += st1[ii]
         centralR_st2 += st2[ii]
         centralR_amp   += amp_ave[ii]
-        centralR_ampr  += amp_ratio[ii]
         centralR_tdiff += tshift[ii]
 
-    #%% -- Find radial slowness nearest R_slow_plot
+    #%% -- Collect R slowness nearest R_slow
     lowest_Rslow = 1000000
     for slow_i in range(slowR_n):
         if abs(stack_Rslows[slow_i] - R_slow_plot) < lowest_Rslow:
@@ -413,191 +350,27 @@ def pro6_cc_pair(eq_file1, eq_file2, plot_scale_fac = 0.03, slow_delta = 0.0005,
     centralT_st1 = Stream()
     centralT_st2 = Stream()
     centralT_amp   = Stream()
-    centralT_ampr  = Stream()
     centralT_tdiff = Stream()
-
-    #%% -- Stack time slices
-    event1_sample = Stream()
-    event2_sample = Stream()
 
     for slowT_i in range(slowT_n):
         ii = lowest_Rindex*slowT_n + slowT_i
         centralT_st1 += st1[ii]
         centralT_st2 += st2[ii]
         centralT_amp   += amp_ave[ii]
-        centralT_ampr  += amp_ratio[ii]
         centralT_tdiff += tshift[ii]
-
-    #%% -- Compute timing time series
-    ttt     = (np.arange(len(   st1[0].data)) *    st1[0].stats.delta + start_buff) # in units of seconds
-    ttt_dec = (np.arange(len(tshift[0].data)) * tshift[0].stats.delta + start_buff) # in units of seconds
-
-#%% Plots
-    #%% -- Radial amp and tdiff vs time plots
-    fig_index = 16
-    tplot_scale = 1
-#    plt.close(fig_index)
-    plt.figure(fig_index,figsize=(30,10))
-    plt.xlim(start_buff,end_buff)
-    plt.ylim(stack_Rslows[0], stack_Rslows[-1])
-    for slowR_i in range(slowR_n):  # loop over radial slownesses
-        dist_offset = stack_Rslows[slowR_i] # trying for approx degrees
-        ttt = (np.arange(len(centralR_st1[slowR_i].data)) * centralR_st1[slowR_i].stats.delta
-          + (centralR_st1[slowR_i].stats.starttime - t1))
-        plt.plot(ttt, (centralR_st1[slowR_i].data - np.median(centralR_st1[slowR_i].data))*plot_scale_fac /global_max + dist_offset, color = 'green')
-        plt.plot(ttt, (centralR_st2[slowR_i].data - np.median(centralR_st2[slowR_i].data))*plot_scale_fac /global_max + dist_offset, color = 'red')
-        # extract stacked time functions
-        if get_stf != 0:
-            if np.abs(stack_Rslows[slowR_i]- 0.005) < 0.000001: # kludge, not exactly zero when desired
-                event1_sample = centralR_st1[slowR_i].copy()
-                event2_sample = centralR_st2[slowR_i].copy()
-#        plt.plot(ttt, (centralR_amp[slowR_i].data)  *plot_scale_fac/global_max + dist_offset, color = 'purple')
-        if turn_off_black == 0:
-            plt.plot(ttt,     (centralR_amp[slowR_i].data)*0.0 + dist_offset, color = 'lightgray') # reference lines
-            plt.plot(ttt_dec, (centralR_tdiff[slowR_i].data)*plot_scale_fac/tplot_scale + dist_offset, color = 'black')
-    plt.xlabel('Time (s)')
-    plt.ylabel('R Slowness (s/km)')
-    plt.title(dphase + ' seismograms and tdiff at ' + str(T_slow_plot) + ' T slowness, green is event1, red is event2')
-    # Plot transverse amp and tdiff vs time plots
-    fig_index = 17
-#    plt.close(fig_index)
-    plt.figure(fig_index,figsize=(30,10))
-    plt.xlim(start_buff,end_buff)
-    plt.ylim(stack_Tslows[0], stack_Tslows[-1])
-
-    for slowT_i in range(slowT_n):  # loop over transverse slownesses
-        dist_offset = stack_Tslows[slowT_i] # trying for approx degrees
-        ttt = (np.arange(len(centralT_st1[slowT_i].data)) * centralT_st1[slowT_i].stats.delta
-          + (centralT_st1[slowT_i].stats.starttime - t1))
-        plt.plot(ttt, (centralT_st1[slowT_i].data - np.median(centralT_st1[slowT_i].data))*plot_scale_fac /global_max + dist_offset, color = 'green')
-        plt.plot(ttt, (centralT_st2[slowT_i].data - np.median(centralT_st2[slowT_i].data))*plot_scale_fac /global_max + dist_offset, color = 'red')
-#        plt.plot(ttt, (centralT_amp[slowT_i].data)  *plot_scale_fac/global_max + dist_offset, color = 'purple')
-        if turn_off_black == 0:
-            plt.plot(ttt,     (centralT_amp[slowT_i].data)*0.0 + dist_offset, color = 'lightgray') # reference lines
-            plt.plot(ttt_dec, (centralT_tdiff[slowT_i].data)*plot_scale_fac/tplot_scale + dist_offset, color = 'black')
-    plt.xlabel('Time (s)')
-    plt.ylabel('T Slowness (s/km)')
-    plt.title(date_label1 + '  ' + dphase + ' seismograms and tdiff ' + str(R_slow_plot) + ' R slowness, green is event1, red is event2')
-    os.chdir('/Users/vidale/Documents/Research/IC/Plots')
-#    plt.savefig(date_label1 + '_' + str(start_buff) + '_' + str(end_buff) + '_stack.png')
-
-#%% -- R-T tshift averaged over time window
-    fig_index = 18
-    stack_slice = np.zeros((slowR_n,slowT_n))
-
-    if start_beam == 0 and end_beam == 0:
-        full_beam = 1
-    else:  # beam just part of stack volume
-        full_beam = 0
-        start_index = int((start_beam - start_buff) / dt1)
-        end_index   = int((end_beam   - start_buff) / dt1)
-        print('beam is ' + str(start_beam) + ' to ' + str(end_beam) + 's, out of ' + str(start_buff)
-            + ' to ' + str(end_buff) + 's, dt is ' + str(dt1)  + 's, and indices are '+ str(start_index) + ' ' + str(end_index))
-        print(f'Beam is {start_beam:.4f} to {end_beam:.4f}s, out of {start_buff:.4f} to {end_buff:.4f}s, dt is {dt1:.4f}s, and indices are {start_index} {end_index}')
-
-    for slowR_i in range(slowR_n):  # loop over radial slownesses
-        for slowT_i in range(slowT_n):  # loop over transverse slownesses
-            index = slowR_i*slowT_n + slowT_i
-            if full_beam == 1:
-                num_val = np.nanmedian(tshift[index].data)
-            else:
-                num_val = np.nanmedian(tshift[index].data[start_index:end_index])
-            stack_slice[slowR_i, slowT_i] = num_val # adjust for dominant frequency of 1.2 Hz, not 1 Hz
-#    stack_slice[0,0] = -0.25  # in case plot amplitude needs normalization by an extreme value
-#    stack_slice[0,1] =  0.25
-
-    y1, x1 = np.mgrid[slice(stack_Rslows[0], stack_Rslows[-1] + slow_delta, slow_delta),
-                 slice(stack_Tslows[0], stack_Tslows[-1] + slow_delta, slow_delta)]
-
-    fig, ax = plt.subplots(1, figsize=(7,0.8*7*(slowR_n/slowT_n)))  # try to make correct aspect ratio plot
-#        fig, ax = plt.subplots(1, figsize=(9,2))
-#        fig.subplots_adjust(bottom=0.3)
-#    c = ax.pcolormesh(x1, y1, stack_slice, cmap=plt.cm.bwr,      vmin = -tdiff_clip, vmax = tdiff_clip)
-    c = ax.pcolormesh(x1, y1, stack_slice, cmap=plt.cm.coolwarm, vmin = -tdiff_clip, vmax = tdiff_clip)
-    ax.axis([x1.min(), x1.max(), y1.min(), y1.max()])
-    circle1 = plt.Circle((0, 0), 0.019, color='black', fill=False)
-    ax.add_artist(circle1)
-    circle2 = plt.Circle((0, 0), 0.040, color='black', fill=False)
-    ax.add_artist(circle2)  #outer core limit
-    fig.colorbar(c, ax=ax)
-    plt.ylabel('R Slowness (s/km)')
-    plt.xlabel('Transverse Slowness (s/km)')
-    plt.title(dphase + ' time shift ' + date_label1 + ' ' + date_label2)
-    os.chdir('/Users/vidale/Documents/Research/IC/Plots')
-    plt.savefig(date_label1 + '_' + date_label2 + '_' + str(start_buff) + '_' + str(end_buff) + '_tshift.png')
-    plt.show()
-
-#%% -- R-T amplitude averaged over time window
-    fig_index = 19
-    stack_slice = np.zeros((slowR_n,slowT_n))
-    smax = 0
-    for slowR_i in range(slowR_n):  # loop over radial slownesses
-        for slowT_i in range(slowT_n):  # loop over transverse slownesses
-            index = slowR_i*slowT_n + slowT_i
-            if full_beam == 1:
-                num_val = np.nanmedian(amp_ave[index].data)
-            else:
-                num_val = np.nanmedian(amp_ave[index].data[start_index:end_index])
-            stack_slice[slowR_i, slowT_i] = num_val
-            if num_val > smax:
-                smax = num_val
-#    stack_slice[0,0] = 0
-
-    y1, x1 = np.mgrid[slice(stack_Rslows[0], stack_Rslows[-1] + slow_delta, slow_delta),
-                 slice(stack_Tslows[0], stack_Tslows[-1] + slow_delta, slow_delta)]
-
-#    fig, ax = plt.subplots(1)
-    fig, ax = plt.subplots(1, figsize=(7,0.8*7*(slowR_n/slowT_n)))
-#    c = ax.pcolormesh(x1, y1, stack_slice/smax, cmap=plt.cm.gist_yarg, vmin = 0.5)
-    c = ax.pcolormesh(x1, y1, stack_slice/smax, cmap=plt.cm.gist_rainbow_r, vmin = 0)
-#    c = ax.pcolormesh(x1, y1, stack_slice, cmap=plt.cm.gist_rainbow_r, vmin = 0)
-    fig.colorbar(c, ax=ax, label='linear amplitude')
-    ax.axis([x1.min(), x1.max(), y1.min(), y1.max()])
-    circle1 = plt.Circle((0, 0), 0.019, color='black', fill=False)
-    ax.add_artist(circle1)  #inner core limit
-    circle2 = plt.Circle((0, 0), 0.040, color='black', fill=False)
-    ax.add_artist(circle2)  #outer core limit
-
-    c = ax.scatter(pred_Eslo, pred_Nslo, color='black'  , s=50, alpha=0.75)
-#    c = ax.scatter( obs_Eslo,  obs_Nslo, color='purple', s=100, alpha=0.75)
-    c = ax.scatter(        0,         0, color='black' , s=50,  alpha=0.75)
-
-    plt.xlabel('Transverse Slowness (s/km)')
-    plt.ylabel('Radial Slowness (s/km)')
-    plt.title(date_label1 + ' ' + date_label2 + '  ' + dphase + ' beam amplitude')
-    os.chdir('/Users/vidale/Documents/Research/IC/Plots')
-    plt.savefig(date_label1 + '_' + date_label2 + '_' + str(start_buff) + '_' + str(end_buff) + '_beam.png')
-    plt.show()
 
 #%%  Save processed files
     goto = '/Users/vidale/Documents/Research/IC/Pro_Files'
     os.chdir(goto)
 
-    if dec_fac != 1:  # decimate files not yet decimated
-        for i in range(len(amp_ave)):  # loop over traces
-            amp_ave[  i].decimate(dec_fac, no_filter=True)
-            amp_ratio[i].decimate(dec_fac, no_filter=True)
-
     fname = 'HD' + date_label1 + '_' + date_label2 + '_tshift.mseed'
     tshift_full.write(fname,format = 'MSEED')
 
     fname = 'HD' + date_label1 + '_' + date_label2 + '_amp_ave.mseed'
-    amp_ave.write(    fname,format = 'MSEED')
-
-    fname = 'HD' + date_label1 + '_' + date_label2 + '_amp_ratio.mseed'
-    amp_ratio.write(  fname,format = 'MSEED')
+    amp_ave_dec.write(    fname,format = 'MSEED')
 
     fname = 'HD' + date_label1 + '_' + date_label2 + '_cc.mseed'
     cc.write(         fname,format = 'MSEED')
-
-#%% Option to write out stf
-    if get_stf != 0:
-        event1_sample.taper(0.1)
-        event2_sample.taper(0.1)
-        fname = 'HD' + date_label1 + '_stf.mseed'
-        event1_sample.write(fname,format = 'MSEED')
-        fname = 'HD' + date_label2 + '_stf.mseed'
-        event2_sample.write(fname,format = 'MSEED')
 
     elapsed_time_wc = time.time() - start_time_wc
     print(f'This job took   {elapsed_time_wc:.1f}   seconds')
