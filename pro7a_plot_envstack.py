@@ -9,7 +9,7 @@ def pro7plotstack(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
               start_buff = -50, end_buff = 50, snaptime = 8, snaps = 10,
               ZslowR_lo = -0.1, ZslowR_hi = 0.1, ZslowT_lo = -0.1, ZslowT_hi = 0.1,
               Zstart_buff = 50, Zend_buff = 50, zoom = 0,
-              plot_dyn_range = 1000, fig_index = 401, skip_T = 1, skip_R = 0, ARRAY = 0):
+              plot_dyn_range = 1000, fig_index = 401, do_T = True, do_R = True, ARRAY = 0):
 
     import obspy
     import obspy.signal
@@ -27,9 +27,10 @@ def pro7plotstack(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
     start_time_wc = time.time()
 
 
-    goto = '/Users/vidale/Documents/PyCode/EvLocs'
-    os.chdir(goto)
-    file = open(eq_file, 'r')
+    folder_name = '/Users/vidale/Documents/Research/IC/'
+    fname = folder_name + 'EvLocs/' + eq_file
+    print('Opening ' + fname)
+    file = open(fname, 'r')
     lines=file.readlines()
     split_line = lines[0].split()
 #            ids.append(split_line[0])  ignore label for now
@@ -39,9 +40,9 @@ def pro7plotstack(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
     #%% Input parameters
     # #%% Get saved event info, also used to name files
     # date_label = '2018-04-02' # date for filename
-    goto = '/Users/vidale/Documents/PyCode/Pro_Files'
-    fname = 'HD' + date_label + '_2dstack_env.mseed'
-    os.chdir(goto)
+
+    name_str = folder_name + 'Pro_files/HD' + date_label + '_'
+    fname  = name_str + 'amp_ave.mseed'
     st = Stream()
     st = read(fname)
     print('Read in: ' + str(len(st)) + ' traces')
@@ -96,7 +97,7 @@ def pro7plotstack(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
         print('After zoom ' + str(slowR_n) + ' radial slownesses, ' + str(slowT_n) + ' trans slownesses, ')
 
     #%% Find transverse slowness nearest zero
-    if skip_R != 1:
+    if do_R == True:
         lowest_Tslow = 1000000
         for slow_i in range(slowT_n):
             if abs(stack_Tslows[slow_i]) < lowest_Tslow:
@@ -111,7 +112,7 @@ def pro7plotstack(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
             centralR_st += st[slowR_i*slowT_n + lowest_Tindex]
 
     #%% Slices near radial slownesses of zero, 0.005, 0.01, 0.015
-    if skip_T != 1:
+    if do_T == True:
         lowest_Rslow = 1000000
         for slow_i in range(slowR_n):
             if abs(stack_Rslows[slow_i]) < lowest_Rslow:
@@ -185,7 +186,7 @@ def pro7plotstack(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
     ttt = (np.arange(len(st[0].data)) * st[0].stats.delta + start_buff) # in units of seconds
 
 #%% Plot radial-time stack
-    if skip_R != 1:
+    if do_R == True:
         stack_array = np.zeros((slowR_n,stack_nt))
 
         for it in range(stack_nt):  # check points one at a time
@@ -210,7 +211,7 @@ def pro7plotstack(eq_file, plot_scale_fac = 0.05, slow_delta = 0.0005,
         plt.show()
 
 #%%  Plot transverse-time stacks
-    if skip_T != 1:
+    if do_T == True:
         stack_array = np.zeros((slowT_n,stack_nt))
 
         for it in range(stack_nt):  # check points one at a time

@@ -129,7 +129,7 @@ def pro5stack2d(eq_file, slow_delta = 0.0005, slowR_lo = -0.1, slowR_hi = 0.1, s
     for stackR_one in stack_Rslows:
         for stackT_one in stack_Tslows:
             tr1 = tr.copy()
-            tr1.stats.station = str(int(done))
+            tr1.stats.station = str(int(round(done)))
             stack.extend([tr1])
             done += 1
 

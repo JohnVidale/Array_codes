@@ -11,7 +11,8 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
             plot_scale_fac = 0.05, qual_threshold = 0, corr_threshold = 0.5,
             freq_min = 1, freq_max = 3, min_dist = 0, max_dist = 180, auto_dist = 1,
             alt_statics = 0, statics_file = 'nothing', ARRAY = 0,
-            ref_loc = 0, ref_rad = 0.4, ref_lat = 36.3, ref_lon = 138.5):
+            ref_loc = 0, ref_rad = 0.4, ref_lat = 36.3, ref_lon = 138.5,
+            max_taper_length = 5.):
 
 
 #%% Import functions
@@ -39,7 +40,7 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
 #%%  Set some parameters
     verbose = 0           # more output
 #    rel_time = 1          # timing is relative to a chosen phase, otherwise relative to OT
-    taper_frac = .05      #Fraction of window tapered on both ends
+    taper_frac = .05      # Fraction of window tapered on both ends
     signal_dur = 5.       # signal length used in SNR calculation
     plot_tt = 1           # plot the traveltimes?
     do_decimate = 0         # 0 if no decimation desired
@@ -68,7 +69,7 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
 #%% Get saved event info, also used to name files
     #  event 2016-05-28T09:47:00.000 -56.241 -26.935 78
     fname1 = '/Users/vidale/Documents/Research/IC/EvLocs/' + eq_file1
-    print('Opening ' + eq_file1)
+    print('Opening ' + fname1)
     file = open(fname1, 'r')
     lines=file.readlines()
     split_line = lines[0].split()
@@ -83,7 +84,7 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
        + str(ev_lat1) + ' lon ' + str( ev_lon1) + ' depth ' + str(ev_depth1))
 
     fname2 = '/Users/vidale/Documents/Research/IC/EvLocs/' + eq_file2
-    print('Opening ' + eq_file2)
+    print('Opening ' + fname2)
     file = open(fname2, 'r')
     lines=file.readlines()
     split_line = lines[0].split()
@@ -162,6 +163,7 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
 #%% Is taper too long compared to noise estimation window?
     totalt = end_buff - start_buff
     noise_time_skipped = taper_frac * totalt
+    noise_time_skipped = min(noise_time_skipped,10.0) # set max of 10s to taper length
     if simple_taper == 0:
         if noise_time_skipped >= 0.5 * (-start_buff):
             print('Specified taper of ' + str(taper_frac * totalt) +
@@ -184,7 +186,8 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
         st1.decimate(do_decimate, no_filter=True)
         st2.decimate(do_decimate, no_filter=True)
 
-    print('1st trace has : ' + str(len(st1[0].data)) + ' time pts ')
+    print(f'1st trace for event 1 has {len(st1[0].data)} time pts which is {len(st1[0].data)*st1[0].stats.delta:.1f} s')
+    print(f'1st trace for event 2 has {len(st2[0].data)} time pts which is {len(st2[0].data)*st2[0].stats.delta:.1f} s')
     print('st1 has ' + str(len(st1)) + ' traces')
     print('st2 has ' + str(len(st2)) + ' traces')
     print('1st trace starts at ' + str(st1[0].stats.starttime) + ', event at ' + str(t1))
@@ -363,7 +366,7 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
         print(f'ref2_distance  {ref2_dist:.3f}  relative start time  {atime_ref:.3f}')
 
     print('ref_loc == 1, ref_lat: ' + str(ref_lat) + ' ref_lon: ' + str(ref_lon))
-    print(f'last station: distance {dist:.3f}  last station lat: {stalat:.3f}   last station lon: {stalat:.3f}')
+    print(f'last station: distance {dist:.3f}  last station lat: {stalat:.3f}   last station lon: {stalon:.3f}')
 
 
     #%%
@@ -379,12 +382,12 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
     print('Taper fraction is ' + str(taper_frac) + ' bandpass is ' + str(freq_min) + ' to ' + str(freq_max))
     st_pickalign1.detrend(type='simple')
     st_pickalign2.detrend(type='simple')
-    st_pickalign1.taper(taper_frac)
-    st_pickalign2.taper(taper_frac)
+    st_pickalign1.taper(taper_frac, max_length = max_taper_length)
+    st_pickalign2.taper(taper_frac, max_length = max_taper_length)
     st_pickalign1.filter('bandpass', freqmin=freq_min, freqmax=freq_max, corners=4, zerophase=True)
     st_pickalign2.filter('bandpass', freqmin=freq_min, freqmax=freq_max, corners=4, zerophase=True)
-    st_pickalign1.taper(taper_frac)
-    st_pickalign2.taper(taper_frac)
+    st_pickalign1.taper(taper_frac, max_length = max_taper_length)
+    st_pickalign2.taper(taper_frac, max_length = max_taper_length)
 
 #%%  Cull further by imposing SNR threshold on both traces
     st1good = Stream()
@@ -544,35 +547,35 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
                     time_vec2 = time_vec2 - atime_ref
                 plt.plot(time_vec3,dist_vec, color = 'yellow')
             # fourth traveltime curve
-            if dphase4 != 'no':
-                time_vec4 = np.arange(min_dist, max_dist_auto, (max_dist_auto - min_dist)/line_pts) # empty time grid of same length (filled with -1000)
-                for i in range(0,line_pts):
-                    arrivals = model.get_travel_times(source_depth_in_km=ev_depth1,distance_in_degree
-                                                =dist_vec[i],phase_list=[dphase4])
-                    num_arrivals = len(arrivals)
-                    found_it = 0
-                    for j in range(0,num_arrivals):
-                        if arrivals[j].name == dphase4:
-                            time_vec4[i] = arrivals[j].time
-                            found_it = 1
-                    if found_it == 0:
-                        time_vec4[i] = np.nan
-                if   rel_time == 3 or rel_time == 4:
-                    time_vec2 = time_vec2 - time_vec1
-                elif rel_time == 2:
-                    time_vec2 = time_vec2 - atime_ref
-                plt.plot(time_vec4,dist_vec, color = 'purple')
+            # if dphase4 != 'no':
+            #     time_vec4 = np.arange(min_dist, max_dist_auto, (max_dist_auto - min_dist)/line_pts) # empty time grid of same length (filled with -1000)
+            #     for i in range(0,line_pts):
+            #         arrivals = model.get_travel_times(source_depth_in_km=ev_depth1,distance_in_degree
+            #                                     =dist_vec[i],phase_list=[dphase4])
+            #         num_arrivals = len(arrivals)
+            #         found_it = 0
+            #         for j in range(0,num_arrivals):
+            #             if arrivals[j].name == dphase4:
+            #                 time_vec4[i] = arrivals[j].time
+            #                 found_it = 1
+            #         if found_it == 0:
+            #             time_vec4[i] = np.nan
+            #     if   rel_time == 3 or rel_time == 4:
+            #         time_vec2 = time_vec2 - time_vec1
+            #     elif rel_time == 2:
+            #         time_vec2 = time_vec2 - atime_ref
+            #     plt.plot(time_vec4,dist_vec, color = 'purple')
 
-            if   rel_time == 3 or rel_time == 4:
-                time_vec1 = time_vec1 - time_vec1
-            elif rel_time == 2:
-                time_vec1 = time_vec1 - atime_ref
-            plt.plot(time_vec1,dist_vec, color = 'blue')
-            plt.show()
+            # if   rel_time == 3 or rel_time == 4:
+            #     time_vec1 = time_vec1 - time_vec1
+            # elif rel_time == 2:
+            #     time_vec1 = time_vec1 - atime_ref
+            # plt.plot(time_vec1,dist_vec, color = 'blue')
+            # plt.show()
 
     plt.xlabel('Time (s)')
     plt.ylabel('Epicentral distance from event (°)')
-    plt.title(dphase + ' for ' + fname1[39:49] + ' vs ' + fname2[39:49])
+    plt.title(dphase + ' for ' + fname1[43:53] + ' vs ' + fname2[43:53])
     plt.show()
 
 #%%  Save processed files
@@ -582,5 +585,5 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
     st2good.write(fname2,format = 'MSEED')
 
     elapsed_time_wc = time.time() - start_time_wc
-    print('This job took ' + str(elapsed_time_wc) + ' seconds')
+    print(f'This job took   {elapsed_time_wc:.1f}   seconds')
     os.system('say "Done"')

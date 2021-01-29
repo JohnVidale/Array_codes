@@ -1,6 +1,7 @@
 #!/usr/bin/env python
-# Read in 2D stacks for one event
-# Compute ave_amp
+# Read in 2D stacks for two events
+# Compute tdiff, ave_amp, amp_ratio
+# Plot radial and transverse cuts through stack, plus beam sum
 # Write out tdiff, ave_amp results
 # John Vidale 3/2019
 
@@ -119,11 +120,11 @@ def pro6_cc_pair(eq_file1, eq_file2, slow_delta = 0.0005,
 
         tr1 = st1[slow_i]
         tr2 = st2[slow_i]
-        cc_ttt, cc_coef, tshift_new = cc_measure_tshift( tr1=tr1, tr2=tr2, tarr_beg = start_buff,
+        cc_ttt, cc_coef, tshift = cc_measure_tshift( tr1=tr1, tr2=tr2, tarr_beg = start_buff,
                           cc_twin=cc_twin, cc_len=cc_len, cc_delta=cc_delta, cc_interp1d=cc_interp1d)
 
         # restore arrays to full length by adding zeroes to ends
-        zero_fill1 = int(round((len(tshift_cc[0].data) - len(tshift_new)) / 2))  # zeroes or NAN to be added to each end
+        zero_fill1 = int(round((len(tshift_cc[0].data) - len(tshift)) / 2))  # zeroes or NAN to be added to each end
         misfit = len(cc[0].data) - (2*zero_fill1 + len(cc_coef))
         if misfit == 0:  # if total zeroes to fill is odd, different fill is required front vs back end
             zero_fill2 = zero_fill1
@@ -133,7 +134,7 @@ def pro6_cc_pair(eq_file1, eq_file2, slow_delta = 0.0005,
             print(f'misfit == {misfit}, this is not going to work')
             sys.exit()
         cc_coef_full    = np.concatenate([np.zeros(zero_fill1),    cc_coef, np.zeros(zero_fill2)])
-        tshift_full = np.concatenate([np.zeros(zero_fill1), tshift_new, np.zeros(zero_fill2)])
+        tshift_full = np.concatenate([np.zeros(zero_fill1), tshift, np.zeros(zero_fill2)])
 
         tshift[slow_i].data = tshift_full  # tshift just gets  NaNs for plotting, full is file that is saved
         cc[    slow_i].data =    cc_coef_full

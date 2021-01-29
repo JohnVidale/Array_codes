@@ -6,7 +6,8 @@
 # plot lines are blue, orange, yellow, purple for phases 1 through 4
 # John Vidale 2/2019
 
-def pro3singlet(eq_file, stat_corr = 1, rel_time = 1, fine_stats = 0, simple_taper = 0, skip_SNR = 0,
+def pro3singlet(eq_file, stat_corr = 1, rel_time = 1, fine_stats = 0,
+            max_taper_length = 5., simple_taper = 0, skip_SNR = 0,
             dphase = 'P', dphase2 = '', dphase3 = '', dphase4 = '',
             start_buff = -10, end_buff = 10, start_beam = 0, end_beam = 0,
             plot_scale_fac = 0.2, qual_threshold = 0, corr_threshold = 0,
@@ -41,7 +42,9 @@ def pro3singlet(eq_file, stat_corr = 1, rel_time = 1, fine_stats = 0, simple_tap
 #%% Get saved event info, also used to name files
     #  input event data with 1-line file of format
     #  event 2016-05-28T09:47:00.000 -56.241 -26.935 78
-    file = open('/Users/vidale/Documents/PyCode/EvLocs/' + eq_file, 'r')
+    fname = '/Users/vidale/Documents/Research/IC/EvLocs/' + eq_file
+    print('Opening ' + fname)
+    file = open(fname, 'r')
     lines=file.readlines()
     split_line = lines[0].split()
 #            ids.append(split_line[0])  ignore label for now
@@ -184,6 +187,7 @@ def pro3singlet(eq_file, stat_corr = 1, rel_time = 1, fine_stats = 0, simple_tap
 #%% Is taper too long compared to noise estimation window?
     totalt = end_buff - start_buff
     noise_time_skipped = taper_frac * totalt
+    noise_time_skipped = min(noise_time_skipped,10.0) # set max of 10s to taper length
     if simple_taper == 0:
         if noise_time_skipped >= -0.5 * start_buff:
             print('        ' + 'Specified taper of ' + str(taper_frac * totalt) +
@@ -207,12 +211,7 @@ def pro3singlet(eq_file, stat_corr = 1, rel_time = 1, fine_stats = 0, simple_tap
 
 #%% Load waveforms and decimate to 10 sps, if not already decimated
     st = Stream()
-    if ARRAY == 0 or ARRAY == 2:
-        fname     = '/Users/vidale/Documents/PyCode/Mseed/HD' + date_label + '.mseed'
-    if ARRAY == 1:
-        fname     = '/Users/vidale/Documents/PyCode/Mseed/L' + date_long[2:4] + date_long[5:7] + date_long[8:10] + '_' + date_long[11:13] + date_long[14:16] + '.mseed'
-    if ARRAY == 2:
-        fname     = '/Users/vidale/Documents/PyCode/China_Array/Mseed/HD' + date_long[0:4] + '-' + date_long[5:7] + '-' + date_long[8:10] + '.mseed'
+    fname     = '/Users/vidale/Documents/GitHub/LASA_data/HD' + date_label + '.mseed'
     st=read(fname)
     if do_decimate != 0:
         st.decimate(do_decimate, no_filter=True)
@@ -372,10 +371,10 @@ def pro3singlet(eq_file, stat_corr = 1, rel_time = 1, fine_stats = 0, simple_tap
 
 #%%  Detrend, taper, filter
     st_pickalign.detrend(type='simple')
-    st_pickalign.taper(taper_frac)
+    st_pickalign.taper(taper_frac, max_length = max_taper_length)
     if do_filt == 1:
         st_pickalign.filter('bandpass', freqmin=freq_min, freqmax=freq_max, corners=4, zerophase=True)
-    st_pickalign.taper(taper_frac)
+    st_pickalign.taper(taper_frac, max_length = max_taper_length)
 
 #%%  Cull further by imposing SNR threshold
     if skip_SNR == 1:
@@ -558,14 +557,14 @@ def pro3singlet(eq_file, stat_corr = 1, rel_time = 1, fine_stats = 0, simple_tap
     plt.xlabel('Time (s)')
     plt.ylabel('Epicentral distance from event (°)')
     plt.title(dphase + ' for ' + date_label + ' event #' + str(event_no))
-    os.chdir('/Users/vidale/Documents/PyCode/Plots')
+    # os.chdir('/Users/vidale/Documents/PyCode/Plots')
 #    plt.savefig(date_label + '_' + str(event_no) + '_raw.png')
     plt.show()
 
 #%%  Save processed files
-    fname3 = '/Users/vidale/Documents/PyCode/Pro_Files/HD' + date_label + 'sel.mseed'
+    # fname3 = '/Users/vidale/Documents/PyCode/Pro_Files/HD' + date_label + 'sel.mseed'
 
-    stgood.write(fname3,format = 'MSEED')
+    # stgood.write(fname3,format = 'MSEED')
 
     elapsed_time_wc = time.time() - start_time_wc
     print(f'    This job took   {elapsed_time_wc:.1f}   seconds')
