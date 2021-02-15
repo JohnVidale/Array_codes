@@ -4,7 +4,7 @@
 # Write out tdiff, ave_amp results
 # John Vidale 3/2019
 
-def pro6_cc_pair(eq_file1, eq_file2, slow_delta = 0.0005,
+def pro6_cc_pair(eq_num1, eq_num2, slow_delta = 0.0005,
               slowR_lo = -0.1, slowR_hi = 0.1, slowT_lo = -0.1, slowT_hi = 0.1,
               start_buff = 1040, end_buff = 1180,
               cc_twin = 2, cc_len = 0.5, cc_interp1d = 5, cc_delta = 0.1, cc_thres = 0.8):
@@ -29,9 +29,10 @@ def pro6_cc_pair(eq_file1, eq_file2, slow_delta = 0.0005,
     start_time_wc = time.time()
 
         #%% Input parameters and computed files
-    folder_name = '/Users/vidale/Documents/Research/IC/'
-    file1 = open(folder_name + 'EvLocs/' + eq_file1, 'r')
-    file2 = open(folder_name + 'EvLocs/' + eq_file2, 'r')
+    fname1 = '/Users/vidale/Documents/Research/IC/EvLocs/event' + str(eq_num1) + '.txt'
+    fname2 = '/Users/vidale/Documents/Research/IC/EvLocs/event' + str(eq_num2) + '.txt'
+    file1 = open(fname1, 'r')
+    file2 = open(fname2, 'r')
     lines1=file1.readlines()
     lines2=file2.readlines()
     split_line1 = lines1[0].split()
@@ -129,8 +130,12 @@ def pro6_cc_pair(eq_file1, eq_file2, slow_delta = 0.0005,
             zero_fill2 = zero_fill1
         elif misfit == 1:
             zero_fill2 = zero_fill1 + 1
+        elif misfit == -1:
+            zero_fill2 = zero_fill1 - 1
         else:
-            print(f'misfit == {misfit}, this is not going to work')
+            print(f'zero_fill1: {zero_fill1}, len(tshift_cc[0].data {len(tshift_cc[0].data)}, len(tshift_new): {len(tshift_new)}')
+            print(f'len(cc[0].data): {len(cc[0].data)}, len(cc_coef) {len(cc_coef)}')
+            print(f'misfit == {misfit}, this is not going to work, fix to make cc_coef + zero_fill1 + zero_fill2 = data length')
             sys.exit()
         cc_coef_full    = np.concatenate([np.zeros(zero_fill1),    cc_coef, np.zeros(zero_fill2)])
         tshift_full = np.concatenate([np.zeros(zero_fill1), tshift_new, np.zeros(zero_fill2)])

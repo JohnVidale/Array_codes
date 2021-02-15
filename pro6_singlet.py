@@ -3,7 +3,7 @@
 # Compute and save tdiff, cc, ave_amp
 # John Vidale 1/2021
 
-def pro6_singlet(eq_file, slow_delta = 0.0005,
+def pro6_singlet(eq_num, slow_delta = 0.0005,
               slowR_lo = -0.1, slowR_hi = 0.1, slowT_lo = -0.1, slowT_hi = 0.1,
               start_buff = 1040, end_buff = 1180, cc_delta = -1):
 
@@ -26,8 +26,10 @@ def pro6_singlet(eq_file, slow_delta = 0.0005,
     start_time_wc = time.time()
 
         #%% Input parameters and computed files
-    folder_name = '/Users/vidale/Documents/Research/IC/'
-    file = open(folder_name + 'EvLocs/' + eq_file, 'r')
+    # folder_name = '/Users/vidale/Documents/Research/IC/'
+    # file = open(folder_name + 'EvLocs/' + eq_file, 'r')
+    fname = '/Users/vidale/Documents/Research/IC/EvLocs/event' + str(eq_num) + '.txt'
+    file = open(fname, 'r')
     lines=file.readlines()
     split_line = lines[0].split()
     # t1          = UTCDateTime(split_line1[1])
@@ -80,7 +82,7 @@ def pro6_singlet(eq_file, slow_delta = 0.0005,
 #%% Find envelope and tshift
     for slow_i in range(total_slows):
 
-        if slow_i % 50 == 0:
+        if slow_i % 200 == 0:
             print('Measuring time shifts, ' + str(slow_i) + ' finished slownesses out of ' + str(total_slows))
 
         if len(st[slow_i].data) == 0: # test for zero-length traces, indexing errors

@@ -2,7 +2,7 @@
 # this program convolves a time function with an mseed file
 # John Vidale 6/2019
 
-def pro2_convstf(eq_file, conv_file):
+def pro2_convstf(eq_num, conv_file):
 
     from obspy import UTCDateTime
     from obspy import Stream, Trace
@@ -27,8 +27,10 @@ def pro2_convstf(eq_file, conv_file):
 
     #%% input event data with 1-line file of format
     #  event 2016-05-28T09:47:00.000 -56.241 -26.935 78
-    folder_name = '/Users/vidale/Documents/Research/IC/'
-    file = open(folder_name + 'EvLocs/' + eq_file, 'r')
+    # folder_name = '/Users/vidale/Documents/Research/IC/'
+    # file = open(folder_name + 'EvLocs/' + eq_file, 'r')
+    fname = '/Users/vidale/Documents/Research/IC/EvLocs/event' + str(eq_num) + '.txt'
+    file = open(fname, 'r')
 
     lines=file.readlines()
     split_line = lines[0].split()
@@ -54,7 +56,7 @@ def pro2_convstf(eq_file, conv_file):
     nt = len(st[0].data)
     dt = st[0].stats.delta
     print('Read in:\n' + str(len(st)) + ' traces' + ' from file ' + fname +
-       ', ' + str(nt) + ' time pts, time sampling of '
+       ', \n' + str(nt) + ' time pts, time sampling of '
           + str(dt) + ' and thus duration of ' + str((nt-1)*dt))
 
         #%%  detrend, taper

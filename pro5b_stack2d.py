@@ -7,7 +7,7 @@
 # saves 2D stack "_2Dstack.mseed" and envelope of 2D stack "_2Dstack_env.mseed"
 # John Vidale 2/2019
 
-def pro5stack2d(eq_file, slow_delta = 0.0005, slowR_lo = -0.1, slowR_hi = 0.1, slowT_lo = -0.1, slowT_hi = 0.1,
+def pro5stack2d(eq_num, slow_delta = 0.0005, slowR_lo = -0.1, slowR_hi = 0.1, slowT_lo = -0.1, slowT_hi = 0.1,
               start_buff = -50, end_buff = 50, norm = 1, ARRAY = 0, NS = False, decimate_fac = 0,
               ref_loc = 0, ref_lat = 36.3, ref_lon = 138.5, stack_option = 1):
 
@@ -33,9 +33,10 @@ def pro5stack2d(eq_file, slow_delta = 0.0005, slowR_lo = -0.1, slowR_hi = 0.1, s
 
     start_time_wc = time.time()
 
-    goto = '/Users/vidale/Documents/Research/IC/EvLocs'
-    os.chdir(goto)
-    file = open(eq_file, 'r')
+    # goto = '/Users/vidale/Documents/Research/IC/EvLocs'
+    # os.chdir(goto)
+    fname = '/Users/vidale/Documents/Research/IC/EvLocs/event' + str(eq_num) + '.txt'
+    file = open(fname, 'r')
 
     lines=file.readlines()
     split_line = lines[0].split()

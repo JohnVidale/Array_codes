@@ -6,13 +6,13 @@
 # plot lines are blue, orange, yellow, purple for phases 1 through 4
 # John Vidale 2/2019
 
-def pro3singlet(eq_file, stat_corr = 1, rel_time = 1, fine_stats = 0,
+def pro3singlet(eq_num, stat_corr = 1, rel_time = 1, fine_stats = 0,
             max_taper_length = 5., simple_taper = 0, skip_SNR = 0,
             dphase = 'P', dphase2 = '', dphase3 = '', dphase4 = '',
             start_buff = -10, end_buff = 10, start_beam = 0, end_beam = 0,
             plot_scale_fac = 0.2, qual_threshold = 0, corr_threshold = 0,
             freq_min = 0.25, freq_max = 1, do_filt = 1,
-            min_dist = 0, max_dist = 180, auto_dist = 0, do_decimate = 0,
+            min_dist = 0, max_dist = 180, auto_dist = True, do_decimate = 0,
             alt_statics = 0, statics_file = 'nothing', ARRAY = 0, JST = 0, ref_loc = 0, ref_rad = 0.4,
             verbose = 0, fig_index = 101, event_no = 0, ref_lat = 36.3, ref_lon = 138.5):
 # 0 is Hinet, 1 is LASA, 2 is NORSAR
@@ -28,6 +28,7 @@ def pro3singlet(eq_file, stat_corr = 1, rel_time = 1, fine_stats = 0,
     from obspy.taup import TauPyModel
     import matplotlib.pyplot as plt
     import time
+    from termcolor import colored
     model = TauPyModel(model='iasp91')
 
 #    import sys # don't show any warnings
@@ -36,13 +37,13 @@ def pro3singlet(eq_file, stat_corr = 1, rel_time = 1, fine_stats = 0,
 #    if not sys.warnoptions:
 #        warnings.simplefilter("ignore")
 
-    print('pro3b_sort_plot_singlet is starting')
+    print(colored('Running pro3b_sort_plot_singlet', 'cyan'))
     start_time_wc = time.time()
 
 #%% Get saved event info, also used to name files
     #  input event data with 1-line file of format
     #  event 2016-05-28T09:47:00.000 -56.241 -26.935 78
-    fname = '/Users/vidale/Documents/Research/IC/EvLocs/' + eq_file
+    fname = '/Users/vidale/Documents/Research/IC/EvLocs/event' + str(eq_num) + '.txt'
     print('Opening ' + fname)
     file = open(fname, 'r')
     lines=file.readlines()
@@ -50,7 +51,6 @@ def pro3singlet(eq_file, stat_corr = 1, rel_time = 1, fine_stats = 0,
 #            ids.append(split_line[0])  ignore label for now
     t           = UTCDateTime(split_line[1])
     date_label  = split_line[1][0:10]
-    date_long   = split_line[1][0:22]
     year        = split_line[1][0:4]
     ev_lat      = float(      split_line[2])
     ev_lon      = float(      split_line[3])
@@ -431,13 +431,21 @@ def pro3singlet(eq_file, stat_corr = 1, rel_time = 1, fine_stats = 0,
                 max_time_plot =  ((tr.stats.starttime - t) + ((len(tr.data)-1) * tr.stats.delta))
     print(f'        Min distance is   {min_dist_auto:.3f}   Max distance is {max_dist_auto:.3f}')
     print(f'        Min time is   {min_time_plot:.2f}   Max time is {max_time_plot:.2f}')
+    if min_time_plot > start_buff:
+        print(f'Min time {min_time_plot:.2f} > start_buff {start_buff:.2f}')
+        print(colored('Write zero-filling into pro3 for this code to work','red'))
+        sys.exit(-1)
+    if max_time_plot < end_buff:
+        print(f'Max time {max_time_plot:.2f} < end_buff {end_buff:.2f}')
+        print(colored('Write zero-filling into pro3 for this code to work','red'))
+        sys.exit(-1)
 
 #%%  Plot traces
     plt.close(fig_index)
     plt.figure(fig_index,figsize=(10,10))
     plt.xlim(min_time_plot,max_time_plot)
 
-    if auto_dist == 1:
+    if auto_dist == True:
         dist_diff = max_dist_auto - min_dist_auto # add space at extremes
         plt.ylim(min_dist_auto - 0.1 * dist_diff, max_dist_auto + 0.1 * dist_diff)
         max_dist = max_dist_auto
@@ -552,19 +560,18 @@ def pro3singlet(eq_file, stat_corr = 1, rel_time = 1, fine_stats = 0,
             elif rel_time == 2:
                 time_vec1 = time_vec1 - atime_ref
             plt.plot(time_vec1,dist_vec, color = 'blue')
+            plt.xlabel('Time (s)')
+            plt.ylabel('Epicentral distance from event (°)')
+            plt.title(date_label + ' event #' + str(eq_num))
+        #    os.chdir('/Users/vidale/Documents/PyCode/Plots')
+        #    plt.savefig(date_label + '_' + str(event_no) + '_raw.png')
             plt.show()
 
-    plt.xlabel('Time (s)')
-    plt.ylabel('Epicentral distance from event (°)')
-    plt.title(dphase + ' for ' + date_label + ' event #' + str(event_no))
-    # os.chdir('/Users/vidale/Documents/PyCode/Plots')
-#    plt.savefig(date_label + '_' + str(event_no) + '_raw.png')
-    plt.show()
 
 #%%  Save processed files
-    # fname3 = '/Users/vidale/Documents/PyCode/Pro_Files/HD' + date_label + 'sel.mseed'
+    fname3 = '/Users/vidale/Documents/Research/IC/Pro_Files/HD' + date_label + 'sel.mseed'
 
-    # stgood.write(fname3,format = 'MSEED')
+    stgood.write(fname3,format = 'MSEED')
 
     elapsed_time_wc = time.time() - start_time_wc
     print(f'    This job took   {elapsed_time_wc:.1f}   seconds')

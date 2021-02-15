@@ -5,14 +5,14 @@
 # outputs selected traces, "*sel.mseed"
 # John Vidale 2/2019
 
-def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
+def pro3pair(eq_num1, eq_num2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
             dphase = 'PKIKP', dphase2 = 'PKiKP', dphase3 = 'PKIKP', dphase4 = 'PKiKP',
             rel_time = 1, start_buff = -200, end_buff = 500,
             plot_scale_fac = 0.05, qual_threshold = 0, corr_threshold = 0.5,
-            freq_min = 1, freq_max = 3, min_dist = 0, max_dist = 180, auto_dist = 1,
+            freq_min = 1, freq_max = 3, min_dist = 0, max_dist = 180, auto_dist = True,
             alt_statics = 0, statics_file = 'nothing', ARRAY = 0,
             ref_loc = 0, ref_rad = 0.4, ref_lat = 36.3, ref_lon = 138.5,
-            max_taper_length = 5.):
+            max_taper_length = 5., no_plots = False):
 
 
 #%% Import functions
@@ -68,33 +68,30 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
     red_slow = 7.2 # seconds per degree
 #%% Get saved event info, also used to name files
     #  event 2016-05-28T09:47:00.000 -56.241 -26.935 78
-    fname1 = '/Users/vidale/Documents/Research/IC/EvLocs/' + eq_file1
-    print('Opening ' + fname1)
-    file = open(fname1, 'r')
-    lines=file.readlines()
-    split_line = lines[0].split()
+    print('Opening locations for events ' + str(eq_num1) + ' and ' + str(eq_num2))
+    fname1 = '/Users/vidale/Documents/Research/IC/EvLocs/event' + str(eq_num1) + '.txt'
+    fname2 = '/Users/vidale/Documents/Research/IC/EvLocs/event' + str(eq_num2) + '.txt'
+    file1 = open(fname1, 'r')
+    file2 = open(fname2, 'r')
+    lines1 = file1.readlines()
+    lines2 = file2.readlines()
+    split_line1 = lines1[0].split()
+    split_line2 = lines2[0].split()
 #            ids.append(split_line[0])  ignore label for now
-    t1           = UTCDateTime(split_line[1])
-    date_label1  = split_line[1][0:10]
-    year1        = split_line[1][0:4]
-    ev_lat1      = float(      split_line[2])
-    ev_lon1      = float(      split_line[3])
-    ev_depth1    = float(      split_line[4])
+    t1           = UTCDateTime(split_line1[1])
+    t2           = UTCDateTime(split_line2[1])
+    date_label1  = split_line1[1][0:10]
+    date_label2  = split_line2[1][0:10]
+    year1        = split_line1[1][0:4]
+    year2        = split_line2[1][0:4]
+    ev_lat1      = float(      split_line1[2])
+    ev_lat2      = float(      split_line2[2])
+    ev_lon1      = float(      split_line1[3])
+    ev_lon2      = float(      split_line2[3])
+    ev_depth1    = float(      split_line1[4])
+    ev_depth2    = float(      split_line2[4])
     print('1st event: date_label ' + date_label1 + ' time ' + str(t1) + ' lat '
        + str(ev_lat1) + ' lon ' + str( ev_lon1) + ' depth ' + str(ev_depth1))
-
-    fname2 = '/Users/vidale/Documents/Research/IC/EvLocs/' + eq_file2
-    print('Opening ' + fname2)
-    file = open(fname2, 'r')
-    lines=file.readlines()
-    split_line = lines[0].split()
-#            ids.append(split_line[0])  ignore label for now
-    t2           = UTCDateTime(split_line[1])
-    date_label2  = split_line[1][0:10]
-    year2        = split_line[1][0:4]
-    ev_lat2      = float(      split_line[2])
-    ev_lon2      = float(      split_line[3])
-    ev_depth2    = float(      split_line[4])
     print('2nd event: date_label ' + date_label2 + ' time ' + str(t2) + ' lat '
        + str(ev_lat2) + ' lon ' + str( ev_lon2) + ' depth ' + str(ev_depth2))
 
@@ -456,6 +453,14 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
 
     print(f'Min distance is   {min_dist_auto:.3f}   Max distance is {max_dist_auto:.3f}')
     print(f'Min time is   {min_time_plot:.2f}   Max time is {max_time_plot:.2f}')
+    if min_time_plot > start_buff:
+        print(f'Min time {min_time_plot:.2f} > start_buff {start_buff:.2f}')
+        print(colored('Write zero-filling into pro3 for this code to work','red'))
+        sys.exit(-1)
+    if max_time_plot < end_buff:
+        print(f'Max time {max_time_plot:.2f} < end_buff {end_buff:.2f}')
+        print(colored('Write zero-filling into pro3 for this code to work','red'))
+        sys.exit(-1)
 
     #%%
     # plot traces
@@ -464,7 +469,7 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
     plt.figure(fig_index,figsize=(8,8))
     plt.xlim(start_buff,end_buff)
 
-    if auto_dist == 1:
+    if auto_dist == True:
         dist_diff = max_dist_auto - min_dist_auto # add space at extremes
         plt.ylim(min_dist_auto - 0.1 * dist_diff, max_dist_auto + 0.1 * dist_diff)
     else:
@@ -571,12 +576,14 @@ def pro3pair(eq_file1, eq_file2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
             # elif rel_time == 2:
             #     time_vec1 = time_vec1 - atime_ref
             # plt.plot(time_vec1,dist_vec, color = 'blue')
-            # plt.show()
+            # if no_plots == False:
+            #     plt.show()
 
     plt.xlabel('Time (s)')
     plt.ylabel('Epicentral distance from event (°)')
     plt.title(dphase + ' for ' + fname1[43:53] + ' vs ' + fname2[43:53])
-    plt.show()
+    if no_plots == False:
+        plt.show()
 
 #%%  Save processed files
     fname1 = '/Users/vidale/Documents/Research/IC/Pro_Files/HD' + date_label1 + 'sel.mseed'

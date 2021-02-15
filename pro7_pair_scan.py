@@ -7,15 +7,16 @@
 # eleven_slice == F plots one radial and one transverse plot, plus snaps
 # John Vidale 2/2019, overhauled 1/2021
 
-def pro7_pair_scan(eq_file1, eq_file2, slow_delta = 0.0005, turn_off_black = 0,
+def pro7_pair_scan(eq_num1, eq_num2, slow_delta = 0.0005, turn_off_black = 1,
               slowR_lo = -0.1, slowR_hi = 0.1, slowT_lo = -0.1, slowT_hi = 0.1,
               start_buff = 50, end_buff = 50,fig_index = 401, do_T = False, do_R = False,
               ZslowR_lo = -0.1, ZslowR_hi = 0.1, ZslowT_lo = -0.1, ZslowT_hi = 0.1,
               Zstart_buff = 50, Zend_buff = 50, zoom = False, tdiff_clip = 1,
               ref_phase = 'blank', cc_thres = 0.8, min_amp = 0.2,
-              R_slow_plot = 0.06, T_slow_plot = 0.0, snaptime = 8, snaps = 10,
+              R_slow_plot = 0.06, T_slow_plot = 0.0, no_plots = False,
+              snaptime = 8, snaps = 10, snap_depth = 0,
               nR_plots  = 3, nT_plots = 3, slow_incr = 0.01, NS = False,
-              ARRAY = 0, auto_slice = True, two_slice_plots = False, beam_sums = 1,
+              ARRAY = 0, auto_slice = True, two_slice_plots = False, beam_sums = True,
               wiggly_plots = 0, start_beam = 0, end_beam = 0, log_plot = False,
               log_plot_range = 2, no_tdiff_plot = False,
               wig_scale_fac = 1, tdiff_scale_fac = 1):
@@ -45,14 +46,11 @@ def pro7_pair_scan(eq_file1, eq_file2, slow_delta = 0.0005, turn_off_black = 0,
             print(f'Zend_buff of {Zend_buff:.1f} cannot be > end_buff of {end_buff:.1f}')
             Zend_buff   = end_buff
 
-    if NS == True:
-        print('NS == True, these are not radial and transverse coordinates')
-        sys.exit()
-
     #%% Input parameters and computed files
-    folder_name = '/Users/vidale/Documents/Research/IC/'
-    file1 = open(folder_name + 'EvLocs/' + eq_file1, 'r')
-    file2 = open(folder_name + 'EvLocs/' + eq_file2, 'r')
+    fname1 = '/Users/vidale/Documents/Research/IC/EvLocs/event' + str(eq_num1) + '.txt'
+    fname2 = '/Users/vidale/Documents/Research/IC/EvLocs/event' + str(eq_num2) + '.txt'
+    file1 = open(fname1, 'r')
+    file2 = open(fname2, 'r')
     lines1=file1.readlines()
     lines2=file2.readlines()
     split_line1 = lines1[0].split()
@@ -61,6 +59,7 @@ def pro7_pair_scan(eq_file1, eq_file2, slow_delta = 0.0005, turn_off_black = 0,
     # t2 = UTCDateTime(split_line2[1])
     date_label1  = split_line1[1][0:10]
     date_label2  = split_line2[1][0:10]
+    save_name = '/Users/vidale/Documents/Research/IC/Plots/' + date_label1 + '_' + date_label2 + '_'
     ev_lat      = float(      split_line1[2])
     ev_lon      = float(      split_line1[3])
     ev_depth    = float(      split_line1[4])
@@ -76,28 +75,29 @@ def pro7_pair_scan(eq_file1, eq_file2, slow_delta = 0.0005, turn_off_black = 0,
         ref_lat = 38      # °N
         ref_lon = 104.5   # °E
     ref_distance = gps2dist_azimuth(ref_lat,ref_lon,ev_lat,ev_lon)
-    ref_back_az = ref_distance[2]
+    ref_dist     = ref_distance[0]/(1000*111)
+    ref_az       = ref_distance[1]
+    ref_back_az  = ref_distance[2]
 
-    ref1_dist  = ref_distance[0]/(1000*111)
-    arrivals_ref   = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree=ref1_dist, phase_list=[ref_phase])
+    arrivals_ref   = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree=ref_dist, phase_list=[ref_phase])
     arrival_time = arrivals_ref[0].time
 
-    arrivals1 = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree=ref1_dist-0.5,phase_list=[ref_phase])
-    arrivals2 = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree=ref1_dist+0.5,phase_list=[ref_phase])
+    arrivals1 = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree=ref_dist-0.5,phase_list=[ref_phase])
+    arrivals2 = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree=ref_dist+0.5,phase_list=[ref_phase])
     dtime = arrivals2[0].time - arrivals1[0].time
     event_pred_slo  = dtime/111.  # s/km
     # convert to pred rslo and tslo
-    if NS == True:
-        sin_baz = np.sin(ref_back_az * np.pi /180)
-        cos_baz = np.cos(ref_back_az * np.pi /180)
-    #  rotate predicted slowness to N and E
+    if NS == True:    #  rotate predicted slowness to N and E
+        print(f'Array  lat {ref_lat:.0f}, lon  {ref_lon:.0f}, Event lat {ev_lat:.0f}, lon {ev_lon:.0f}, az {ref_az:.0f}, baz {ref_back_az:.0f}')
+        sin_baz = np.sin(ref_az * np.pi /180)
+        cos_baz = np.cos(ref_az * np.pi /180)
         pred_Nslo = event_pred_slo * cos_baz
         pred_Eslo = event_pred_slo * sin_baz
     else:
         pred_Nslo = event_pred_slo
         pred_Eslo = 0
 
-    name_str = folder_name + 'Pro_files/HD' + date_label1 + '_' + date_label2 + '_'
+    name_str = '/Users/vidale/Documents/Research/IC/Pro_files/HD' + date_label1 + '_' + date_label2 + '_'
     fname1  = name_str + 'tshift.mseed'
     fname2  = name_str + 'amp_ave.mseed'
     fname3  = name_str + 'cc.mseed'
@@ -206,7 +206,7 @@ def pro7_pair_scan(eq_file1, eq_file2, slow_delta = 0.0005, turn_off_black = 0,
                            # remember logs can be negative
         for slow_i in range(len(amp_ave)): # find global max of ave_amp
             for data_i in range(len(amp_ave[slow_i].data)): # find global max of ave_amp
-                    amp_ave[slow_i].data[data_i] = math.log10(amp_ave[slow_i].data[data_i])
+                amp_ave[slow_i].data[data_i] = math.log10(amp_ave[slow_i].data[data_i])
             local_max = max(amp_ave[slow_i].data)
             if local_max > global_max:
                 global_max = local_max
@@ -262,7 +262,8 @@ def pro7_pair_scan(eq_file1, eq_file2, slow_delta = 0.0005, turn_off_black = 0,
                     plt.xlabel('Time (s)')
                     plt.ylabel('Radial slowness (s/km)')
                     plt.title(f'{ref_phase} Tdiff at {target_slow:.3f} s/km T slowness, {fname1[48:58]}  {fname1[59:69]}  min amp {min_amp:.1f}  cc_thres {cc_thres:.2f}')
-                    plt.show()
+                    if no_plots == False:
+                        plt.show()
                     fig_index += 1
 
                 #%% -- -- plot R amp
@@ -288,9 +289,14 @@ def pro7_pair_scan(eq_file1, eq_file2, slow_delta = 0.0005, turn_off_black = 0,
                     fig.colorbar(c, ax=ax, label='linear amplitude')
                 c = ax.scatter(arrival_time, event_pred_slo, color='black'  , s=50, alpha=0.75)
                 plt.xlabel('Time (s)')
-                plt.ylabel('Radial slowness (s/km)')
-                plt.title(f'{ref_phase} Amp at {target_slow:.3f} s/km T slowness, {fname1[48:58]}  {fname1[59:69]}')
-                plt.show()
+                if NS == True:
+                    plt.ylabel('North Slowness (s/km)')
+                    plt.title(f'Amp at {target_slow:.3f} s/km E slowness, {fname1[48:58]}  {fname1[59:69]}')
+                else:
+                    plt.ylabel('Radial Slowness (s/km)')
+                    plt.title(f'Amp at {target_slow:.3f} s/km T slowness, {fname1[48:58]}  {fname1[59:69]}')
+                if no_plots == False:
+                    plt.show()
                 fig_index += 1
 
         #%% -- T slices
@@ -339,7 +345,8 @@ def pro7_pair_scan(eq_file1, eq_file2, slow_delta = 0.0005, turn_off_black = 0,
                     plt.xlabel('Time (s)')
                     plt.ylabel('Transverse slowness (s/km)')
                     plt.title(f'{ref_phase} Tdiff at {target_slow:.3f} s/km R slowness, {fname1[48:58]}  {fname1[59:69]}  min amp {min_amp:.1f}  cc_thres {cc_thres:.2f}')
-                    plt.show()
+                    if no_plots == False:
+                        plt.show()
                     fig_index += 1
 
                 #%% -- -- plot T amp
@@ -365,14 +372,19 @@ def pro7_pair_scan(eq_file1, eq_file2, slow_delta = 0.0005, turn_off_black = 0,
                     fig.colorbar(c, ax=ax, label='linear amplitude')
                 c = ax.scatter(arrival_time, 0, color='black'  , s=50, alpha=0.75)
                 plt.xlabel('Time (s)')
-                plt.ylabel('Transverse slowness (s/km)')
-                plt.title(f'{ref_phase} Amp at {target_slow:.3f} s/km R slowness, {fname1[48:58]}  {fname1[59:69]}')
-                plt.show()
+                if NS == True:
+                    plt.ylabel('East Slowness (s/km)')
+                    plt.title(f'Amp at {target_slow:.3f} s/km N slowness, {fname1[48:58]}  {fname1[59:69]}')
+                else:
+                    plt.ylabel('Transverse Slowness (s/km)')
+                    plt.title(f'Amp at {target_slow:.3f} s/km R slowness, {fname1[48:58]}  {fname1[59:69]}')
+                if no_plots == False:
+                    plt.show()
                 fig_index += 1
 
     #%% 2-slices-plus-snaps option
     if two_slice_plots == True:
-        #%% -- R Slice near T slowness T_slow
+        #%% -- Find slowness arrays for R and T slices
         lowest_Tslow = 1000000
         for slow_i in range(slowT_n):
             if abs(stack_Tslows[slow_i] - T_slow_plot) < lowest_Tslow:
@@ -381,12 +393,6 @@ def pro7_pair_scan(eq_file1, eq_file2, slow_delta = 0.0005, turn_off_black = 0,
 
         print(f'{lowest_Tindex:4d} is T slow nearest {T_slow_plot:.3f}, difference is {lowest_Tslow:.3f}')
 
-        # Select only stacks with that slowness for Transverse plot
-        centralR_st = Stream()
-        for slowR_i in range(slowR_n):
-            centralR_st += tdiff[slowR_i*slowT_n + lowest_Tindex]
-
-        #%% -- T Slice near R slowness R_slow
         lowest_Rslow = 1000000
         for slow_i in range(slowR_n):
             if abs(stack_Rslows[slow_i] - R_slow_plot) < lowest_Rslow:
@@ -395,17 +401,33 @@ def pro7_pair_scan(eq_file1, eq_file2, slow_delta = 0.0005, turn_off_black = 0,
 
         print(f'{lowest_Rindex:4d} is R slow nearest 0.005, difference is {lowest_Rslow:.3f}')
 
-        # Select only stacks with that slowness for Radial plot
-        centralT_st = Stream()
-        for slowT_i in range(slowT_n):
-            centralT_st += tdiff[lowest_Rindex*slowT_n + slowT_i]
+        #%% -- Extract and sum tdiff and amp slices from beam matrix
+        # Select only stacks with that slowness for Transverse plot
+        centralR_Dst = Stream()
+        for slowR_i in range(slowR_n):
+            centralR_Dst += tdiff[slowR_i*slowT_n + lowest_Tindex]
 
-        #%% -- R-time stack plot
+        # Select only stacks with that slowness for Radial plot
+        centralT_Dst = Stream()
+        for slowT_i in range(slowT_n):
+            centralT_Dst += tdiff[lowest_Rindex*slowT_n + slowT_i]
+
+        # Select only stacks with that slowness for Transverse plot
+        centralR_Ast = Stream()
+        for slowR_i in range(slowR_n):
+            centralR_Ast += amp_ave[slowR_i*slowT_n + lowest_Tindex]
+
+        # Select only stacks with that slowness for Radial plot
+        centralT_Ast = Stream()
+        for slowT_i in range(slowT_n):
+            centralT_Ast += amp_ave[lowest_Rindex*slowT_n + slowT_i]
+
+        #%% -- Stack plots
         stack_array = np.zeros((slowR_n,stack_nt))
 
         for it in range(stack_nt):  # check points one at a time
             for slowR_i in range(slowR_n):  # for this station, loop over slownesses
-                num_val = centralR_st[slowR_i].data[it]
+                num_val = centralR_Dst[slowR_i].data[it]
                 stack_array[slowR_i, it] = num_val
 
         y, x = np.mgrid[slice(stack_Rslows[0], stack_Rslows[-1] + slow_delta, slow_delta),
@@ -416,22 +438,29 @@ def pro7_pair_scan(eq_file1, eq_file2, slow_delta = 0.0005, turn_off_black = 0,
         print(f'len(stack_Rslows) is {len(stack_Rslows)} and len(ttt) is {len(ttt)}')
         print(f'slowR_n is {slowR_n} and stack_nt is {stack_nt}')
         c = ax.pcolormesh(x, y, stack_array, cmap=plt.cm.coolwarm, vmin=-tdiff_clip, vmax=tdiff_clip)
-        fig.colorbar(c, ax=ax)
+        fig.colorbar(c, ax=ax, label='time lag (s)')
         fig.subplots_adjust(bottom=0.2)
         ax.axis([x.min(), x.max(), y.min(), y.max()])
         c = ax.scatter(arrival_time, event_pred_slo, color='black'  , s=50, alpha=0.75)
         plt.xlabel('Time (s)')
-        plt.ylabel('Radial slowness (s/km)')
-        plt.title(ref_phase + ' Time lag at ' + str(T_slow_plot) + ' s/km transverse slowness, ' + date_label1 + ' ' + date_label2)
-        plt.show()
+        if NS == True:
+            plt.ylabel('N slowness (s/km)')
+            plt.title('Time lag at ' + str(T_slow_plot) + ' s/km E slowness, ' + date_label1 + ' ' + date_label2)
+            plt.savefig(save_name + str(start_buff) + '_' + str(end_buff) + '_NtdiffSection.png')
+        else:
+            plt.ylabel('R slowness (s/km)')
+            plt.title('Time lag at ' + str(T_slow_plot) + ' s/km T slowness, ' + date_label1 + ' ' + date_label2)
+            plt.savefig(save_name + str(start_buff) + '_' + str(end_buff) + '_RtdiffSection.png')
+        if no_plots == False:
+            plt.show()
 
         fig_index += 1
-        #%% -- T-time stack plot
+
         stack_array = np.zeros((slowT_n,stack_nt))
 
         for it in range(stack_nt):  # check points one at a time
             for slowT_i in range(slowT_n):  # for this station, loop over slownesses
-                num_val = centralT_st[slowT_i].data[it]
+                num_val = centralT_Dst[slowT_i].data[it]
                 stack_array[slowT_i, it] = num_val
 
         y, x = np.mgrid[slice(stack_Tslows[0], stack_Tslows[-1] + slow_delta, slow_delta),
@@ -440,65 +469,173 @@ def pro7_pair_scan(eq_file1, eq_file2, slow_delta = 0.0005, turn_off_black = 0,
         fig, ax = plt.subplots(1, figsize=(10,3))
         fig.subplots_adjust(bottom=0.2)
         c = ax.pcolormesh(x, y, stack_array, cmap=plt.cm.coolwarm, vmin=-tdiff_clip, vmax=tdiff_clip)
-        fig.colorbar(c, ax=ax)
+        fig.colorbar(c, ax=ax, label='time lag (s)')
         ax.axis([x.min(), x.max(), y.min(), y.max()])
         c = ax.scatter(arrival_time, 0, color='black'  , s=50, alpha=0.75)
         plt.xlabel('Time (s)')
-        plt.ylabel('Transverse slowness (s/km)')
-        plt.title(ref_phase + ' Time lag at ' + str(R_slow_plot) + ' s/km radial slowness, ' + date_label1 + ' ' + date_label2)
-        plt.show()
+        if NS == True:
+            plt.ylabel('E slowness (s/km)')
+            plt.title('Time lag at ' + str(R_slow_plot) + ' s/km N slowness, ' + date_label1 + ' ' + date_label2)
+            plt.savefig(save_name + str(start_buff) + '_' + str(end_buff) + '_EtdiffSection.png')
+        else:
+            plt.ylabel('T slowness (s/km)')
+            plt.title('Time lag at ' + str(R_slow_plot) + ' s/km R slowness, ' + date_label1 + ' ' + date_label2)
+            plt.savefig(save_name + str(start_buff) + '_' + str(end_buff) + '_TtdiffSection.png')
+        if no_plots == False:
+            plt.show()
 
         fig_index += 1
 
-    #%% -- R-T time difference snap plots
-        stack_slice = np.zeros((slowR_n,slowT_n))
-        for snap_num in range(snaps):
-            fig_index += 1
-            it = int(round((snaptime - start_buff)/dt) + snap_num)
-            for slowR_i in range(slowR_n):  # loop over radial slownesses
-                for slowT_i in range(slowT_n):  # loop over transverse slownesses
-                    index = slowR_i*slowT_n + slowT_i
-                    num_val = tdiff[index].data[it]
-                    stack_slice[slowR_i, slowT_i] = num_val
+        stack_array = np.zeros((slowR_n,stack_nt))
 
-            y1, x1 = np.mgrid[slice(stack_Rslows[0], stack_Rslows[-1] + slow_delta, slow_delta),
-                         slice(stack_Tslows[0], stack_Tslows[-1] + slow_delta, slow_delta)]
+        for it in range(stack_nt):  # check points one at a time
+            for slowR_i in range(slowR_n):  # for this station, loop over slownesses
+                num_val = centralR_Ast[slowR_i].data[it]
+                stack_array[slowR_i, it] = num_val
 
-            fig, ax = plt.subplots(1)
-            c = ax.pcolormesh(x1, y1, stack_slice, cmap=plt.cm.gist_rainbow_r, vmin=-tdiff_clip, vmax=tdiff_clip)
-            ax.axis([x1.min(), x1.max(), y1.min(), y1.max()])
-            fig.colorbar(c, ax=ax)
-            circle1 = plt.Circle((0, 0), 0.019, color='black', fill=False)
-            ax.add_artist(circle1)
-            plt.xlabel('T Slowness (s/km)')
-            plt.ylabel('R Slowness (s/km)')
-            plt.title(ref_phase + ' T-R plot of time lag at rel time ' + str(snaptime + snap_num*dt) + '  ' + fname1[12:22] + ' ' + fname1[23:33])
+        y, x = np.mgrid[slice(stack_Rslows[0], stack_Rslows[-1] + slow_delta, slow_delta),
+                     slice(ttt[0], ttt[-1] + dt, dt)]
+
+        fig, ax = plt.subplots(1, figsize=(10,3))
+        print(f'len(x) is {len(x)} and len(y) is {len(y)}')
+        print(f'len(stack_Rslows) is {len(stack_Rslows)} and len(ttt) is {len(ttt)}')
+        print(f'slowR_n is {slowR_n} and stack_nt is {stack_nt}')
+        c = ax.pcolormesh(x, y, stack_array, cmap=plt.cm.gist_rainbow_r, vmin=0)
+        fig.colorbar(c, ax=ax, label='linear amplitude')
+        fig.subplots_adjust(bottom=0.2)
+        ax.axis([x.min(), x.max(), y.min(), y.max()])
+        c = ax.scatter(arrival_time, event_pred_slo, color='black'  , s=50, alpha=0.75)
+        plt.xlabel('Time (s)')
+        if NS == True:
+            plt.ylabel('N slowness (s/km)')
+            plt.title('Amp at ' + str(T_slow_plot) + ' s/km E slowness, ' + date_label1 + ' ' + date_label2)
+            plt.savefig(save_name + str(start_buff) + '_' + str(end_buff) + '_NampSection.png')
+        else:
+            plt.ylabel('R slowness (s/km)')
+            plt.title('Amp at ' + str(T_slow_plot) + ' s/km T slowness, ' + date_label1 + ' ' + date_label2)
+            plt.savefig(save_name + str(start_buff) + '_' + str(end_buff) + '_RampSection.png')
+        if no_plots == False:
             plt.show()
 
-    #%% -- R-T amplitude snap plots
-        stack_slice = np.zeros((slowR_n,slowT_n))
-        for snap_num in range(snaps):
-            fig_index += 1
-            it = int(round((snaptime - start_buff)/dt) + snap_num)
-            for slowR_i in range(slowR_n):  # loop over radial slownesses
-                for slowT_i in range(slowT_n):  # loop over transverse slownesses
-                    index = slowR_i*slowT_n + slowT_i
-                    num_val = amp_ave[index].data[it]
-                    stack_slice[slowR_i, slowT_i] = num_val
+        fig_index += 1
 
-            y1, x1 = np.mgrid[slice(stack_Rslows[0], stack_Rslows[-1] + slow_delta, slow_delta),
-                         slice(stack_Tslows[0], stack_Tslows[-1] + slow_delta, slow_delta)]
+        stack_array = np.zeros((slowT_n,stack_nt))
 
-            fig, ax = plt.subplots(1)
-            c = ax.pcolormesh(x1, y1, stack_slice, cmap=plt.cm.gist_rainbow_r)
-            ax.axis([x1.min(), x1.max(), y1.min(), y1.max()])
-            fig.colorbar(c, ax=ax)
-            circle1 = plt.Circle((0, 0), 0.019, color='black', fill=False)
-            ax.add_artist(circle1)
-            plt.xlabel('T Slowness (s/km)')
-            plt.ylabel('R Slowness (s/km)')
-            plt.title(ref_phase + ' T-R plot of amplitude at rel time ' + str(snaptime + snap_num*dt) + '  ' + fname1[12:22] + ' ' + fname1[23:33])
+        for it in range(stack_nt):  # check points one at a time
+            for slowT_i in range(slowT_n):  # for this station, loop over slownesses
+                num_val = centralT_Ast[slowT_i].data[it]
+                stack_array[slowT_i, it] = num_val
+
+        y, x = np.mgrid[slice(stack_Tslows[0], stack_Tslows[-1] + slow_delta, slow_delta),
+                     slice(ttt[0], ttt[-1] + dt, dt)]
+
+        fig, ax = plt.subplots(1, figsize=(10,3))
+        fig.subplots_adjust(bottom=0.2)
+        c = ax.pcolormesh(x, y, stack_array, cmap=plt.cm.gist_rainbow_r, vmin=0)
+        fig.colorbar(c, ax=ax, label='linear amplitude')
+        ax.axis([x.min(), x.max(), y.min(), y.max()])
+        c = ax.scatter(arrival_time, 0, color='black'  , s=50, alpha=0.75)
+        plt.xlabel('Time (s)')
+        if NS == True:
+            plt.ylabel('E slowness (s/km)')
+            plt.title('Amp at ' + str(R_slow_plot) + ' s/km N slowness, ' + date_label1 + ' ' + date_label2)
+            plt.savefig(save_name + str(start_buff) + '_' + str(end_buff) + '_EampSection.png')
+        else:
+            plt.ylabel('T slowness (s/km)')
+            plt.title('Amp at ' + str(R_slow_plot) + ' s/km R slowness, ' + date_label1 + ' ' + date_label2)
+            plt.savefig(save_name + str(start_buff) + '_' + str(end_buff) + '_TampSection.png')
+        if no_plots == False:
             plt.show()
+
+        fig_index += 1
+
+    #%% -- Snap plots
+        stack_slice = np.zeros((slowR_n,slowT_n))
+        if snaps > 0:
+            # check for impossible parameters
+            if (start_buff + snaptime) < start_buff:
+                print(f'snaptime {start_buff + snaptime:.0f} is earlier than start_buff of {start_buff:.0f}')
+                sys.exit(-1)
+            last_snap = snaptime + snaps*snap_depth
+            if (start_buff + last_snap) > end_buff:
+                print(f'last snap {last_snap:.0f} is later than end_buff of {end_buff:.0f}')
+                sys.exit(-1)
+
+            for snap_num in range(snaps):
+                snap_start = start_buff + snaptime + (snap_num  ) * snap_depth
+                snap_end   = start_buff + snaptime + (snap_num+1) * snap_depth
+                fig_index += 1
+                it_start = int(round((snap_start - start_buff)/dt))
+                it_end   = int(round((snap_end   - start_buff)/dt))
+                # plt.savefig(save_name + str(start_buff + snap_start) + '_' + str(start_buff + snap_end) + '_Abeam.png')
+                for slowR_i in range(slowR_n):  # loop over radial slownesses
+                    for slowT_i in range(slowT_n):  # loop over transverse slownesses
+                        index = slowR_i*slowT_n + slowT_i
+                        num_val = np.nanmean(tdiff[index].data[it_start:it_end])
+                        stack_slice[slowR_i, slowT_i] = num_val
+
+                y1, x1 = np.mgrid[slice(stack_Rslows[0], stack_Rslows[-1] + slow_delta, slow_delta),
+                             slice(stack_Tslows[0], stack_Tslows[-1] + slow_delta, slow_delta)]
+
+                fig, ax = plt.subplots(1, figsize=(7,0.8*7))
+                c = ax.pcolormesh(x1, y1, stack_slice, cmap=plt.cm.coolwarm, vmin=-tdiff_clip, vmax=tdiff_clip)
+                ax.axis([x1.min(), x1.max(), y1.min(), y1.max()])
+                fig.colorbar(c, ax=ax, label = 'time shift (s)')
+                c = ax.scatter(pred_Eslo, pred_Nslo, color='black'  , s=50, alpha=0.75)
+                c = ax.scatter(        0,         0, color='black' , s=50,  alpha=0.75)
+                circle1 = plt.Circle((0, 0), 0.019, color='black', fill=False)
+                ax.add_artist(circle1)  # inner core limit
+                circle2 = plt.Circle((0, 0), 0.040, color='black', fill=False)
+                ax.add_artist(circle2)  # outer core limit
+                plt.title(f'Tdiff {snap_start:.0f} to {snap_end:.0f}s  {date_label1} {date_label2}  events {eq_num1}&{eq_num2}')
+                if NS == True:
+                    plt.xlabel('E Slowness (s/km)')
+                    plt.ylabel('N Slowness (s/km)')
+                else:
+                    plt.xlabel('T Slowness (s/km)')
+                    plt.ylabel('R Slowness (s/km)')
+                plt.savefig(save_name + str(snap_start) + '_' + str(snap_end) + '_Tbeam.png')
+                if no_plots == False:
+                    plt.show()
+
+            for snap_num in range(snaps):
+                snap_start = start_buff + snaptime + (snap_num  ) * snap_depth
+                snap_end   = start_buff + snaptime + (snap_num+1) * snap_depth
+                fig_index += 1
+                it_start = int(round((snap_start - start_buff)/dt))
+                it_end   = int(round((snap_end   - start_buff)/dt))
+                for slowR_i in range(slowR_n):  # loop over radial slownesses
+                    for slowT_i in range(slowT_n):  # loop over transverse slownesses
+                        index = slowR_i*slowT_n + slowT_i
+                        num_val = np.nanmean(amp_ave[index].data[it_start:it_end])
+                        stack_slice[slowR_i, slowT_i] = num_val
+
+                y1, x1 = np.mgrid[slice(stack_Rslows[0], stack_Rslows[-1] + slow_delta, slow_delta),
+                             slice(stack_Tslows[0], stack_Tslows[-1] + slow_delta, slow_delta)]
+
+                fig, ax = plt.subplots(1, figsize=(7,0.8*7))
+                c = ax.pcolormesh(x1, y1, stack_slice, cmap=plt.cm.gist_rainbow_r)
+                ax.axis([x1.min(), x1.max(), y1.min(), y1.max()])
+                if log_plot == True:
+                    fig.colorbar(c, ax=ax, label = 'log amp')
+                else:
+                    fig.colorbar(c, ax=ax, label = 'linear amp')
+                c = ax.scatter(pred_Eslo, pred_Nslo, color='black'  , s=50, alpha=0.75)
+                c = ax.scatter(        0,         0, color='black' , s=50,  alpha=0.75)
+                circle1 = plt.Circle((0, 0), 0.019, color='black', fill=False)
+                ax.add_artist(circle1)  # inner core limit
+                circle2 = plt.Circle((0, 0), 0.040, color='black', fill=False)
+                ax.add_artist(circle2)  # outer core limit
+                plt.title(f'Amp {snap_start:.0f} to {snap_end:.0f}s  {date_label1} {date_label2}  events {eq_num1}&{eq_num2}')
+                if NS == True:
+                    plt.xlabel('E Slowness (s/km)')
+                    plt.ylabel('N Slowness (s/km)')
+                else:
+                    plt.xlabel('T Slowness (s/km)')
+                    plt.ylabel('R Slowness (s/km)')
+                plt.savefig(save_name + str(snap_start) + '_' + str(snap_end) + '_Abeam.png')
+                if no_plots == False:
+                    plt.show()
 
     #%% Wiggly plots
     if wiggly_plots == True:
@@ -583,8 +720,14 @@ def pro7_pair_scan(eq_file1, eq_file2, slow_delta = 0.0005, turn_off_black = 0,
                 plt.plot(ttt_dec, (centralR_tdiff[slowR_i].data) * scale_plot_tdiff + dist_offset, color = 'black')
 
         plt.xlabel('Time (s)')
-        plt.ylabel('R Slowness (s/km)')
-        plt.title(ref_phase + ' seismograms and tdiff at ' + str(T_slow_plot) + ' T slowness, green is event1, red is event2')
+        if NS == True:
+            plt.ylabel('N Slowness (s/km)')
+            plt.title(date_label1 + '  ' + date_label2 + '  ' + ' seismograms ' + str(T_slow_plot) + ' E slowness, green is event1, red is event2')
+            plt.savefig(save_name + str(start_buff) + '_' + str(end_buff) + '_N_pro_wig.png')
+        else:
+            plt.ylabel('R Slowness (s/km)')
+            plt.title(date_label1 + '  ' + date_label2 + '  ' + ' seismograms ' + str(T_slow_plot) + ' T slowness, green is event1, red is event2')
+            plt.savefig(save_name + str(start_buff) + '_' + str(end_buff) + '_R_pro_wig.png')
         #%% -- -- T amp and tdiff vs time plots with black line for time shift
         fig_index = 117
         plt.figure(fig_index,figsize=(30,10))
@@ -601,10 +744,14 @@ def pro7_pair_scan(eq_file1, eq_file2, slow_delta = 0.0005, turn_off_black = 0,
                 plt.plot(ttt2,     (centralT_st1[slowT_i].data)*0.0 + dist_offset, color = 'gray') # reference lines
                 plt.plot(ttt_dec, (centralT_tdiff[slowT_i].data) * scale_plot_tdiff + dist_offset, color = 'black')
         plt.xlabel('Time (s)')
-        plt.ylabel('T Slowness (s/km)')
-        plt.title(date_label1 + '  ' + ref_phase + ' seismograms and tdiff ' + str(R_slow_plot) + ' R slowness, green is event1, red is event2')
-        os.chdir('/Users/vidale/Documents/Research/IC/Plots')
-    #    plt.savefig(date_label1 + '_' + str(start_buff) + '_' + str(end_buff) + '_stack.png')
+        if NS == True:
+            plt.ylabel('E Slowness (s/km)')
+            plt.title(date_label1 + '  ' + date_label2 + '  ' + ' seismograms ' + str(R_slow_plot) + ' N slowness, green is event1, red is event2')
+            plt.savefig(save_name + str(start_buff) + '_' + str(end_buff) + '_E_pro_wig.png')
+        else:
+            plt.ylabel('T Slowness (s/km)')
+            plt.title(date_label1 + '  ' + date_label2 + '  ' + ' seismograms ' + str(R_slow_plot) + ' R slowness, green is event1, red is event2')
+            plt.savefig(save_name + str(start_buff) + '_' + str(end_buff) + '_T_pro_wig.png')
 
     #%% Beam sum plots
     if beam_sums == True:
@@ -613,12 +760,11 @@ def pro7_pair_scan(eq_file1, eq_file2, slow_delta = 0.0005, turn_off_black = 0,
 
         if start_beam == 0 and end_beam == 0:
             full_beam = 1
+            print('Full beam is specified.')
         else:  # beam just part of stack volume
             full_beam = 0
             start_index = int((start_beam - start_buff) / dt)
             end_index   = int((end_beam   - start_buff) / dt)
-            print('beam is ' + str(start_beam) + ' to ' + str(end_beam) + 's, out of ' + str(start_buff)
-                + ' to ' + str(end_buff) + 's, dt is ' + str(dt)  + 's, and indices are '+ str(start_index) + ' ' + str(end_index))
             print(f'Beam is {start_beam:.4f} to {end_beam:.4f}s, out of {start_buff:.4f} to {end_buff:.4f}s, dt is {dt:.4f}s, and indices are {start_index} {end_index}')
 
         for slowR_i in range(slowR_n):  # loop over radial slownesses
@@ -636,7 +782,7 @@ def pro7_pair_scan(eq_file1, eq_file2, slow_delta = 0.0005, turn_off_black = 0,
 
         fig, ax = plt.subplots(1, figsize=(7,0.8*7*(slowR_n/slowT_n)))  # try to make correct aspect ratio plot
         c = ax.pcolormesh(x1, y1, stack_slice, cmap=plt.cm.coolwarm, vmin = -tdiff_clip, vmax = tdiff_clip)
-        fig.colorbar(c, ax=ax, label='time lag (s)')
+        fig.colorbar(c, ax=ax, label='time shift (s)')
         ax.axis([x1.min(), x1.max(), y1.min(), y1.max()])
         circle1 = plt.Circle((0, 0), 0.019, color='black', fill=False)
         ax.add_artist(circle1)
@@ -646,12 +792,16 @@ def pro7_pair_scan(eq_file1, eq_file2, slow_delta = 0.0005, turn_off_black = 0,
         c = ax.scatter(pred_Eslo, pred_Nslo, color='black'  , s=50, alpha=0.75)
         c = ax.scatter(        0,         0, color='black' , s=50,  alpha=0.75)
 
-        plt.ylabel('R Slowness (s/km)')
-        plt.xlabel('Transverse Slowness (s/km)')
-        plt.title(ref_phase + ' time shift ' + date_label1 + ' ' + date_label2 + ' amp weighted')
-        os.chdir('/Users/vidale/Documents/Research/IC/Plots')
-        plt.savefig(date_label1 + '_' + date_label2 + '_' + str(start_buff) + '_' + str(end_buff) + '_tdiff.png')
-        plt.show()
+        if NS == True:
+            plt.ylabel('N Slowness (s/km)')
+            plt.xlabel('E Slowness (s/km)')
+        else:
+            plt.ylabel('R Slowness (s/km)')
+            plt.xlabel('T Slowness (s/km)')
+        plt.title(f'{date_label1} {date_label2} {start_buff:.0f} to {end_buff:.0f} time shift')
+        plt.savefig(save_name + str(start_buff) + '_' + str(end_buff) + '_Tbeam.png')
+        if no_plots == False:
+            plt.show()
 
     #%% -- R-T amplitude averaged over time window
         stack_slice = np.zeros((slowR_n,slowT_n))
@@ -689,12 +839,16 @@ def pro7_pair_scan(eq_file1, eq_file2, slow_delta = 0.0005, turn_off_black = 0,
         c = ax.scatter(pred_Eslo, pred_Nslo, color='black'  , s=50, alpha=0.75)
         c = ax.scatter(        0,         0, color='black' , s=50,  alpha=0.75)
 
-        plt.xlabel('Transverse Slowness (s/km)')
-        plt.ylabel('Radial Slowness (s/km)')
-        plt.title(date_label1 + ' ' + date_label2 + '  ' + ref_phase + ' beam amplitude')
-        os.chdir('/Users/vidale/Documents/Research/IC/Plots')
-        plt.savefig(date_label1 + '_' + date_label2 + '_' + str(start_buff) + '_' + str(end_buff) + '_beam.png')
-        plt.show()
+        if NS == True:
+            plt.xlabel('E Slowness (s/km)')
+            plt.ylabel('N Slowness (s/km)')
+        else:
+            plt.xlabel('T Slowness (s/km)')
+            plt.ylabel('R Slowness (s/km)')
+        plt.title(f'{date_label1} {date_label2} {start_buff:.0f} to {end_buff:.0f} beam amp')
+        plt.savefig(save_name + str(start_buff) + '_' + str(end_buff) + '_Abeam.png')
+        if no_plots == False:
+            plt.show()
 
     #  Save processed files
 #    fname = 'HD' + date_label + '_slice.mseed'
