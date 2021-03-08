@@ -770,7 +770,7 @@ def pro7_pair_scan(eq_num1, eq_num2, slow_delta = 0.0005, turn_off_black = 1,
         for slowR_i in range(slowR_n):  # loop over radial slownesses
             for slowT_i in range(slowT_n):  # loop over transverse slownesses
                 index = slowR_i*slowT_n + slowT_i
-                if full_beam == 1: # using elementwise multiplication
+                if full_beam == 1: # using elementwise multiplication, amplitude weighted
                     num_val = np.nansum(np.multiply(tdiff[index].data, amp_ave_thres[index].data))/np.nansum(amp_ave_thres[index].data)
                 else:
                     num_val = np.nansum(np.multiply(tdiff[start_index:end_index].data, amp_ave_thres[start_index:end_index].data

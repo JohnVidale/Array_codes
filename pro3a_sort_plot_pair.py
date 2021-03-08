@@ -12,7 +12,7 @@ def pro3pair(eq_num1, eq_num2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
             freq_min = 1, freq_max = 3, min_dist = 0, max_dist = 180, auto_dist = True,
             alt_statics = 0, statics_file = 'nothing', ARRAY = 0,
             ref_loc = 0, ref_rad = 0.4, ref_lat = 36.3, ref_lon = 138.5,
-            max_taper_length = 5., no_plots = False):
+            max_taper_length = 5., no_plots = False, taper_frac = 0.05):
 
 
 #%% Import functions
@@ -40,7 +40,7 @@ def pro3pair(eq_num1, eq_num2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
 #%%  Set some parameters
     verbose = 0           # more output
 #    rel_time = 1          # timing is relative to a chosen phase, otherwise relative to OT
-    taper_frac = .05      # Fraction of window tapered on both ends
+    # taper_frac = 0.05      # Fraction of window tapered on both ends
     signal_dur = 5.       # signal length used in SNR calculation
     plot_tt = 1           # plot the traveltimes?
     do_decimate = 0         # 0 if no decimation desired

@@ -73,6 +73,7 @@ def pro2_convstf(eq_num, conv_file):
 #        print('Tr data has length ' + str(len(tr.data)) + ' con_trace data has length ' + str(len(con_trace[0].data)))
         tr.data = np.convolve(tr.data, con_trace[0].data)
 #        print('Now, Tr data has length ' + str(len(tr.data)))
+        tr.stats.starttime = tr.stats.starttime - 9 # shift timing to reflect convolution delay
         st_out += tr
         done += 1
         if done%50 == 0:

@@ -7,8 +7,8 @@
 # saves 1D stack "_1Dstack.mseed"
 # John Vidale 2/2019
 
-def pro5stack(eq_file, plot_scale_fac = 0.05, slowR_lo = -0.1, slowR_hi = 0.1, stack_option = 1,
-            slow_delta = 0.0005, start_buff = -50, end_buff = 50, event_no = 5,
+def pro5stack(eq_num, plot_scale_fac = 0.05, slowR_lo = -0.1, slowR_hi = 0.1, stack_option = 1,
+            slow_delta = 0.0005, start_buff = -50, end_buff = 50,
             ref_lat = 36.3, ref_lon = 138.5, ref_loc = 0, envelope = 1, plot_dyn_range = 1000,
             log_plot = 1, norm = 1, global_norm_plot = 1, color_plot = 1, fig_index = 401, ARRAY = 0):
 
@@ -29,19 +29,22 @@ def pro5stack(eq_file, plot_scale_fac = 0.05, slowR_lo = -0.1, slowR_hi = 0.1, s
     from scipy.signal import hilbert
     import math
     import time
+    from termcolor import colored
 
     env_stack = 0  # flag to stack envelopes instead of oscillating seismograms
 
 #    import sys # don't show any warnings
 #    import warnings
 
-    print('pro5a_stack has started')
+    print(colored('Running pro5a_stack', 'cyan'))
 
 #%% Get saved event info, also used to name files
     start_time_wc = time.time()
 
-    file = open('/Users/vidale/Documents/PyCode/EvLocs/' + eq_file, 'r')
+    fname = '/Users/vidale/Documents/Research/IC/EvLocs/event' + str(eq_num) + '.txt'
+    file = open(fname, 'r')
     lines=file.readlines()
+
     split_line = lines[0].split()
 #            ids.append(split_line[0])  ignore label for now
     t           = UTCDateTime(split_line[1])
@@ -96,7 +99,12 @@ def pro5stack(eq_file, plot_scale_fac = 0.05, slowR_lo = -0.1, slowR_hi = 0.1, s
 
 #%% Name file, read data
     # date_label = '2018-04-02' # date for filename
-    fname = '/Users/vidale/Documents/PyCode/Pro_Files/HD' + date_label + 'sel.mseed'
+    fname = 'HD' + date_label + 'sel.mseed'
+    goto = '/Users/vidale/Documents/Research/IC/Pro_Files'
+    os.chdir(goto)
+
+    # fname = '/Users/vidale/Documents/PyCode/Pro_Files/HD' + date_label + 'sel.mseed'
+
     st = Stream()
     print('        reading ' + fname)
     print('        Stack option is ' + str(stack_option))
@@ -104,8 +112,8 @@ def pro5stack(eq_file, plot_scale_fac = 0.05, slowR_lo = -0.1, slowR_hi = 0.1, s
     print('    ' + str(len(st)) + ' traces read in')
     nt = len(st[0].data)
     dt = st[0].stats.delta
-    print('        First trace has : ' + str(nt) + ' time pts, time sampling of '
-          + str(dt) + ' and thus duration of ' + str((nt-1)*dt))
+    print(f'        First trace has {nt} time pts, time sampling of {dt:.2f} and thus duration of {(nt-1)*dt:.0f} and max amp of {max(abs(st[0].data)):.1f}')
+    print(f'st[0].stats.starttime-t {(st[0].stats.starttime-t):.2f} start_buff {start_buff:.2f}')
 
 #%% Build Stack arrays
     stack = Stream()
@@ -120,6 +128,7 @@ def pro5stack(eq_file, plot_scale_fac = 0.05, slowR_lo = -0.1, slowR_hi = 0.1, s
     stack_slows = [(x * slow_delta + slowR_lo) for x in a1]
     print('        ' + str(slow_n) + ' slownesses.')
     tr.stats.starttime = t + start_buff
+    # print(f'tr.stats.starttime-t {(tr.stats.starttime-t):.2f} start_buff {start_buff:.2f}')
     tr.data = np.zeros(stack_nt)
     done = 0
     for stack_one in stack_slows:
@@ -139,7 +148,7 @@ def pro5stack(eq_file, plot_scale_fac = 0.05, slowR_lo = -0.1, slowR_hi = 0.1, s
         for tr in st:
             tr.data = np.abs(hilbert(tr.data))
 
-    for tr in st: # traces one by one, find lat-lon by searching entire inventory.  Inefficient but cheap
+    for tr in st: # traces one by one
         if tr.stats.station in st_names:  # find station in station list
             ii = st_names.index(tr.stats.station)
             if norm == 1:
@@ -149,12 +158,13 @@ def pro5stack(eq_file, plot_scale_fac = 0.05, slowR_lo = -0.1, slowR_hi = 0.1, s
             distance = gps2dist_azimuth(stalat,stalon,ev_lat,ev_lon) # Get traveltimes again, hard to store
             tr.stats.distance=distance[0] # distance in m
             del_dist = (ref_distance[0] - distance[0])/(1000) # in km
+            rel_start_buff = tr.stats.starttime - (t + start_buff)
+            print(f'{tr.stats.station} del_dist {del_dist:.2f} ref_dist {ref_distance[0]/1000.:.2f} distance {distance[0]/1000.:.2f} rel_start_buff {rel_start_buff:.2f} tr.stats.starttime-t {(tr.stats.starttime-t):.2f} start_buff {start_buff:.2f}')
 
-#            for(k=0;k<nslow;k++){
-#                slow = 110.*(LOWSLOW + k*DELTASLOW);
             for slow_i in range(slow_n):  # for this station, loop over slownesses
                 time_lag = -del_dist * stack_slows[slow_i]  # time shift due to slowness, flipped to match 2D
-                time_correction = ((t-tr.stats.starttime) + (time_lag + start_buff))/dt
+                time_correction = (rel_start_buff + time_lag)/dt
+                # print(f'{slow_i} time_lag {time_lag:.1f} time correction {time_correction:.1f}')
 
                 if stack_option == 0:
                     for it in range(stack_nt):  # check points one at a time
@@ -250,9 +260,9 @@ def pro5stack(eq_file, plot_scale_fac = 0.05, slowR_lo = -0.1, slowR_hi = 0.1, s
         plt.xlim(start_buff,end_buff)
     plt.xlabel('Time (s)')
     plt.ylabel('Slowness (s/km)')
-    plt.title('1Dstack   ' + str(event_no) + '  ' + date_label)
-    os.chdir('/Users/vidale/Documents/PyCode/Plots')
-    plt.savefig(date_label + '_' + str(start_buff) + '_' + str(end_buff) + '_1D.png')
+    plt.title('1Dstack   ' + str(eq_num) + '  ' + date_label)
+    # os.chdir('/Users/vidale/Documents/PyCode/Plots')
+    # plt.savefig(date_label + '_' + str(start_buff) + '_' + str(end_buff) + '_1D.png')
     plt.show()
 
 #%% Save processed files

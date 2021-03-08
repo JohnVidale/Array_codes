@@ -2,7 +2,7 @@
 # this program convolves
 # John Vidale 2/2019
 
-def pro2_test(eq_file1, conv_file1, eq_file2, conv_file2):
+def pro2_test(conv_file1, conv_file2):
 
     from obspy import UTCDateTime
     from obspy import Stream, Trace
@@ -82,7 +82,7 @@ def pro2_test(eq_file1, conv_file1, eq_file2, conv_file2):
     sgrams.normalize()
 
     print('made it, before')
-    # sgrams.plot(size = (800,600))  # program l=plots but hangs up here with obscure deprecating np.float message
+    sgrams.plot(size = (800,600))  # program l=plots but hangs up here with obscure deprecating np.float message
     print('made it, after')
 
     elapsed_time_wc = time.time() - start_time_wc

@@ -6,6 +6,7 @@
 # John Vidale 2/2019
 
 from run_pair_func             import runpair
+from run_pair_func_get_convo   import runpair_getconvo
 
 # runpair(Tstart=600, Tend=700, eq_num1=1, eq_num2=2)
 # runpair(Tstart=700, Tend=800, eq_num1=1, eq_num2=2)
@@ -48,7 +49,15 @@ from run_pair_func             import runpair
 # runpair(Tstart=2200, Tend=2300, eq_num1=4, eq_num2=5)
 # runpair(Tstart=2300, Tend=2400, eq_num1=4, eq_num2=5)
 
-decon78 = False
+con78 = True
+runpair(Tstart=1012, Tend=1057, eq_num1=7, eq_num2=8, con78 = con78)
+
+# con78 = True
+# runpair(Tstart=1020, Tend=1200, eq_num1=7, eq_num2=8, con78 = con78)
+
+# con78 = True
+# runpair_getconvo(Tstart=1010, Tend=1030, eq_num1=7, eq_num2=8, con78 = con78)
+# runpair_getconvo(Tstart=900, Tend=1300, eq_num1=7, eq_num2=8, con78 = con78)
 
 # runpair(Tstart=500, Tend=600, eq_num1=7, eq_num2=8, decon78 = decon78)
 # runpair(Tstart=600, Tend=700, eq_num1=7, eq_num2=8, decon78 = decon78)
@@ -56,7 +65,7 @@ decon78 = False
 # runpair(Tstart=800, Tend=900, eq_num1=7, eq_num2=8, decon78 = decon78)
 # runpair(Tstart=900, Tend=1000, eq_num1=7, eq_num2=8, decon78 = decon78)
 # runpair(Tstart=1000, Tend=1100, eq_num1=7, eq_num2=8, decon78 = decon78)
-runpair(Tstart=1100, Tend=1200, eq_num1=7, eq_num2=8, decon78 = decon78)
+# runpair(Tstart=1100, Tend=1200, eq_num1=7, eq_num2=8, decon78 = decon78)
 # runpair(Tstart=1200, Tend=1300, eq_num1=7, eq_num2=8, decon78 = decon78)
 # runpair(Tstart=1300, Tend=1400, eq_num1=7, eq_num2=8, decon78 = decon78)
 # runpair(Tstart=1400, Tend=1500, eq_num1=7, eq_num2=8, decon78 = decon78)

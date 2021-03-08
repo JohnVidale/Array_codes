@@ -33,8 +33,6 @@ def pro5stack2d(eq_num, slow_delta = 0.0005, slowR_lo = -0.1, slowR_hi = 0.1, sl
 
     start_time_wc = time.time()
 
-    # goto = '/Users/vidale/Documents/Research/IC/EvLocs'
-    # os.chdir(goto)
     fname = '/Users/vidale/Documents/Research/IC/EvLocs/event' + str(eq_num) + '.txt'
     file = open(fname, 'r')
 
