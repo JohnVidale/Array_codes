@@ -27,10 +27,6 @@ def pro5stack2d(eq_num, slow_delta = 0.0005, slowR_lo = -0.1, slowR_hi = 0.1, sl
     print(colored('Running pro5b_stack2d', 'cyan'))
 
     env_stack = 0  # flag to stack envelopes instead of oscillating seismograms
-
-#    norm = 1 # norm by dividing by max(abs)
-#    global_norm_plot = 1 # not used, only used in pro5stack
-
     start_time_wc = time.time()
 
     fname = '/Users/vidale/Documents/Research/IC/EvLocs/event' + str(eq_num) + '.txt'

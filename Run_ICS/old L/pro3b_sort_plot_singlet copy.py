@@ -6,7 +6,7 @@
 # plot lines are blue, orange, yellow, purple for phases 1 through 4
 # John Vidale 2/2019
 
-def pro3singlet(eq_num, stat_corr = 1, rel_time = 1,
+def pro3singlet(eq_num, stat_corr = 1, rel_time = 1, fine_stats = 0,
             max_taper_length = 5., simple_taper = 0, skip_SNR = 0,
             dphase = 'P', dphase2 = '', dphase3 = '', dphase4 = '',
             start_buff = -10, end_buff = 10, start_beam = 0, end_beam = 0,
@@ -51,13 +51,7 @@ def pro3singlet(eq_num, stat_corr = 1, rel_time = 1,
 #            ids.append(split_line[0])  ignore label for now
     t           = UTCDateTime(split_line[1])
     date_label  = split_line[1][0:10]
-    year_label  = split_line[1][0:4]
-    year_short_label  = split_line[1][2:4]
-    month_label   = split_line[1][5:7]
-    day_label     = split_line[1][8:10]
-    hour_label    = split_line[1][11:13]
-    minute_label  = split_line[1][14:16]
-    print(date_label + ' year_label ' + year_label + ' hour_label ' + hour_label + ' min_label ' + minute_label)
+    year        = split_line[1][0:4]
     ev_lat      = float(      split_line[2])
     ev_lon      = float(      split_line[3])
     ev_depth    = float(      split_line[4])
@@ -101,6 +95,37 @@ def pro3singlet(eq_num, stat_corr = 1, rel_time = 1,
                 st_lons.append( split_line[2])
                 st_shift.append(split_line[3])
                 st_corr.append(split_line[4]) # but really std dev
+
+        # static refinement
+        if fine_stats == 1:
+            fsta_file = '/Users/vidale/Documents/PyCode/Mseed/fine_statics.txt'
+            with open(fsta_file, 'r') as file:
+                lines = file.readlines()
+            print('    ' + str(len(lines)) + ' fine station statics read from ' + fsta_file)
+            # Load station coords into arrays
+            station_index = range(len(lines))
+            stf_names = []
+            stf_dist  = []
+            stf_lats  = []
+            stf_lons  = []
+            stf_shift = []
+            stf_corr  = []
+            for ii in station_index:
+                line = lines[ii]
+                split_line = line.split()
+                stf_names.append(split_line[0])
+                if ARRAY == 0 or ARRAY == 1:
+                    stf_dist.append(split_line[1])
+                    stf_lats.append( split_line[2])
+                    stf_lons.append( split_line[3])
+                    stf_shift.append(split_line[4])
+                    stf_corr.append(split_line[5])
+                elif ARRAY == 2:
+    #                stf_dist.append(split_line[1])
+                    stf_lats.append( split_line[1])
+                    stf_lons.append( split_line[2])
+                    stf_shift.append(split_line[3])
+                    stf_corr.append(split_line[4]) # but really std dev
 
     else: # no static terms, always true for NORSAR
         if ARRAY == 0: # Hinet set
@@ -186,10 +211,7 @@ def pro3singlet(eq_num, stat_corr = 1, rel_time = 1,
 
 #%% Load waveforms and decimate to 10 sps, if not already decimated
     st = Stream()
-    # fname     = '/Users/vidale/Documents/GitHub/LASA_data/HD' + date_label + '.mseed'
-    mseed_name = year_short_label + month_label + day_label + '_' + hour_label + minute_label
-    fname     = '/Users/vidale/Documents/Research/IC/Mseed/L' + mseed_name + '.mseed'
-    print('file name attempt: ' + fname)
+    fname     = '/Users/vidale/Documents/GitHub/LASA_data/HD' + date_label + '.mseed'
     st=read(fname)
     if do_decimate != 0:
         st.decimate(do_decimate, no_filter=True)
@@ -238,7 +260,7 @@ def pro3singlet(eq_num, stat_corr = 1, rel_time = 1,
     ref_slow = arrivals_plus[0].time - arrivals_minus[0].time  # dt over 1 degree at ref distance
 
     for tr in st: # traces one by one, find lat-lon
-        if float(year_label) < 1970: # fix the damn 1969 -> 2069 bug in Gibbon's LASA data
+        if float(year) < 1970: # fix the damn 1969 -> 2069 bug in Gibbon's LASA data
             temp_t = str(tr.stats.starttime)
             temp_tt = '19' + temp_t[2:]
             tr.stats.starttime = UTCDateTime(temp_tt)
@@ -253,78 +275,91 @@ def pro3singlet(eq_num, stat_corr = 1, rel_time = 1,
             ii = st_names.index(tr.stats.station)
             tra_sta_found += 1
 
+            skip = 0
+            if fine_stats != 0:  # refine static correction?
+                if tr.stats.station in stf_names:  # find station in refining station list
+                    iii = stf_names.index(tr.stats.station)
+                else:
+                    skip = 1  # wanted it but it wasn't there
+
             corr = 1
             if stat_corr == 1:
                 corr = float(st_corr[ii])
+            if fine_stats == 1 and skip == 0:  #overwrite correlation if finer corrections are made
+                corr = float(stf_corr[iii]) +  float(st_corr[ii])
+                print(f'          {st_names[ii]:s}  {stf_names[iii]:s}  {float(st_corr[ii]):.2f}  {float(stf_corr[iii]):.2f}  {float(st_shift[ii]):.2f}  {float(stf_shift[iii]):.2f}')
 
-            if corr > corr_threshold: # if using statics, reject low correlations
-                stalat = float(st_lats[ii]) # look up lat & lon again to find distance
-                stalon = float(st_lons[ii])
+            if skip == 0:  # if fine adjustment sought and is missing, skip station
+                if corr > corr_threshold: # if using statics, reject low correlations
+                    stalat = float(st_lats[ii]) # look up lat & lon again to find distance
+                    stalon = float(st_lons[ii])
 
-                distance = gps2dist_azimuth(stalat,stalon,ev_lat,ev_lon) # Get traveltimes again, hard to store
-                tr.stats.distance=distance[0] # distance in km
-                dist = distance[0]/(1000*111)
+                    distance = gps2dist_azimuth(stalat,stalon,ev_lat,ev_lon) # Get traveltimes again, hard to store
+                    tr.stats.distance=distance[0] # distance in km
+                    dist = distance[0]/(1000*111)
 
-                in_range = 0  # flag for whether this trace goes into stack
-                rejector = False  # flag in case model.get_travel_times fails
+                    in_range = 0  # flag for whether this trace goes into stack
+                    rejector = False  # flag in case model.get_travel_times fails
 
-                if ref_loc == False:  # check whether trace is in distance range from earthquake
-                    if min_dist < dist and dist < max_dist:
-                        in_range = 1
-                        tra_in_range += 1
-                elif ref_loc == True:  # alternately, check whether trace is close enough to ref_location
-                    ref_distance = gps2dist_azimuth(ref_lat,ref_lon,stalat,stalon)
-                    ref2_dist = ref_distance[0]/(1000*111)
-                    if ref2_dist < ref_rad:
-                        in_range = 1
-                        tra_in_range += 1
-                if in_range == 1:   # trace fulfills the specified criteria for being in range
-                    s_t = t + start_buff
-                    e_t = t + end_buff
-                    if stat_corr == 1: # apply static station corrections
-                        tr.stats.starttime -= float(st_shift[ii])
-                    if rel_time == 0:  #  don't adjust absolute time
-                        tr.trim(starttime=s_t,endtime = e_t)
-                    else:              # shift relative to a chosen phase
-                        arrivals_each = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree=dist,phase_list=[dphase])
-                        if(len(arrivals_each) == 0):
-                            if(dist < 10 and dphase == 'P'):  # in case first arrival is upgoing P, try 'p'
-                                arrivals_each = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree=dist,phase_list='p')
-                        if(len(arrivals_each) == 0):  # did it still fail?
-                                print('model.get_travel_times failed: dist, depth, phase  ' + tr.stats.station + '   ' + str(ref1_dist) + '   ' +
-                                      '   ' + str(ev_depth) + '   ' + dphase)
-                                tra_in_range -= 1 # don't count this trace after all
-                                rejector = True
-                        else:
-                            atime_each = arrivals_each[0].time
-                            if rel_time == 1: # each window has a shift proportional to ref_dist at phase slowness at ref_dist
-                                s_t += atime_each
-                                e_t += atime_each
-                                tr.trim( starttime=s_t, endtime = e_t)
-                                tr.stats.starttime -= atime_each - (dist-ref1_dist) * ref_slow
-                            elif rel_time == 2: # each window has a distinct shift, but offset is common to all stations
-                                s_t += atime_each
-                                e_t += atime_each
-                                tr.trim( starttime=s_t, endtime = e_t)
-                                tr.stats.starttime -= atime_ref
-                            elif rel_time == 3:  # each station has an individual, chosen-phase shift, phase arrival set to zero
-                                s_t += atime_each
-                                e_t += atime_each
-                                tr.trim( starttime=s_t, endtime = e_t)
-                                tr.stats.starttime -= atime_each
-                            elif rel_time == 4: # use same window around chosen phase for all stations, phase arrival set to zero
-                                s_t += atime_ref
-                                e_t += atime_ref
-                                tr.trim( starttime=s_t, endtime = e_t)
-                                tr.stats.starttime -= atime_ref
+                    if ref_loc == False:  # check whether trace is in distance range from earthquake
+                        if min_dist < dist and dist < max_dist:
+                            in_range = 1
+                            tra_in_range += 1
+                    elif ref_loc == True:  # alternately, check whether trace is close enough to ref_location
+                        ref_distance = gps2dist_azimuth(ref_lat,ref_lon,stalat,stalon)
+                        ref2_dist = ref_distance[0]/(1000*111)
+                        if ref2_dist < ref_rad:
+                            in_range = 1
+                            tra_in_range += 1
+                    if in_range == 1:   # trace fulfills the specified criteria for being in range
+                        s_t = t + start_buff
+                        e_t = t + end_buff
+                        if stat_corr == 1: # apply static station corrections
+                            tr.stats.starttime -= float(st_shift[ii])
+                            if fine_stats == 1:
+                                tr.stats.starttime -= float(stf_shift[iii])
+                        if rel_time == 0:  #  don't adjust absolute time
+                            tr.trim(starttime=s_t,endtime = e_t)
+                        else:              # shift relative to a chosen phase
+                            arrivals_each = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree=dist,phase_list=[dphase])
+                            if(len(arrivals_each) == 0):
+                                if(dist < 10 and dphase == 'P'):  # in case first arrival is upgoing P, try 'p'
+                                    arrivals_each = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree=dist,phase_list='p')
+                            if(len(arrivals_each) == 0):  # did it still fail?
+                                    print('model.get_travel_times failed: dist, depth, phase  ' + tr.stats.station + '   ' + str(ref1_dist) + '   ' +
+                                          '   ' + str(ev_depth) + '   ' + dphase)
+                                    tra_in_range -= 1 # don't count this trace after all
+                                    rejector = True
                             else:
-                                sys.exit('Invalid rel_time parameter, must be integer 0 to 4')
-                    if len(tr.data) > 0 and rejector == False:
-                        st_pickalign += tr
-                    else:
-                        nodata += 1
+                                atime_each = arrivals_each[0].time
+                                if rel_time == 1: # each window has a shift proportional to ref_dist at phase slowness at ref_dist
+                                    s_t += atime_each
+                                    e_t += atime_each
+                                    tr.trim( starttime=s_t, endtime = e_t)
+                                    tr.stats.starttime -= atime_each - (dist-ref1_dist) * ref_slow
+                                elif rel_time == 2: # each window has a distinct shift, but offset is common to all stations
+                                    s_t += atime_each
+                                    e_t += atime_each
+                                    tr.trim( starttime=s_t, endtime = e_t)
+                                    tr.stats.starttime -= atime_ref
+                                elif rel_time == 3:  # each station has an individual, chosen-phase shift, phase arrival set to zero
+                                    s_t += atime_each
+                                    e_t += atime_each
+                                    tr.trim( starttime=s_t, endtime = e_t)
+                                    tr.stats.starttime -= atime_each
+                                elif rel_time == 4: # use same window around chosen phase for all stations, phase arrival set to zero
+                                    s_t += atime_ref
+                                    e_t += atime_ref
+                                    tr.trim( starttime=s_t, endtime = e_t)
+                                    tr.stats.starttime -= atime_ref
+                                else:
+                                    sys.exit('Invalid rel_time parameter, must be integer 0 to 4')
+                        if len(tr.data) > 0 and rejector == False:
+                            st_pickalign += tr
+                        else:
+                            nodata += 1
         else:
-            print(tr.stats.station + ' not found in station list with statics')
+            print(tr.stats.station + ' not found in station list')
     print('    ' + str(tra_in_range) + '  traces in range')
     print('    ' + str(len(st_pickalign)) + '  traces after alignment and correlation selection')
     print('    ' + str(nodata) + '  traces with no data')

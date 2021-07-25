@@ -11,7 +11,7 @@ def pro3pair(eq_num1, eq_num2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
             plot_scale_fac = 0.05, qual_threshold = 0, corr_threshold = 0.5,
             freq_min = 1, freq_max = 3, min_dist = 0, max_dist = 180, auto_dist = True,
             alt_statics = 0, statics_file = 'nothing', ARRAY = 0,
-            ref_loc = 0, ref_rad = 0.4, ref_lat = 36.3, ref_lon = 138.5,
+            ref_loc = False, ref_rad = 0.4,
             max_taper_length = 5., no_plots = False, taper_frac = 0.05):
 
 
@@ -44,19 +44,18 @@ def pro3pair(eq_num1, eq_num2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
     signal_dur = 5.       # signal length used in SNR calculation
     plot_tt = 1           # plot the traveltimes?
     do_decimate = 0         # 0 if no decimation desired
-    #ref_loc = 0  # 1 if selecting stations within ref_rad of ref_lat and ref_lon
-                 # 0 if selecting stations by distance from earthquake
-    if ref_loc == 0:
-        if ARRAY == 0:
-            ref_lat = 36.3  # °N, around middle of Japan
-            ref_lon = 138.5 # °E
-        if ARRAY == 1:
-            ref_lat = 46.7      # °N keep only inner rings A-D if radius is 0.4°
-            ref_lon = -106.22   # °E
-        if ARRAY == 2:
-            ref_lat = 38      # °N
-            ref_lon = 104.5   # °E
-#        ref_rad = 0.4    # ° radius (°) set by input or at top
+    # if ref_loc ==true,  use ref_rad        to filter station distance
+    # if ref_loc ==false, use earthquake loc to filter station distance
+    #    ref_rad = 0.4    # ° radius (°) set by input or at top
+    if ARRAY == 0:
+        ref_lat = 36.3  # °N, around middle of Japan
+        ref_lon = 138.5 # °E
+    if ARRAY == 1:
+        ref_lat = 46.7      # °N keep only inner rings A-D if radius is 0.4°
+        ref_lon = -106.22   # °E
+    if ARRAY == 2:
+        ref_lat = 38      # °N
+        ref_lon = 104.5   # °E
 
     if rel_time == 0: # SNR requirement not implemented for unaligned traces
         qual_threshold = 0
@@ -234,11 +233,11 @@ def pro3pair(eq_num1, eq_num2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
                 dist = distance[0]/(1000*111)
 
                 in_range = 0  # flag for whether this trace goes into stack
-                if ref_loc == 0:  # check whether trace is in distance range from earthquake
+                if ref_loc == False:  # check whether trace is in distance range from earthquake
                     if min_dist < dist and dist < max_dist:
                         in_range = 1
                         tra1_in_range += 1
-                elif ref_loc == 1:  # alternately, check whether trace is close enough to ref_location
+                elif ref_loc == True:  # alternately, check whether trace is close enough to ref_location
                     ref_distance = gps2dist_azimuth(ref_lat,ref_lon,stalat,stalon)
                     ref2_dist = ref_distance[0]/(1000*111)
                     if ref2_dist < ref_rad:
@@ -303,16 +302,18 @@ def pro3pair(eq_num1, eq_num2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
                 dist = distance[0]/(1000*111)
 
                 in_range = 0  # flag for whether this trace goes into stack
-                if ref_loc == 0:  # check whether trace is in distance range from earthquake
+
+                if ref_loc == False:  # check whether trace is in distance range from earthquake
                     if min_dist < dist and dist < max_dist:
                         in_range = 1
                         tra2_in_range += 1
-                elif ref_loc == 1:  # alternately, check whether trace is close enough to ref_location
+                elif ref_loc == True:  # alternately, check whether trace is close enough to ref_location
                     ref_distance = gps2dist_azimuth(ref_lat,ref_lon,stalat,stalon)
                     ref2_dist = ref_distance[0]/(1000*111)
                     if ref2_dist < ref_rad:
                         in_range = 1
                         tra2_in_range += 1
+
                 if in_range == 1:   # trace fulfills the specified criteria for being in range
                     s_t = t2 + start_buff
                     e_t = t2 + end_buff
@@ -359,10 +360,9 @@ def pro3pair(eq_num1, eq_num2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
     print('2nd event, Traces found: ' + str(tra2_sta_found) + ' Traces in range: ' + str(tra2_in_range) + ' Traces with no data: ' + str(nodata2))
 
     print(f'ref1_distance  {ref1_dist:.3f}  relative start time  {atime_ref:.3f}')
-    if ref_loc == 1:
+    if ref_loc == True:
         print(f'ref2_distance  {ref2_dist:.3f}  relative start time  {atime_ref:.3f}')
-
-    print('ref_loc == 1, ref_lat: ' + str(ref_lat) + ' ref_lon: ' + str(ref_lon))
+        print('ref_loc == True, ref_lat: ' + str(ref_lat) + ' ref_lon: ' + str(ref_lon))
     print(f'last station: distance {dist:.3f}  last station lat: {stalat:.3f}   last station lon: {stalon:.3f}')
 
 

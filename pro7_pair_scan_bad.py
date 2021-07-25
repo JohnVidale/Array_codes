@@ -222,6 +222,8 @@ def pro7_pair_scan(eq_num1, eq_num2, slow_delta = 0.0005, turn_off_black = 1,
         #%% -- R slices
         ttt = (np.arange(stack_nt) * dt + start_buff)
         if do_R == True:  # remember plots scanning R are those at constant T
+            # Rmean_st = Stream() # array to collect average tdiff
+            # Rmean_am = Stream() # array to collect average amp
             for T_cnt in range(-nR_plots, nR_plots + 1):
                 if nR_plots * slow_incr > slowT_hi:
                     print('nR_plots * slow_incr > slowT_hi, out of range')
@@ -244,7 +246,15 @@ def pro7_pair_scan(eq_num1, eq_num2, slow_delta = 0.0005, turn_off_black = 1,
                 for slowR_i in range(slowR_n):
                     Rcentral_st += tdiff[  slowR_i*slowT_n + lowest_Tindex]
                     Rcentral_am += amp_ave[slowR_i*slowT_n + lowest_Tindex]
-
+                # if T_cnt == -nR_plots: # Form arrays just before first slice is summed   # doesn't do NaNs, also 20 lines up
+                #     Rmean_st = np.zeros((slowR_n,stack_nt))
+                #     Rmean_am = np.zeros((slowR_n,stack_nt))
+                # for it in range(stack_nt):  # add slice one point at a time
+                #     for slowR_i in range(slowR_n):  # loop over slownesses and time
+                #         num_val = Rcentral_st[slowR_i].data[it]
+                #         Rmean_st[slowR_i, it] += num_val
+                #         num_val = Rcentral_am[slowR_i].data[it]
+                #         Rmean_am[slowR_i, it] += num_val
 
                 #%% -- -- plot R tdiff
                 if no_tdiff_plot == False:
