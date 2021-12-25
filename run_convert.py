@@ -12,6 +12,10 @@ os.chdir('/Users/vidale/Documents/GitHub/Array_codes')
 #%% Import functions
 from pro0_convert_to_1_mseed import collect_mseed_files
 
+collect_mseed_files(dir_name = '200407252335/U')
+collect_mseed_files(dir_name = '200407252335/N')
+collect_mseed_files(dir_name = '200407252335/E')
+
 #collect_mseed_files(dir_name = '690228_0425')
 #collect_mseed_files(dir_name = '690308_1020')
 #collect_mseed_files(dir_name = '690617_1926')
