@@ -34,8 +34,8 @@ NZN_lat   = 73.393
 NZN_lon   = 54.929
 NZS_lat   = 70.80
 NZS_lon   = 53.96
-phase1 = 'P'
-phase2 = 'P'  # last leg before coming to array
+phase1 = 'PKiKP'
+phase2 = 'PKiKP'  # last leg before coming to array
 max_Pdiff_dist = 135
 depth = 0
 
