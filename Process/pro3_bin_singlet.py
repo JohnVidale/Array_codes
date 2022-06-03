@@ -7,9 +7,9 @@
 # plot lines are blue, orange, yellow, purple for phases 1 through 4
 # John Vidale 10/2021
 
-def pro3bin(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1, norm = 1,
-            max_taper_length = 5., simple_taper = 1, skip_SNR = True, SNR_thres = 0,
-            dphase = 'P', dphase2 = '', dphase3 = '', dphase4 = '',
+def pro3bin(eq_num, stat_corr = 1, corr_threshold = 0.5, rel_time = 1, norm = 1,
+            max_taper_length = 5., simple_taper = 1,
+            dphase = 'PKP', dphase2 = '', dphase3 = '', dphase4 = '',
             start_buff = -10, end_buff = 10,
             freq_min = 0.25, freq_max = 1, do_filt = 1, plot_scale_fac = 0.2,
             min_dist = 0, max_dist = 180, plot_auto_dist = True, do_decimate = 0,
@@ -32,11 +32,20 @@ def pro3bin(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1, norm = 1,
     from termcolor import colored
     model = TauPyModel(model='iasp91')
 
-    print(colored('Running pro3b_sort_plot_singlet', 'cyan'))
+    print(colored('Running pro3_bin_singlet', 'cyan'))
     start_time_wc = time.time()
     if ARRAY != 0:
         print(colored('Only runs on Hinet - ARRAY must be 0!', 'red'))
         exit()
+
+#%% -- Define grid of bins
+    lat_lo =  30  # rounds off lat_hi and lon_hi to a round increment of grid_delta
+    lat_hi =  46
+    lon_lo = 129
+    lon_hi = 146
+    grid_delta = 0.75    # mesh spacing, in °
+    min_trace_count = 2  # minimum traces to keep stack
+    use_sel = True       # use selected and static-corrected rather than unselected traces
 
 #%% -- Event info
     #  input event data with 1-line file of format
@@ -62,7 +71,7 @@ def pro3bin(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1, norm = 1,
     print('        date_label ' + date_label + ' time ' + str(t) + ' lat ' + str(ev_lat) + ' lon ' + str( ev_lon) + ' depth ' + str(ev_depth))
 
 #%% -- Station locations and statics
-    if stat_corr == 1:  # load static terms, only applies to Hinet, LASA, and China
+    if stat_corr == 1 and use_sel == False:  # load static terms, only applies to Hinet, LASA, and China
         if ARRAY == 0:
             if alt_statics == 0: # standard set
                 sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_statics_hinet.txt'
@@ -101,6 +110,10 @@ def pro3bin(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1, norm = 1,
                 st_corr.append(split_line[4]) # but really std dev
 
     else: # no static terms, always true for NORSAR
+        # if use_sel == True:
+        #     sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/bin_hinet.txt'
+        # elif ARRAY == 0: # Hinet set
+        #     sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_hinet.txt'
         if ARRAY == 0: # Hinet set
             sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_hinet.txt'
         elif ARRAY == 1: #         LASA set
@@ -139,7 +152,6 @@ def pro3bin(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1, norm = 1,
     taper_frac = .05      # Fraction of window tapered on both ends
     noise_win_max = 20    # maximum length of noise window for SNR estimation, seconds
 #    plot_scale_fac = 0.5    #  Bigger numbers make each trace amplitude bigger on plot
-#    SNR_thres      = 2 # minimum SNR
 #    corr_threshold = 0.7  # minimum correlation in measuring shift to use station
     plot_tt = 1           # plot the traveltimes?
     plot_auto_dist = 1    # plot just the traces, not potentially bigger dist_min to dist_max
@@ -151,8 +163,8 @@ def pro3bin(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1, norm = 1,
     # if ref_loc ==false, use distance to earthquake loc to filter stations
     #    ref_rad = 0.4    # ° radius (°) set by input or at top
     if ARRAY == 0:
-        ref_lat = 36  # °N, around middle of Japan
-        ref_lon = 139 # °E
+        ref_lat = 36.3  # °N, around middle of Japan
+        ref_lon = 138.5 # °E
     if ARRAY == 1:
         ref_lat = 46.7      # °N keep only inner rings A-D if radius is 0.4°
         ref_lon = -106.22   # °E
@@ -163,24 +175,18 @@ def pro3bin(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1, norm = 1,
 
 #%% -- Test taper, needs adjustment?
 #   Is taper too long compared to noise estimation window?
-    totalt = end_buff - start_buff
-    noise_time_skipped = taper_frac * totalt
-    noise_time_skipped = min(noise_time_skipped,10.0) # set max of 10s to taper length
-    if simple_taper == 0:
-        if noise_time_skipped >= -0.5 * start_buff:
-            print('        ' + 'Specified taper of ' + str(taper_frac * totalt) +
+    totalt = end_buff - start_buff                    # window duration
+    noise_time_skipped = taper_frac * totalt          # set ignored SNR interval to be taper
+    noise_time_skipped = min(noise_time_skipped,10.0) # cap ignored SNR interval at 10s
+    if simple_taper == 0:                             # lengthen taper_frac if too short
+        if noise_time_skipped >= 0.5 * (-start_buff):
+            print('Specified taper of ' + str(taper_frac * totalt) +
                ' is not big enough compared to available noise estimation window ' +
                str(-start_buff - noise_time_skipped) + '. May not work well.')
             old_taper_frac = taper_frac
             taper_frac = -0.5*start_buff/totalt
-            if start_buff > 0:
-                    taper_frac = 0.05 # pick random minimal window if there is no leader
-            print('        ' + 'Taper reset from ' + str(old_taper_frac * totalt) + ' to '
+            print('Taper reset from ' + str(old_taper_frac * totalt) + ' to '
                + str(taper_frac * totalt) + ' seconds.')
-
-    if rel_time == 0: # SNR requirement not implemented for unaligned traces
-        skip_SNR = True
-        SNR_thres = 0
 
 #%% Load waveforms
     st = Stream()
@@ -188,9 +194,14 @@ def pro3bin(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1, norm = 1,
     if ARRAY == 1:
         mseed_name = year_short_label + month_label + day_label + '_' + hour_label + minute_label
         fname     = '/Users/vidale/Documents/Research/IC/Mseed/L' + mseed_name + '.mseed'
-    else:
+    elif ARRAY == 0 and use_sel == False:
         mseed_name = year_short_label + '-' +month_label + '-' + day_label
         fname     = '/Users/vidale/Documents/Research/IC/Mseed/HD20' + mseed_name + '.mseed'
+    elif ARRAY == 0 and use_sel == True:
+        mseed_name = year_short_label + '-' +month_label + '-' + day_label
+        fname     = '/Users/vidale/Documents/Research/IC/Pro_Files/HD20' + mseed_name + 'sel.mseed'
+    else:
+        print('Not sure if pro3_bin_singlet is set up for ARRAY' + str(ARRAY))
 
     print('Reading seismogram file: ' + fname)
     st=read(fname)
@@ -217,12 +228,6 @@ def pro3bin(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1, norm = 1,
     st.taper(taper_frac, max_length = max_taper_length)
 
 #%% Make bins for stacking
-#%% -- Define grid of bins
-    lat_lo =  30  # rounds off lat_hi and lon_hi to a round increment of grid_delta
-    lat_hi =  46
-    lon_lo = 129
-    lon_hi = 146
-    grid_delta = 1 # mesh spacing, in °
     lat_n = int(round(1 + (lat_hi - lat_lo)/grid_delta))  # number of latitude nodes
     lon_n = int(round(1 + (lon_hi - lon_lo)/grid_delta))  # number of longitude nodes
     stack_nt = int(round(1 + ((end_buff - start_buff)/dt)))  # number of time points
@@ -235,8 +240,8 @@ def pro3bin(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1, norm = 1,
 
     # testing slownesses in indexing
     print(str(lat_n) + ' lats, ' + str(lon_n) + ' lons')
-    print('Lats 0' + ' ' + str(stack_lats[0]) + '   ' 'end' + ' ' + str(stack_lats[-1]))
-    print('Lons 1' + ' ' + str(stack_lons[0]) + '   ' 'end' + ' ' + str(stack_lons[-1]))
+    print('Lats' + ' ' + str(stack_lats[0]) + '   ' 'to' + ' ' + str(stack_lats[-1]))
+    print('Lons' + ' ' + str(stack_lons[0]) + '   ' 'to' + ' ' + str(stack_lons[-1]))
 
 #%% -- Template empty-bin seismogram
     stack = Stream()
@@ -290,8 +295,8 @@ def pro3bin(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1, norm = 1,
             tr.stats.starttime = tr.stats.starttime - 9*60*60
         if tr.stats.station in st_names:  # find station in station list
             ii = st_names.index(tr.stats.station)
-            if stat_corr == 1: # or use value from correlation file
-                corr = float(st_corr[ii])
+            if stat_corr == 1 and use_sel == False: # apply static corrections and threshold correlation coeff
+                corr = float(st_corr[ii])  #
             else:
                 corr = 1 # 1 says correlation is high
             if corr > corr_threshold: # if using statics, reject low correlations
@@ -300,13 +305,16 @@ def pro3bin(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1, norm = 1,
                     tr.normalize() # trace divided abs(max of trace)
 
     #%% -- -- Find bin index and its coordinates
-                stalat = float(st_lats[ii])
-                stalon = float(st_lons[ii])
-                dist_lat = (stalat - lat_lo)/float(grid_delta)
-                dist_lon = (stalon - lon_lo)/float(grid_delta)
-                index_lat = int(round(dist_lat))  # lat index
-                index_lon = int(round(dist_lon))  # lon index
-                index = int(round(index_lat*lon_n + index_lon)) # compute index of bin
+                stalat        = float(st_lats[ii])
+                stalon        = float(st_lons[ii])
+
+                dist_lat      = (stalat - lat_lo)/float(grid_delta)
+                dist_lon      = (stalon - lon_lo)/float(grid_delta)
+
+                index_lat     = int(round(dist_lat))  # lat index
+                index_lon     = int(round(dist_lon))  # lon index
+
+                index         = int(round(index_lat*lon_n + index_lon)) # compute index of bin
                 local_bin_lat = bin_lat[index]
                 local_bin_lon = bin_lon[index]
 
@@ -315,52 +323,48 @@ def pro3bin(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1, norm = 1,
                 sta_distance = gps2dist_azimuth(stalat       ,stalon       ,ev_lat,ev_lon)
                 ref_dist  = ref_distance[0]/(1000*111)
                 dist      = sta_distance[0]/(1000*111)
-                dist_minus = ref_dist - 0.5
-                dist_plus  = ref_dist + 0.5
 
-                arrivals_ref   = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree=ref_dist  ,phase_list=[dphase])
-                arrivals_minus = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree=dist_minus,phase_list=[dphase])
-                arrivals_plus  = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree=dist_plus ,phase_list=[dphase])
-                atime_ref = arrivals_ref[0].time  # phase arrival time at reference distance
-                ref_slow = arrivals_plus[0].time - arrivals_minus[0].time  # dt over 1 degree at ref distance
-
-    # distance = gps2dist_azimuth(stalat,stalon,ev_lat,ev_lon) # Get traveltimes again, hard to store
-    # tr.stats.distance=sta_distance[0] # distance in km
-    # dist = sta_distance[0]/(1000*111)
-
-                if(len(arrivals_ref) == 0 or len(arrivals_minus) == 0 or len(arrivals_plus) == 0):
-                    print('model.get_travel_times failed: dist, phase  ' + str(ref_dist) + '   ' + dphase)
+                # time and slowness for bin center
                 in_range = 0  # flag for whether this trace goes into stack
                 rejector = False  # flag in case model.get_travel_times fails
+                arrivals_ref   = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree=ref_dist  ,phase_list=[dphase])
+                if(len(arrivals_ref) == 0):
+                    rejector = True
+                    # print('model.get_travel_times failed: dist, phase  ' + str(ref_dist) + '   ' + dphase)
+                else:
+                    atime_rayp = arrivals_ref[0].ray_param    # get ray parameter
+                    ref_slow  = atime_rayp * 2 * np.pi / 360. # convert to s/°
+                    atime_ref = arrivals_ref[0].time  # phase arrival time at reference distance
 
     #%% -- -- Check whether in distance range or within distance circle
-                if ref_loc == False:  # check whether trace is in distance range from earthquake
-                    if min_dist < ref_dist and ref_dist < max_dist:
-                        in_range = 1
-                elif ref_loc == True:  # alternately, check whether trace is close enough to the ref_location
-                    ref_distance = gps2dist_azimuth(ref_lat,ref_lon,stalat,stalon)
-                    ref2_dist = ref_distance[0]/(1000*111)
-                    if ref2_dist < ref_rad:
-                        in_range = 1
+                    if ref_loc == False:  # check whether trace is in distance range from earthquake
+                        if min_dist < ref_dist and ref_dist < max_dist:
+                            in_range = 1
+                    elif ref_loc == True:  # alternately, check whether trace is close enough to the ref_location
+                        ref_distance = gps2dist_azimuth(ref_lat,ref_lon,stalat,stalon)
+                        ref2_dist = ref_distance[0]/(1000*111)
+                        if ref2_dist < ref_rad:
+                            in_range = 1
 
-                if in_range == 1:   # trace fulfills the specified criteria for being in range
+                if in_range == 1 and rejector == False:   # trace fulfills the specified criteria for being in range
                     tra_in_range += 1
                     s_t = t + start_buff
                     e_t = t + end_buff
 
 #%% -- Apply static
-                    if stat_corr == 1: # apply static station corrections
+                    if stat_corr == 1 and use_sel == False: # apply station static correction
                         tr.stats.starttime -= float(st_shift[ii])
 
 #%% -- Four rel_time options
                     if rel_time == 0:  #  use absolute time, ignore time of chosen phase
                         tr.trim(starttime=s_t,endtime = e_t)
-                    else:              # shift relative to a chosen phase
+                    else:              # shift to time relative to a chosen phase
                         # print(f'        dist_m is   {dist:.2f}   ev_depth is {ev_depth:.2f}   dphase is {dphase}')
+                        # arrival time for station
                         arrivals_each = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree=dist,phase_list=[dphase])
                         # print(f'        cal_time is   {arrivals_each[0].time:.2f}')
                         if(len(arrivals_each) == 0):
-                            if(dist < 10 and dphase == 'P'):  # in case first arrival is upgoing P, try 'p'
+                            if(dist < 10 and dphase == 'P'):  # in case first arrival is upgoing P and distance close, try 'p'
                                 arrivals_each = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree=dist,phase_list='p')
                         if(len(arrivals_each) == 0):  # did it still fail?
                             print('model.get_travel_times failed: dist, depth, phase  ' + tr.stats.station + '   ' + str(ref_dist) + '   ' +
@@ -368,8 +372,8 @@ def pro3bin(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1, norm = 1,
                             tra_in_range -= 1 # don't count this trace after all
                             rejector = True
                         else:
-                            # atime_each is phase arrival on this trace
-                            # atime_ref  is phase arrival on reference trace
+                            # atime_each is phase arrival time on this trace
+                            # atime_ref  is phase arrival time on reference trace
 
                             atime_each = arrivals_each[0].time
                             # start time has a shift proportional to ref_dist at phase slowness at ref_dist
@@ -380,7 +384,7 @@ def pro3bin(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1, norm = 1,
                                 e_t += atime_each
                                 tr.trim( starttime=s_t, endtime = e_t)
                                 tr.stats.starttime -= atime_each - (dist-ref_dist) * ref_slow
-                                # print('station ' + tr.stats.station + ' Start ' + str(s_t)  + ' End ' + str(e_t))
+                                # print('station ' + tr.stats.station + ' Start ' + str(s_t)  + ' End ' + str(e_t) + ' dist ' + str(dist) + ' ref_dist ' + str(ref_dist) + ' ref_slow ' + str(ref_slow))
                             # window time sets 0 at chosen phase only on reference trace
                             # keeps true slowness, but blurs arcuate slowness curves
                             # uniform relative window limits around phase
@@ -395,8 +399,11 @@ def pro3bin(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1, norm = 1,
                             elif rel_time == 3:
                                 s_t += atime_each
                                 e_t += atime_each
+                                # print(f'data length before {len(tr.data)} atime_each {atime_each}')
+                                # print(f's_t {s_t} e_t {e_t} trace start {tr.stats.starttime}')
                                 tr.trim( starttime=s_t, endtime = e_t)
                                 tr.stats.starttime -= atime_each
+                                # print(f'data length after {len(tr.data)}')
                             # window time sets 0 at chosen phase only on reference trace
                             # set phase to 0 slowness
                             # use same absolute window around chosen phase for all stations
@@ -427,6 +434,7 @@ def pro3bin(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1, norm = 1,
                             time_correction = ((t + start_buff) - tr.stats.starttime)/dt
                             it_in = int(round(it + time_correction))
 
+                            # add trace to stack
                             if it_in >= 0 and it_in < stack_nt - 1: # does data lie within seismogram?
                                 stack[index].data[it] += tr[it_in]
                             # stack[index].data[it] += tr[it]
@@ -436,11 +444,11 @@ def pro3bin(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1, norm = 1,
                         nodata += 1 # one could complicate this code to allow partial traces into stack
 
                     bin_count[index] += 1
-                    done2 += 1
-                    if done2 % 100 == 0:
-                        print('Done with ' + str(done2))
-                    # add trace to stack
-                    # print('stalat,lon ' + str(stalat) + ' ' + str(stalon) + ' index_lat,lon vector index ' + str(index_lat) + ' ' + str(index_lon) + ' ' + str(index))
+
+                done2 += 1
+                if done2 % 100 == 0:
+                    print('Done with ' + str(done2) + ', so far no data or incomplete data for ' + str(nodata) + ' traces')
+                # print('stalat,lon ' + str(stalat) + ' ' + str(stalon) + ' index_lat,lon vector index ' + str(index_lat) + ' ' + str(index_lon) + ' ' + str(index))
         else:
             print(tr.stats.station + ' not found in station list')
 #%% -- Reject if not in station (static) list
@@ -452,7 +460,7 @@ def pro3bin(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1, norm = 1,
 
     non_zero = 0
     for i in range(int(lat_n * lon_n)):
-        if bin_count[i] > 0:
+        if bin_count[i] > min_trace_count:
             non_zero += 1
             if bin_count[i] > 0:
                 stack[i].data /= float(bin_count[i])
@@ -576,11 +584,6 @@ def pro3bin(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1, norm = 1,
                         found_it = 1
                 if found_it == 0:
                     time_vec1[i] = np.nan
-            if   rel_time == 3 or rel_time == 4 or rel_time == 1:
-                time_vec1 = time_vec1 - time_vec1
-            elif rel_time == 2:
-                time_vec1 = time_vec1 - atime_ref
-            plt.plot(time_vec1,dist_vec, color = 'blue')
             # second traveltime curve
             if dphase2 != 'no':
                 time_vec2 = np.arange(min_dist_auto, max_dist_auto, (max_dist_auto - min_dist_auto)/line_pts) # empty time grid of same length (filled with -1000)
@@ -598,9 +601,11 @@ def pro3bin(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1, norm = 1,
                             found_it = 1
                     if found_it == 0:
                         time_vec2[i] = np.nan
-                if   rel_time == 3 or rel_time == 4 or rel_time == 1:
+                if   rel_time == 1:
+                    time_vec2 = time_vec2 - time_vec1 + (dist_vec - ref_dist) * ref_slow
+                if   rel_time == 3:
                     time_vec2 = time_vec2 - time_vec1
-                elif rel_time == 2:
+                elif rel_time == 2 or rel_time == 4:
                     time_vec2 = time_vec2 - atime_ref
                 plt.plot(time_vec2,dist_vec, color = 'orange')
             # third traveltime curve
@@ -620,9 +625,11 @@ def pro3bin(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1, norm = 1,
                             found_it = 1
                     if found_it == 0:
                         time_vec3[i] = np.nan
-                if   rel_time == 3 or rel_time == 4 or rel_time == 1:
+                if   rel_time == 1:
+                    time_vec3 = time_vec3 - time_vec1 + (dist_vec - ref_dist) * ref_slow
+                if   rel_time == 3:
                     time_vec3 = time_vec3 - time_vec1
-                elif rel_time == 2:
+                elif rel_time == 2 or rel_time == 4:
                     time_vec3 = time_vec3 - atime_ref
                 plt.plot(time_vec3,dist_vec, color = 'yellow')
             # fourth traveltime curve
@@ -642,11 +649,20 @@ def pro3bin(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1, norm = 1,
                             found_it = 1
                     if found_it == 0:
                         time_vec4[i] = np.nan
-                if   rel_time == 3 or rel_time == 4 or rel_time == 1:
+                if   rel_time == 1:
+                    time_vec4 = time_vec4 - time_vec1 + (dist_vec - ref_dist) * ref_slow
+                if   rel_time == 3:
                     time_vec4 = time_vec4 - time_vec1
-                elif rel_time == 2:
+                elif rel_time == 2 or rel_time == 4:
                     time_vec4 = time_vec4 - atime_ref
                 plt.plot(time_vec4,dist_vec, color = 'purple')
+            if   rel_time == 1:
+                time_vec1 = (dist_vec - ref_dist) * ref_slow
+            if   rel_time == 3:
+                time_vec1 = time_vec1 - time_vec1
+            elif rel_time == 2 or rel_time == 4:
+                time_vec1 = time_vec1 - atime_ref
+            plt.plot(time_vec1,dist_vec, color = 'black')
 
             plt.xlabel('Time (s)')
             plt.ylabel('Epicentral distance from event (°)')
@@ -763,13 +779,6 @@ def pro3bin(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1, norm = 1,
                         found_it = 1
                 if found_it == 0:
                     time_vec1[i] = np.nan
-            if   rel_time == 1:
-                time_vec1 = time_vec1 - time_vec1 + (dist_vec - ref_dist) * ref_slow
-            if   rel_time == 3:
-                time_vec1 = time_vec1 - time_vec1
-            elif rel_time == 2 or rel_time == 4:
-                time_vec1 = time_vec1 - atime_ref
-            plt.plot(time_vec1,dist_vec, color = 'blue')
             # second traveltime curve
             if dphase2 != 'no':
                 time_vec2 = np.arange(min_dist_auto, max_dist_auto, (max_dist_auto - min_dist_auto)/line_pts) # empty time grid of same length (filled with -1000)
@@ -842,6 +851,13 @@ def pro3bin(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1, norm = 1,
                 elif rel_time == 2 or rel_time == 4:
                     time_vec4 = time_vec4 - atime_ref
                 plt.plot(time_vec4,dist_vec, color = 'purple')
+            if   rel_time == 1:
+                time_vec1 = (dist_vec - ref_dist) * ref_slow
+            if   rel_time == 3:
+                time_vec1 = time_vec1 - time_vec1
+            elif rel_time == 2 or rel_time == 4:
+                time_vec1 = time_vec1 - atime_ref
+            plt.plot(time_vec1,dist_vec, color = 'blue')
 
             plt.xlabel('Time (s)')
             plt.ylabel('Epicentral distance from event (°)')

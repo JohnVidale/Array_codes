@@ -3,8 +3,8 @@
 
 def run_bin_one(start_buff = 980, end_buff = 1180, event_no = 1,
     start_beam_stack = 0, end_beam_stack = 0, start_buff_stack = 0, end_buff_stack = 0,
-    freq_min = 1, freq_max = 3, slow_delta = 0.0025,
-    min_dist = 0, max_dist = 180, dphase  = 'PKiKP', JST = False):
+    freq_min = 1, freq_max = 3, slow_delta = 0.0025, rel_time = 0,
+    min_dist = 148, max_dist = 154.5, dphase  = 'PKiKP'):
 
     import os
 
@@ -12,7 +12,7 @@ def run_bin_one(start_buff = 980, end_buff = 1180, event_no = 1,
     from pro2_dec                import pro2decimate
     from pro3_sort_plot_singlet  import pro3singlet
     from pro3_bin_singlet        import pro3bin
-    from pro4_get_shifts         import pro4statics
+    from pro4_get_shifts         import pro4_get_shifts
     from pro5_stack1d            import pro5stack1d
     from pro5_stack2d            import pro5stack2d
     from pro6_singlet            import pro6_singlet
@@ -24,6 +24,7 @@ def run_bin_one(start_buff = 980, end_buff = 1180, event_no = 1,
     os.chdir(ev_directory)
 
     ARRAY     = 0
+    JST = False
 
     ref_loc = False   # True select stations by distance from ref location, False select stations by distance from epicenter
     ref_rad = 10 # radius of stations around ref_loc chosen
@@ -40,10 +41,10 @@ def run_bin_one(start_buff = 980, end_buff = 1180, event_no = 1,
     # min_dist = 12
     # max_dist = 25
 
-    # dphase  = 'PKiKP'
-    dphase2 = 'P'
-    dphase3 = 'pPKiKP'
-    dphase4 = 'PKiKP'
+    dphase  = 'PKiKP'
+    dphase2 = 'pPKIKP'
+    dphase3 = 'PKIKP'
+    dphase4 = 'PKP'
 
     # decimate_fac = 5
     # decimate, in 100 sps, out 20 sps
@@ -52,8 +53,8 @@ def run_bin_one(start_buff = 980, end_buff = 1180, event_no = 1,
 
     # start_beam_align = 4  # times before pick are now normal, negative
     # end_beam_align   = 2
-    corr_threshold = 0.4
-    skip_SNR       = True
+    corr_threshold = 0.5
+    apply_SNR      = True
     SNR_thres      = 1.3
     simple_taper   = 1
     snaptime       = 0
@@ -76,14 +77,14 @@ def run_bin_one(start_buff = 980, end_buff = 1180, event_no = 1,
     plot_scale_fac = 0.3
     log_plot = 0
 
-    stat_corr = 1
+    stat_corr = 2  # apply static corrections
 
     slowR_lo_1D = -0.04
     slowR_hi_1D =  0.04
     slow_delta_1D = 0.0002
     dec_fac = 10
 
-    rel_time = 3   # phase alignment details
+    # rel_time = 1   # phase alignment details
     # rel_time == 0  no shift - window in absolute time after origin time
     # rel_time == 1  chosen arrival is flattened, then local slowness of chosen arrival is added back to moveout
     # rel_time == 2  each window has a distinct phase-chosen shift, but time offset is common to all stations
@@ -93,12 +94,10 @@ def run_bin_one(start_buff = 980, end_buff = 1180, event_no = 1,
 #%%  pro3singlet -- selects data
     pro3bin(ARRAY = ARRAY, stat_corr = stat_corr,
         eq_num = event_no, simple_taper = simple_taper, rel_time = rel_time,
-        start_buff = start_buff_stack, end_buff = end_buff_stack,
-        plot_scale_fac = plot_scale_fac, skip_SNR = skip_SNR,
+        start_buff = start_buff_stack, end_buff = end_buff_stack, plot_scale_fac = plot_scale_fac,
         dphase = dphase, dphase2 = dphase2, dphase3 = dphase3, dphase4 = dphase4,
         freq_min = freq_min, freq_max = freq_max,
-        min_dist = min_dist, max_dist = max_dist,
-        SNR_thres = SNR_thres, corr_threshold = corr_threshold,
+        min_dist = min_dist, max_dist = max_dist, corr_threshold = corr_threshold,
         ref_loc = ref_loc, ref_rad = ref_rad, JST = JST)
 
 #%%  pro5stack -- 1D stack mostly good for long time window surveys

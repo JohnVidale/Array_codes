@@ -8,12 +8,12 @@ def pro7_singlet(eq_num, slow_delta = 0.0005, turn_off_black = 0,
               start_buff = 50, end_buff = 50, fig_index = 401, do_T = False, do_R = False,
               ZslowR_lo = -0.1, ZslowR_hi = 0.1, ZslowT_lo = -0.1, ZslowT_hi = 0.1,
               Zstart_buff = 50, Zend_buff = 50, zoom = False, ref_phase = 'blank', min_amp = 0.2,
-              R_slow_plot = 0.01, T_slow_plot = 0.0,
+              R_slow_plot = 0.004, T_slow_plot = -0.00,
               snaptime = 0, snaps = 0, snap_depth = 1,
               nR_plots  = 1, nT_plots = 1, slow_incr = 0.01, NS = False,
               ARRAY = 0, auto_slice = True, two_slice_plots = True, beam_sums = 1,
-              wiggly_plots = False, start_beam = 0, end_beam = 0, log_plot = False,
-              log_plot_range = 2, wig_scale_fac = 1):
+              wiggly_plots = False, max_wiggly_plot = True, start_beam = 0, end_beam = 0, log_plot = False,
+              log_plot_range = 2, wig_scale_fac = 1, ref_loc = True, ref_lat = 0, ref_lon = 0):
 
     from obspy import read
     from obspy.taup import TauPyModel
@@ -33,6 +33,8 @@ def pro7_singlet(eq_num, slow_delta = 0.0005, turn_off_black = 0,
     start_time_wc = time.time()
 
     if zoom == True:
+        orig_start_buff = start_buff
+        orig_end_buff   = end_buff
         if Zstart_buff  < start_buff:
             print(f'Zstart_buff of {Zstart_buff:.1f} cannot be < start_buff of {start_buff:.1f}')
             Zstart_buff = start_buff
@@ -53,15 +55,16 @@ def pro7_singlet(eq_num, slow_delta = 0.0005, turn_off_black = 0,
     ev_depth    = float(      split_line[4])
     # date_label = '2018-04-02' # dates in filename
 
-    if ARRAY == 0:
-        ref_lat = 36.3  # °N, around middle of Japan
-        ref_lon = 138.5 # °E
-    elif ARRAY == 1:
-        ref_lat = 46.7  # °N keep only inner rings A-D
-        ref_lon = -106.22   # °E
-    elif ARRAY == 2: # China set and center
-        ref_lat = 38      # °N
-        ref_lon = 104.5   # °E
+    if ref_loc == False:
+        if ARRAY == 0: # Hinet set
+            ref_lat = 36.3
+            ref_lon = 138.5
+        elif ARRAY == 1:         # LASA set
+            ref_lat = 46.69
+            ref_lon = -106.22
+        elif ARRAY == 2: # China set and center
+            ref_lat = 38      # °N
+            ref_lon = 104.5   # °E
     ref_distance = gps2dist_azimuth(ref_lat, ref_lon, ev_lat, ev_lon)
     ref_dist     = ref_distance[0]/(1000*111)
     ref_az       = ref_distance[1]
@@ -73,10 +76,10 @@ def pro7_singlet(eq_num, slow_delta = 0.0005, turn_off_black = 0,
     arrival_time = arrivals_ref[0].time
     print(ref_phase + ' arrival time is ' + str(arrival_time) + ' at distance ' + str(ref_dist))
 
-    arrivals1 = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree=ref_dist-0.5,phase_list=[ref_phase])
-    arrivals2 = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree=ref_dist+0.5,phase_list=[ref_phase])
-    dtime = arrivals2[0].time - arrivals1[0].time
-    event_pred_slo  = dtime/111.  # s/km
+    atime_rayp = arrivals_ref[0].ray_param
+    # atime_ref  = arrivals_ref[0].time
+    event_pred_slo  = atime_rayp * 2 * np.pi / (360. * 111) # convert to s/°
+
     # convert to pred rslo and tslo
     if NS == True:     #  rotate predicted slowness to N and E
         print(f'Array  lat {ref_lat:.0f}, lon  {ref_lon:.0f}, Event lat {ev_lat:.0f}, lon {ev_lon:.0f}, az {ref_az:.0f}, baz {ref_back_az:.0f}')
@@ -84,17 +87,19 @@ def pro7_singlet(eq_num, slow_delta = 0.0005, turn_off_black = 0,
         cos_baz = np.cos(ref_az * np.pi /180)
         pred_Nslo = event_pred_slo * cos_baz
         pred_Eslo = event_pred_slo * sin_baz
+        print(f'pred slowness is {pred_Nslo:.3f} N and {pred_Eslo:.3f} E')
     else:
         pred_Nslo = event_pred_slo
         pred_Eslo = 0
+        print(f'pred slowness is {pred_Nslo:.3f} R and {pred_Eslo:.3f} T')
 
     name_str = folder_name + 'Pro_files/HD' + date_label + '_'
     fname  = name_str + 'amp_ave.mseed'
     amp_ave = Stream()
     amp_ave = read(fname)
 
-    dt     = amp_ave[0].stats.delta
-    nt     = len(amp_ave[  0].data)
+    dt     =     amp_ave[0].stats.delta
+    nt     = len(amp_ave[0].data)
     nt_amp = len(amp_ave[0].data)
     print(f'amp_ave data length is {nt_amp} time pts, dt is {dt:.2f}, so record length is {dt * nt   :.0f} seconds')
     print(f'slowness grid has {len(amp_ave)} elements')
@@ -114,7 +119,7 @@ def pro7_singlet(eq_num, slow_delta = 0.0005, turn_off_black = 0,
     #%% Select subset if Zoomed
     if zoom == True:
         Zamp_ave = Stream()
-        print(f'before calculation, amp_ave[0] has length {len(amp_ave[0])}')
+        print(f'before trim, amp_ave[0] has length {len(amp_ave[0])}')
         for slowR_i in range(slowR_n):  # loop over radial slownesses
             for slowT_i in range(slowT_n):  # loop over transverse slownesses, kludge to evade rounding error
                 if ((stack_Rslows[slowR_i] >= ZslowR_lo - 0.000001) and (stack_Rslows[slowR_i] <= ZslowR_hi + 0.000001) and
@@ -128,9 +133,9 @@ def pro7_singlet(eq_num, slow_delta = 0.0005, turn_off_black = 0,
         nt = len(amp_ave[0].data)
         start_buff = Zstart_buff
         # make time series
-        print(f'after calculation, amp_ave[0] has length {len(amp_ave[0])}')
-        print(f'slowR_lo  is {slowR_lo}  and slowR_hi  is {slowR_hi}  and slowT_lo  is {slowT_lo}  and slowT_hi is {slowT_hi}')
-        print(f'ZslowR_lo is {ZslowR_lo} and ZslowR_hi is {ZslowR_hi} and ZslowT_lo is {ZslowT_lo} and ZslowT_hi is {ZslowT_hi}')
+        print(f'after trim, amp_ave[0] has length {len(amp_ave[0])}')
+        print(f'input slowR_lo  is {slowR_lo}  and slowR_hi  is {slowR_hi}  and slowT_lo  is {slowT_lo}  and slowT_hi is {slowT_hi}')
+        print(f'trimmed ZslowR_lo is {ZslowR_lo} and ZslowR_hi is {ZslowR_hi} and ZslowT_lo is {ZslowT_lo} and ZslowT_hi is {ZslowT_hi}')
 
         #%% -- Re-make finer grid of slownesses
         slowR_lo   = ZslowR_lo
@@ -160,7 +165,7 @@ def pro7_singlet(eq_num, slow_delta = 0.0005, turn_off_black = 0,
         if local_max > global_max:
             global_max = local_max
 
-    #%% Mask out weak and/or less correlated points
+    #%% Mask out weak and/or less correlated slowness points
     amp_ave_thres = amp_ave.copy()  # copy amp envelope array, set amps and tdiff below thresholds to NaN using global_max
     nt = len(amp_ave[0].data)
     for slow_i in range(len(amp_ave)): # don't plot less robust points
@@ -216,6 +221,7 @@ def pro7_singlet(eq_num, slow_delta = 0.0005, turn_off_black = 0,
                 y, x = np.mgrid[slice(stack_Rslows[0], stack_Rslows[-1] + slow_delta, slow_delta),
                              slice(ttt[0], ttt[-1] + dt, dt)]
 
+                fig_index += 1
                 fig, ax = plt.subplots(1, figsize=(10,3), num = fig_index)
                 if log_plot == True:
                     c = ax.pcolormesh(x, y, stack_arrayR_Amp - global_max, cmap=plt.cm.gist_rainbow_r, vmin= - log_plot_range, vmax=0)
@@ -236,7 +242,6 @@ def pro7_singlet(eq_num, slow_delta = 0.0005, turn_off_black = 0,
                     plt.ylabel('Radial Slowness (s/km)')
                     plt.title(f'Amp at {target_slow:.3f} s/km T slowness, {fname[48:58]} #{eq_num}')
                 plt.show()
-                fig_index += 1
 
         #%% -- T slices
         if do_T == True:  # remember plots scanning T are those at constant R
@@ -272,6 +277,7 @@ def pro7_singlet(eq_num, slow_delta = 0.0005, turn_off_black = 0,
                 y, x = np.mgrid[slice(stack_Tslows[0], stack_Tslows[-1] + slow_delta, slow_delta),
                              slice(ttt[0], ttt[-1] + dt, dt)]
 
+                fig_index += 1
                 fig, ax = plt.subplots(1, figsize=(10,3), num = fig_index)
                 if log_plot == True:
                     c = ax.pcolormesh(x, y, stack_arrayT_Amp - global_max, cmap=plt.cm.gist_rainbow_r, vmin= - log_plot_range, vmax=0)
@@ -292,7 +298,6 @@ def pro7_singlet(eq_num, slow_delta = 0.0005, turn_off_black = 0,
                     plt.ylabel('Transverse Slowness (s/km)')
                     plt.title(f'Amp at {target_slow:.3f} s/km R slowness, {fname[48:58]} #{eq_num}')
                 plt.show()
-                fig_index += 1
 
     #%% 2-slices-plus-snaps option
     if two_slice_plots == True:
@@ -338,29 +343,36 @@ def pro7_singlet(eq_num, slow_delta = 0.0005, turn_off_black = 0,
                 else:
                     stack_array[slowR_i, it] = num_val
 
-        y, x = np.mgrid[slice(stack_Rslows[0], stack_Rslows[-1] + slow_delta, slow_delta),
-                     slice(ttt[0], ttt[-1] + dt, dt)]
+        y, x = np.meshgrid(stack_Rslows,ttt)
+        # if x.shape[1] != len(ttt):  # does array come out too long in time steps?
+        #     y, x = np.mgrid[slice(stack_Rslows[0], stack_Rslows[-1] + slow_delta, slow_delta),
+        #                  slice(ttt[0], ttt[-1] + (dt/1.5), dt)]
 
+        fig_index += 1
         fig, ax = plt.subplots(1, figsize=(10,3), num = fig_index)
         print(f'len(x) is {len(x)} and len(y) is {len(y)}')
+        print(f'x1 is {x.shape[0]} and x2 is {x.shape[1]}')
         print(f'len(stack_Rslows) is {len(stack_Rslows)} and len(ttt) is {len(ttt)}')
         print(f'slowR_n is {slowR_n} and stack_nt is {stack_nt}')
         if log_plot == True:
-            c = ax.pcolormesh(x, y, stack_array, cmap=plt.cm.gist_rainbow_r, vmin = -log_plot_range, vmax=0)
+            c = ax.pcolormesh(x, y, np.transpose(stack_array), cmap=plt.cm.gist_rainbow_r, vmin = -log_plot_range, vmax=0)
             fig.colorbar(c, ax=ax, label='log amplitude')
         else:
-            c = ax.pcolormesh(x, y, stack_array, cmap=plt.cm.gist_rainbow_r, vmin=0)
+            c = ax.pcolormesh(x, y, np.transpose(stack_array), cmap=plt.cm.gist_rainbow_r, vmin=0)
             fig.colorbar(c, ax=ax, label='Linear amplitude')
         fig.subplots_adjust(bottom=0.2)
         ax.axis([x.min(), x.max(), y.min(), y.max()])
         c = ax.scatter(arrival_time, event_pred_slo, color='black'  , s=50, alpha=0.75)
         plt.xlabel('Time (s)')
-        plt.ylabel('Radial slowness (s/km)')
-        plt.title('Amp at ' + str(T_slow_plot) + ' s/km transverse slowness, ' + date_label + ' #' + str(eq_num))
+        if NS == True:
+            plt.ylabel('North Slowness (s/km)')
+            plt.title('Amp at ' + str(T_slow_plot) + ' s/km East slowness, ' + date_label + ' #' + str(eq_num))
+        else:
+            plt.ylabel('Radial slowness (s/km)')
+            plt.title('Amp at ' + str(T_slow_plot) + ' s/km transverse slowness, ' + date_label + ' #' + str(eq_num))
         plt.show()
 
         #%% -- -- Transverse slice plot
-        fig_index += 1
 
         stack_array = np.zeros((slowT_n,stack_nt))
 
@@ -372,26 +384,29 @@ def pro7_singlet(eq_num, slow_delta = 0.0005, turn_off_black = 0,
                 else:
                     stack_array[slowT_i, it] = num_val
 
-        y, x = np.mgrid[slice(stack_Tslows[0], stack_Tslows[-1] + slow_delta, slow_delta),
-                     slice(ttt[0], ttt[-1] + dt, dt)]
+        y, x = np.meshgrid(stack_Tslows,ttt)
 
+        fig_index += 1
         fig, ax = plt.subplots(1, figsize=(10,3), num = fig_index)
         if log_plot == True:
-            c = ax.pcolormesh(x, y, stack_array, cmap=plt.cm.gist_rainbow_r, vmin = -log_plot_range, vmax=0)
+            c = ax.pcolormesh(x, y, np.transpose(stack_array), cmap=plt.cm.gist_rainbow_r, vmin = -log_plot_range, vmax=0)
             fig.colorbar(c, ax=ax, label='log amplitude')
         else:
-            c = ax.pcolormesh(x, y, stack_array, cmap=plt.cm.gist_rainbow_r, vmin=0)
+            c = ax.pcolormesh(x, y, np.transpose(stack_array), cmap=plt.cm.gist_rainbow_r, vmin=0)
             fig.colorbar(c, ax=ax, label='Linear amplitude')
         fig.subplots_adjust(bottom=0.2)
         ax.axis([x.min(), x.max(), y.min(), y.max()])
         c = ax.scatter(arrival_time, 0, color='black'  , s=50, alpha=0.75)
         plt.xlabel('Time (s)')
-        plt.ylabel('Transverse slowness (s/km)')
-        plt.title('Amp at ' + str(R_slow_plot) + ' s/km radial slowness, ' + date_label + ' #' + str(eq_num))
+        if NS == True:
+            plt.ylabel('East Slowness (s/km)')
+            plt.title('Amp at ' + str(R_slow_plot) + ' s/km North slowness, ' + date_label + ' #' + str(eq_num))
+        else:
+            plt.ylabel('Transverse slowness (s/km)')
+            plt.title('Amp at ' + str(R_slow_plot) + ' s/km radial slowness, ' + date_label + ' #' + str(eq_num))
         plt.show()
 
         #%% -- Snap plots
-        fig_index += 1
         stack_slice = np.zeros((slowR_n,slowT_n))
         if snaps > 0 :
             # check for impossible parameters
@@ -406,7 +421,6 @@ def pro7_singlet(eq_num, slow_delta = 0.0005, turn_off_black = 0,
             for snap_num in range(snaps):
                 snap_start = snaptime + (snap_num  ) * snap_depth
                 snap_end   = snaptime + (snap_num+1) * snap_depth
-                fig_index += 1
                 it_start = int(round((snap_start - start_buff)/dt))
                 it_end   = int(round((snap_end   - start_buff)/dt))
                 print(f'snap start {snap_start:.1f} snap end {snap_end:.1f} it start {it_start:.1f} it end {it_end:.1f} snap num {snap_num:.1f} start buff {start_buff:.1f}')
@@ -419,6 +433,7 @@ def pro7_singlet(eq_num, slow_delta = 0.0005, turn_off_black = 0,
                 y1, x1 = np.mgrid[slice(stack_Rslows[0], stack_Rslows[-1] + slow_delta, slow_delta),
                              slice(stack_Tslows[0], stack_Tslows[-1] + slow_delta, slow_delta)]
 
+                fig_index += 1
                 fig, ax = plt.subplots(1, figsize=(7,0.8*7), num = fig_index)
                 c = ax.pcolormesh(x1, y1, stack_slice, cmap=plt.cm.gist_rainbow_r)
                 ax.axis([x1.min(), x1.max(), y1.min(), y1.max()])
@@ -426,7 +441,7 @@ def pro7_singlet(eq_num, slow_delta = 0.0005, turn_off_black = 0,
                     fig.colorbar(c, ax=ax, label = 'log amp')
                 else:
                     fig.colorbar(c, ax=ax, label = 'linear amp')
-                c = ax.scatter(pred_Eslo, pred_Nslo, color='black'  , s=50, alpha=0.75)
+                c = ax.scatter(pred_Eslo, pred_Nslo, color='purple'  , s=50, alpha=0.75)
                 c = ax.scatter(        0,         0, color='black' , s=50,  alpha=0.75)
                 circle1 = plt.Circle((0, 0), 0.019, color='black', fill=False)
                 ax.add_artist(circle1)  # inner core limit
@@ -441,8 +456,78 @@ def pro7_singlet(eq_num, slow_delta = 0.0005, turn_off_black = 0,
                     plt.ylabel('R Slowness (s/km)')
                 plt.show()
 
+    #%% Beam sum plots
+    if beam_sums == True or max_wiggly_plot == True:
+    #%% -- R-T amplitude averaged over time window
+        stack_slice = np.zeros((slowR_n,slowT_n))
+        if start_beam == 0 and end_beam == 0: # entire volume is summed
+            full_beam = 1
+        else:  # beam just part of stack volume
+            full_beam = 0
+            start_index = int((start_beam - start_buff) / dt)
+            end_index   = int((end_beam   - start_buff) / dt)
+            print('beam is ' + str(start_beam) + ' to ' + str(end_beam) + 's, out of ' + str(start_buff)
+                + ' to ' + str(end_buff) + 's, dt is ' + str(dt)  + 's, and indices are '+ str(start_index) + ' ' + str(end_index))
+            print(f'Beam is {start_beam:.4f} to {end_beam:.4f}s, out of {start_buff:.4f} to {end_buff:.4f}s, dt is {dt:.4f}s, and indices are {start_index} {end_index}')
+
+        for slowR_i in range(slowR_n):  # loop over radial slownesses
+            for slowT_i in range(slowT_n):  # loop over transverse slownesses
+                index = slowR_i*slowT_n + slowT_i
+                if full_beam == 1:
+                    num_val = np.nanmean(amp_ave[index].data)
+                else:
+                    num_val = np.nanmean(amp_ave[index].data[start_index:end_index])
+                stack_slice[slowR_i, slowT_i] = num_val
+
+        y1, x1 = np.meshgrid(stack_Rslows,stack_Tslows)
+
+        # y1, x1 = np.mgrid[slice(stack_Rslows[0], stack_Rslows[-1] + slow_delta, slow_delta),
+        #              slice(stack_Tslows[0], stack_Tslows[-1] + slow_delta, slow_delta)]
+
+        fig_index += 1
+        fig, ax = plt.subplots(1, figsize=(7,0.8*7*(slowR_n/slowT_n)), num = fig_index)
+        smax = np.max(stack_slice)
+        smin = np.min(stack_slice)
+
+        max_xy = np.where(stack_slice == stack_slice.max() ) # find indices of slowness with max amplitude, needed for max_wiggle_plot
+        print('Beam max - (x,y):' + str(max_xy[0]) + '  ' + str(max_xy[1]) + ' out of nR, nT slownesses ' + str(slowR_n) + '  ' + str(slowR_n))
+        Rslow_max = int(max_xy[0]) * slow_delta + slowR_lo
+        Tslow_max = int(max_xy[1]) * slow_delta + slowT_lo
+
+        if log_plot == True:
+            if (smax - smin) < log_plot_range:  # use full color scale even if range is less than specified
+                log_plot_range = smax - smin
+            c = ax.pcolormesh(x1, y1, np.transpose(stack_slice - smax), cmap=plt.cm.gist_rainbow_r, vmin= - log_plot_range, vmax=0)
+        else:
+            c = ax.pcolormesh(x1, y1, np.transpose(stack_slice/smax), cmap=plt.cm.gist_rainbow_r, vmin = 0)
+        if log_plot == True:
+            fig.colorbar(c, ax=ax, label='log amplitude')
+        else:
+            fig.colorbar(c, ax=ax, label='linear amplitude')
+        ax.axis([x1.min(), x1.max(), y1.min(), y1.max()])
+        circle1 = plt.Circle((0, 0), 0.019, color='black', fill=False)
+        ax.add_artist(circle1)  #inner core limit
+        circle2 = plt.Circle((0, 0), 0.040, color='black', fill=False)
+        ax.add_artist(circle2)  #outer core limit
+
+        c = ax.scatter(pred_Eslo, pred_Nslo, color='purple' , s=50, alpha=1) # predicted slowness
+        c = ax.scatter(Tslow_max, Rslow_max, color='white' , s=30, alpha=1)  # max amp observed
+        c = ax.scatter(        0,         0, color='black' , s=50, alpha=1)  # (0,0)
+
+        if NS == True:
+            plt.xlabel('East Slowness (s/km)')
+            plt.ylabel('North Slowness (s/km)')
+        else:
+            plt.xlabel('Transverse Slowness (s/km)')
+            plt.ylabel('Radial Slowness (s/km)')
+        plt.title(f'{date_label} {ref_phase} {start_buff:.1f} to {end_buff:.1f} beam amp #{eq_num}')
+        os.chdir('/Users/vidale/Documents/Research/IC/Plots_hold')
+        # plt.savefig(date_label + '_' + str(start_buff) + '_' + str(end_buff) + '_beam.png')
+        plt.savefig(f'{eq_num:02}_{date_label}_{start_buff:.0f}-{end_buff:.0f}_beam')
+        plt.show()
+
     #%% Wiggly plots
-    if wiggly_plots == True:
+    if wiggly_plots == True or max_wiggly_plot == True:
 
         #%% -- read wiggle beams
         # Get saved event info, also used to name files
@@ -463,12 +548,12 @@ def pro7_singlet(eq_num, slow_delta = 0.0005, turn_off_black = 0,
 
         print(f'{slowT_n} T slownesses, index {lowest_Tindex} is closest to requested plot T slowness {T_slow_plot:.4f}, slowness diff there is {lowest_Tslow:.4f} and slowness is {stack_Tslows[lowest_Tindex]:.4f}')
         # Select only stacks with that slowness for radial plot
-        centralR_st = Stream()
+        centralR_st    = Stream()
         centralR_amp   = Stream()
         for slowR_i in range(slowR_n):
             ii = slowR_i*slowT_n + lowest_Tindex
-            centralR_st += st[ii]
-            centralR_amp   += amp_ave[ii]
+            centralR_st  += st[ii]
+            centralR_amp += amp_ave[ii]
 
         #%% -- -- Collect R slowness nearest R_slow
         lowest_Rslow = 1000000
@@ -489,6 +574,7 @@ def pro7_singlet(eq_num, slow_delta = 0.0005, turn_off_black = 0,
             centralT_amp   += amp_ave[ii]
 
     #%% -- Plot wiggles
+    if wiggly_plots == True:
         #%% -- -- R amp and tdiff vs time plots with black line for time shift
         scale_plot_wig = wig_scale_fac / (200 * global_max)
         if log_plot == True:
@@ -509,10 +595,10 @@ def pro7_singlet(eq_num, slow_delta = 0.0005, turn_off_black = 0,
         plt.xlabel('Time (s)')
         if NS == True:
             plt.ylabel('N Slowness (s/km)')
-            plt.title(' seismograms and tdiff at ' + str(T_slow_plot) + ' E slowness, green is event1, red is event2' + ' #' + str(eq_num))
+            plt.title(ref_phase + '  ' + date_label + '  ' + ' seismograms ' + str(T_slow_plot) + ' E slowness' + ' #' + str(eq_num))
         else:
             plt.ylabel('R Slowness (s/km)')
-            plt.title(' seismograms and tdiff at ' + str(T_slow_plot) + ' T slowness, green is event1, red is event2' + ' #' + str(eq_num))
+            plt.title(ref_phase + '  ' + date_label + '  ' + ' seismograms ' + str(T_slow_plot) + ' T slowness' + ' #' + str(eq_num))
         #%% -- -- T amp and tdiff vs time plots with black line for time shift
         fig_tit = str(eq_num) + '_Tamp'
         plt.figure(fig_tit,figsize=(30,10))
@@ -529,72 +615,45 @@ def pro7_singlet(eq_num, slow_delta = 0.0005, turn_off_black = 0,
         plt.xlabel('Time (s)')
         if NS == True:
             plt.ylabel('E Slowness (s/km)')
-            plt.title(date_label + '  ' + ' seismograms ' + str(R_slow_plot) + ' N slowness' + ' #' + str(eq_num))
+            plt.title(ref_phase + '  ' + date_label + '  ' + ' seismograms ' + str(R_slow_plot) + ' N slowness' + ' #' + str(eq_num))
         else:
             plt.ylabel('T Slowness (s/km)')
-            plt.title(date_label + '  ' + ' seismograms ' + str(R_slow_plot) + ' R slowness' + ' #' + str(eq_num))
+            plt.title(ref_phase + '  ' + date_label + '  ' + ' seismograms ' + str(R_slow_plot) + ' R slowness' + ' #' + str(eq_num))
         os.chdir('/Users/vidale/Documents/Research/IC/Plots_hold')
     #    plt.savefig(date_label1 + '_' + str(start_buff) + '_' + str(end_buff) + '_stack.png')
 
-    #%% Beam sum plots
-    if beam_sums == True:
-    #%% -- R-T amplitude averaged over time window
-        stack_slice = np.zeros((slowR_n,slowT_n))
-        if start_beam == 0 and end_beam == 0:
-            full_beam = 1
-        else:  # beam just part of stack volume
-            full_beam = 0
-            start_index = int((start_beam - start_buff) / dt)
-            end_index   = int((end_beam   - start_buff) / dt)
-            print('beam is ' + str(start_beam) + ' to ' + str(end_beam) + 's, out of ' + str(start_buff)
-                + ' to ' + str(end_buff) + 's, dt is ' + str(dt)  + 's, and indices are '+ str(start_index) + ' ' + str(end_index))
-            print(f'Beam is {start_beam:.4f} to {end_beam:.4f}s, out of {start_buff:.4f} to {end_buff:.4f}s, dt is {dt:.4f}s, and indices are {start_index} {end_index}')
+    #%% Wiggly plot at max amplitude
+    if max_wiggly_plot == True:
+        # have already read wiggle beams
+        # if beam_sums == False or wiggly_plots == False:
+        #     print(colored('Need beam_sums and wiggly_plots True to make max_wiggly_plot', 'magenta'))
+        # else:
+        #%% -- Select stack at max amp
+        max_trace = Stream()
+        # iii = 84*slowT_n + 81
+        iii = int(max_xy[0])*slowT_n + int(max_xy[1])
+        max_trace = st[iii]
 
-        for slowR_i in range(slowR_n):  # loop over radial slownesses
-            for slowT_i in range(slowT_n):  # loop over transverse slownesses
-                index = slowR_i*slowT_n + slowT_i
-                if full_beam == 1:
-                    num_val = np.nanmean(amp_ave[index].data)
-                else:
-                    num_val = np.nanmean(amp_ave[index].data[start_index:end_index])
-                stack_slice[slowR_i, slowT_i] = num_val
-
-        y1, x1 = np.mgrid[slice(stack_Rslows[0], stack_Rslows[-1] + slow_delta, slow_delta),
-                     slice(stack_Tslows[0], stack_Tslows[-1] + slow_delta, slow_delta)]
-
-        fig, ax = plt.subplots(1, figsize=(7,0.8*7*(slowR_n/slowT_n)), num = fig_index)
-        smax = np.max(stack_slice)
-        smin = np.min(stack_slice)
+        max_trace.data /= max(abs(max_trace.data))
         if log_plot == True:
-            if (smax - smin) < log_plot_range:  # use full color scale even if range is less than specified
-                log_plot_range = smax - smin
-            c = ax.pcolormesh(x1, y1, stack_slice - smax, cmap=plt.cm.gist_rainbow_r, vmin= - log_plot_range, vmax=0)
-        else:
-            c = ax.pcolormesh(x1, y1, stack_slice/smax, cmap=plt.cm.gist_rainbow_r, vmin = 0)
-        if log_plot == True:
-            fig.colorbar(c, ax=ax, label='log amplitude')
-        else:
-            fig.colorbar(c, ax=ax, label='linear amplitude')
-        ax.axis([x1.min(), x1.max(), y1.min(), y1.max()])
-        circle1 = plt.Circle((0, 0), 0.019, color='black', fill=False)
-        ax.add_artist(circle1)  #inner core limit
-        circle2 = plt.Circle((0, 0), 0.040, color='black', fill=False)
-        ax.add_artist(circle2)  #outer core limit
+            scale_plot_wig /= 30  # not quite sure why this renormalization works
+        # fig_tit = str(eq_num) + '_maxamp'
+        fig_index += 1
+        plt.figure(figsize=(10,5), num = fig_index)
+        plt.xlim(orig_start_buff,orig_end_buff)
+        plt.ylim(-1, 1)
+        ttt = (np.arange(len(max_trace)) * centralR_st[0].stats.delta
+          + (centralR_st[0].stats.starttime - t))
+        print('Length of ttt and max_trace:  ' + str(len(ttt)) + '  ' +  str(len(max_trace)))
+        plt.plot(ttt, max_trace, color = 'black')
 
-        c = ax.scatter(pred_Eslo, pred_Nslo, color='black' , s=50, alpha=0.75)
-        c = ax.scatter(        0,         0, color='black' , s=50, alpha=0.75)
+        plt.xlabel('Time (s)')
+        plt.ylabel('Amplitude')
 
-        if NS == True:
-            plt.xlabel('East Slowness (s/km)')
-            plt.ylabel('North Slowness (s/km)')
-        else:
-            plt.xlabel('Transverse Slowness (s/km)')
-            plt.ylabel('Radial Slowness (s/km)')
-        plt.title(f'{date_label} {ref_phase} {start_buff:.1f} to {end_buff:.1f} beam amp #{eq_num}')
+        plt.title(f'{ref_phase} {date_label}  max amp stack in event {eq_num}  Rslow  {Rslow_max:.4f}  Tslow {Tslow_max:.4f}')
+        # plt.title(date_label + '  ' + ' max amp stack in event ' + str(eq_num) + ' Rslow ' + str(Rslow) + ' Tslow ' + str(Tslow))
         os.chdir('/Users/vidale/Documents/Research/IC/Plots_hold')
-        # plt.savefig(date_label + '_' + str(start_buff) + '_' + str(end_buff) + '_beam.png')
-        plt.savefig(f'{eq_num:02}_{date_label}_{start_buff:.0f}-{end_buff:.0f}_beam')
-        plt.show()
+    #    plt.savefig(date_label1 + '_' + str(start_buff) + '_' + str(end_buff) + '_stack.png')
 
     #  Save processed files
 #    fname = 'HD' + date_label + '_slice.mseed'

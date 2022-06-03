@@ -1,6 +1,6 @@
 #!/usr/bin/env python
-# Read in 2D stacks for two events
-# Compute and save tdiff, cc, ave_amp
+# Read in 2D stack for an events
+# Compute and save ave_amp
 # John Vidale 1/2021
 
 def pro6_singlet(eq_num, slow_delta = 0.0005,
@@ -74,7 +74,7 @@ def pro6_singlet(eq_num, slow_delta = 0.0005,
     print(f'{slowR_n} radial slownesses, low {slowR_lo:.4f} high {slowR_hi:.4f}')
     print(f'{slowT_n} transv slownesses, low {slowT_lo:.4f} high {slowT_hi:.4f}  total slows: {total_slows}')
 
-#%% Find envelope and tshift
+#%% Find envelope
     for slow_i in range(total_slows):
 
         if slow_i % 1000 == 0:

@@ -5,13 +5,12 @@
 # outputs selected traces, "*sel.mseed"
 # John Vidale 2/2019
 
-def pro3pair(eq_num1, eq_num2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
-            dphase = 'PKIKP', dphase2 = 'PKiKP', dphase3 = 'PKIKP', dphase4 = 'PKiKP',
-            rel_time = 1, start_buff = -200, end_buff = 500,
-            plot_scale_fac = 0.05, qual_threshold = 0, corr_threshold = 0.5,
-            freq_min = 1, freq_max = 3, min_dist = 0, max_dist = 180, auto_dist = True,
-            alt_statics = 0, statics_file = 'nothing', ARRAY = 0,
-            ref_loc = False, ref_rad = 0.4,
+def pro3pair(eq_num1, eq_num2, stat_corr = 1, simple_taper = 0, apply_SNR = False, SNR_thres = 1.7,
+            dphase = 'PKP', dphase2 = 'PKiKP', dphase3 = 'PKIKP', dphase4 = 'pPKP',
+            rel_time = 1, start_buff = -200, end_buff = 500, precursor_shift = 0, signal_dur = 0,
+            plot_scale_fac = 0.05, corr_threshold = 0, off_center_shift = 0,
+            freq_min = 1, freq_max = 3, min_dist = 0, max_dist = 180, auto_dist = True, ARRAY = 0,
+            ref_loc = False, ref_rad = 0.4, JST = False,
             max_taper_length = 5., no_plots = False, taper_frac = 0.05):
 
 
@@ -39,11 +38,14 @@ def pro3pair(eq_num1, eq_num2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
 
 #%%  Set some parameters
     verbose = 0           # more output
-#    rel_time = 1          # timing is relative to a chosen phase, otherwise relative to OT
-    # taper_frac = 0.05      # Fraction of window tapered on both ends
-    signal_dur = 5.       # signal length used in SNR calculation
+    # rel_time   = 1      # timing is relative to a chosen phase, otherwise relative to OT
+    # taper_frac = 0.05   # Fraction of window tapered on both ends
+    noise_win_max = 10    # maximum length of noise window for SNR estimation, seconds
+    # signal_dur = 5.       # signal length used in SNR calculation
+    # precursor_shift = 3.  # shift in case SNR is used and signal starts before computed arrival time
     plot_tt = 1           # plot the traveltimes?
-    do_decimate = 0         # 0 if no decimation desired
+    do_decimate = False   # 0 if no decimation desired
+    dec_factor = 10
     # if ref_loc ==true,  use ref_rad        to filter station distance
     # if ref_loc ==false, use earthquake loc to filter station distance
     #    ref_rad = 0.4    # ° radius (°) set by input or at top
@@ -58,13 +60,8 @@ def pro3pair(eq_num1, eq_num2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
         ref_lon = 104.5   # °E
 
     if rel_time == 0: # SNR requirement not implemented for unaligned traces
-        qual_threshold = 0
+        SNR_thres = 0
 
-    # Plot with reduced velocity?
-    red_plot = 0
-    red_dist = 55
-    red_time = 300
-    red_slow = 7.2 # seconds per degree
 #%% Get saved event info, also used to name files
     #  event 2016-05-28T09:47:00.000 -56.241 -26.935 78
     print('Opening locations for events ' + str(eq_num1) + ' and ' + str(eq_num2))
@@ -79,8 +76,21 @@ def pro3pair(eq_num1, eq_num2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
 #            ids.append(split_line[0])  ignore label for now
     t1           = UTCDateTime(split_line1[1])
     t2           = UTCDateTime(split_line2[1])
+
+    #  new lines to match more specific naming
     date_label1  = split_line1[1][0:10]
     date_label2  = split_line2[1][0:10]
+    year_short_label1  = split_line1[1][2:4]
+    year_short_label2  = split_line2[1][2:4]
+    month_label1   = split_line1[1][5:7]
+    month_label2   = split_line2[1][5:7]
+    day_label1     = split_line1[1][8:10]
+    day_label2     = split_line2[1][8:10]
+    hour_label1    = split_line1[1][11:13]
+    hour_label2    = split_line2[1][11:13]
+    minute_label1  = split_line1[1][14:16]
+    minute_label2  = split_line2[1][14:16]
+
     year1        = split_line1[1][0:4]
     year2        = split_line2[1][0:4]
     ev_lat1      = float(      split_line1[2])
@@ -95,14 +105,12 @@ def pro3pair(eq_num1, eq_num2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
        + str(ev_lat2) + ' lon ' + str( ev_lon2) + ' depth ' + str(ev_depth2))
 
 #%% Get station location file
-    if stat_corr == 1:  # load static terms, only applies to Hinet and LASA
+    if stat_corr == 1 or stat_corr == 2:  # load static terms, only applies to Hinet and LASA
         if ARRAY == 0:
-            if alt_statics == 0: # standard set
+            if stat_corr == 1: # standard set
                 sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_statics_hinet.txt'
-            else: # custom set made by this event for this event
-                print('probably needs fixing')
-                sta_file = ('/Users/vidale/Documents/PyCode/Hinet/Array_codes/Files/' + 'HA' +
-                   date_label1[:10] + 'pro4_' + dphase + '.statics')
+            elif stat_corr == 2: # custom set made for SSI to Hi-Net PKiKP
+                sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/SSI_HiNet_statics.txt'
         elif ARRAY == 1:
             sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_statics_LASA.txt'
         elif ARRAY == 2:
@@ -156,11 +164,11 @@ def pro3pair(eq_num1, eq_num2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
             this_name_truc = this_name[0:5]
             st_names[ii]  = this_name_truc.upper()
 
-#%% Is taper too long compared to noise estimation window?
-    totalt = end_buff - start_buff
-    noise_time_skipped = taper_frac * totalt
-    noise_time_skipped = min(noise_time_skipped,10.0) # set max of 10s to taper length
-    if simple_taper == 0:
+#%% Is noise estimation window too short compared to taper?
+    totalt = end_buff - start_buff                    # window duration
+    noise_time_skipped = taper_frac * totalt          # set ignored SNR interval to be taper
+    noise_time_skipped = min(noise_time_skipped,10.0) # cap ignored SNR interval at 10s
+    if simple_taper == 0:                             # lengthen taper_frac if too short
         if noise_time_skipped >= 0.5 * (-start_buff):
             print('Specified taper of ' + str(taper_frac * totalt) +
                ' is not big enough compared to available noise estimation window ' +
@@ -173,21 +181,42 @@ def pro3pair(eq_num1, eq_num2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
 #%% Load waveforms and decimate to 10 sps
     st1 = Stream()
     st2 = Stream()
-    fname1     = '/Users/vidale/Documents/GitHub/LASA_data/HD' + date_label1 + '.mseed'
-    fname2     = '/Users/vidale/Documents/GitHub/LASA_data/HD' + date_label2 + '.mseed'
+    # old
+    # fname1     = '/Users/vidale/Documents/GitHub/LASA_data/L' + date_label1 + '.mseed'
+    # fname2     = '/Users/vidale/Documents/GitHub/LASA_data/L' + date_label2 + '.mseed'
+    # st1=read(fname1)
+    # st2=read(fname2)
+
+    if ARRAY == 0:
+        mseed_name1 = year_short_label1 + '-' + month_label1 + '-' + day_label1
+        mseed_name2 = year_short_label2 + '-' + month_label2 + '-' + day_label2
+        fname1     = '/Users/vidale/Documents/Research/IC/Mseed/HD20' + mseed_name1 + '.mseed'
+        fname2     = '/Users/vidale/Documents/Research/IC/Mseed/HD20' + mseed_name2 + '.mseed'
+    elif ARRAY == 1:
+        mseed_name1 = year_short_label1 + month_label1 + day_label1 + '_' + hour_label1 + minute_label1
+        mseed_name2 = year_short_label2 + month_label2 + day_label2 + '_' + hour_label2 + minute_label2
+        fname1     = '/Users/vidale/Documents/Research/IC/Mseed/L' + mseed_name1 + '.mseed'
+        fname2     = '/Users/vidale/Documents/Research/IC/Mseed/L' + mseed_name2 + '.mseed'
     st1=read(fname1)
     st2=read(fname2)
 
-    if do_decimate != 0:
-        st1.decimate(do_decimate, no_filter=True)
-        st2.decimate(do_decimate, no_filter=True)
+    if do_decimate == True:
+        st1.decimate(dec_factor, no_filter=True)
+        st2.decimate(dec_factor, no_filter=True)
 
     print(f'1st trace for event 1 has {len(st1[0].data)} time pts which is {len(st1[0].data)*st1[0].stats.delta:.1f} s')
     print(f'1st trace for event 2 has {len(st2[0].data)} time pts which is {len(st2[0].data)*st2[0].stats.delta:.1f} s')
     print('st1 has ' + str(len(st1)) + ' traces')
     print('st2 has ' + str(len(st2)) + ' traces')
-    print('1st trace starts at ' + str(st1[0].stats.starttime) + ', event at ' + str(t1))
-    print('2nd trace starts at ' + str(st2[0].stats.starttime) + ', event at ' + str(t2))
+
+    if JST == False:
+        print('1st trace starts at ' + str(st1[0].stats.starttime) + ', event at ' + str(t1))
+        print('2nd trace starts at ' + str(st2[0].stats.starttime) + ', event at ' + str(t2))
+    if JST == True:  # time shift actually applied in loop below
+        temp_time1 = st1[0].stats.starttime - 9*60*60
+        temp_time2 = st2[0].stats.starttime - 9*60*60
+        print('JST -> UTC 1st trace ' + str(temp_time1) + ', event at ' + str(t1))
+        print('JST -> UTC 2nd trace ' + str(temp_time2) + ', event at ' + str(t2))
 
 #%% Select by distance, window and adjust start time to align picked times
     st_pickalign1 = Stream()
@@ -207,24 +236,33 @@ def pro3pair(eq_num1, eq_num2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
     # only used if rel_slow == 1, preserves 0 slowness, otherwise 0 is set to phase slowness
     ref_distance = gps2dist_azimuth(ref_lat,ref_lon,ev_lat1,ev_lon1)
     ref1_dist  = ref_distance[0]/(1000*111)
-    dist_minus = ref1_dist - 0.5
-    dist_plus  = ref1_dist + 0.5
     arrivals_ref   = model.get_travel_times(source_depth_in_km=ev_depth1,distance_in_degree=ref1_dist, phase_list=[dphase])
-    arrivals_minus = model.get_travel_times(source_depth_in_km=ev_depth1,distance_in_degree=dist_minus,phase_list=[dphase])
-    arrivals_plus  = model.get_travel_times(source_depth_in_km=ev_depth1,distance_in_degree=dist_plus ,phase_list=[dphase])
+    if(len(arrivals_ref) == 0 and ref1_dist < 10 and dphase == 'P'):  # in case first arrival might be upgoing P, which is 'p'
+        arrivals_ref   = model.get_travel_times(source_depth_in_km=ev_depth1,distance_in_degree=ref1_dist, phase_list='p')
+    if(len(arrivals_ref) == 0):
+        print('model.get_travel_times failed: dist, phase  ' + str(ref1_dist) + '   ' + dphase)
     atime_ref = arrivals_ref[0].time  # phase arrival time at reference distance
-    ref_slow = arrivals_plus[0].time - arrivals_minus[0].time  # dt over 1 degree at ref distance
+    if dphase == 'PKP':  # use last element; first element might be BC, with limited range and thus step in [0] element
+        atime_rayp = arrivals_ref[-1].ray_param  # ray parameter (s/radian) at reference distance
+        atime_ref  = arrivals_ref[-1].time       # phase arrival time at reference distance
+    else:  # use first element
+        atime_rayp = arrivals_ref[0].ray_param
+        atime_ref  = arrivals_ref[0].time
+    ref_slow  = atime_rayp * 2 * np.pi / 360. # convert to s/°
 
+#%% -- First event
     for tr in st1: # find lat-lon from list, chop, statics, traces one by one
         if float(year1) < 1970: # fix the damn 1969 -> 2069 bug in Gibbon's LASA data
             temp_t = str(tr.stats.starttime)
             temp_tt = '19' + temp_t[2:]
             tr.stats.starttime = UTCDateTime(temp_tt)
+        if JST: # if necessary, convert JST -> UTC, time in Greenwich 9 hours earlier than Japan
+            tr.stats.starttime = tr.stats.starttime - 9*60*60
         if tr.stats.station in st_names:  # find station in station list
             ii = st_names.index(tr.stats.station)
             tra1_sta_found += 1
 
-            if stat_corr != 1 or float(st_corr[ii]) > corr_threshold: # if using statics, reject low correlations
+            if stat_corr == 0 or float(st_corr[ii]) > corr_threshold: # if using statics, reject low correlations
                 stalat = float(st_lats[ii]) # look up lat & lon again to find distance
                 stalon = float(st_lons[ii])
 
@@ -233,67 +271,111 @@ def pro3pair(eq_num1, eq_num2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
                 dist = distance[0]/(1000*111)
 
                 in_range = 0  # flag for whether this trace goes into stack
+                rejector = False  # flag in case model.get_travel_times fails
+
                 if ref_loc == False:  # check whether trace is in distance range from earthquake
                     if min_dist < dist and dist < max_dist:
                         in_range = 1
                         tra1_in_range += 1
                 elif ref_loc == True:  # alternately, check whether trace is close enough to ref_location
                     ref_distance = gps2dist_azimuth(ref_lat,ref_lon,stalat,stalon)
-                    ref2_dist = ref_distance[0]/(1000*111)
-                    if ref2_dist < ref_rad:
+                    ref_degree_dist = ref_distance[0]/(1000*111)
+                    if ref_degree_dist < ref_rad:
                         in_range = 1
                         tra1_in_range += 1
+
                 if in_range == 1:   # trace fulfills the specified criteria for being in range
                     s_t = t1 + start_buff
                     e_t = t1 + end_buff
-                    if stat_corr == 1: # apply static station corrections
+
+#%% ---- Apply static
+                    if stat_corr == 1 or stat_corr == 2: # apply static station corrections
                         tr.stats.starttime -= float(st_shift[ii])
-                    if rel_time == 0:  #  don't adjust absolute time
+                    if rel_time == 0:  #  use absolute time, ignore time of chose phase
                         tr.trim(starttime=s_t,endtime = e_t)
                     else:              # shift relative to a chosen phase
                         arrivals_each = model.get_travel_times(source_depth_in_km=ev_depth1,distance_in_degree=dist,phase_list=[dphase])
-                        atime_each = arrivals_each[0].time
-                        if rel_time == 1: # each window has a shift proportional to ref_dist at phase slowness at ref_dist
-                            s_t += atime_each
-                            e_t += atime_each
-                            tr.trim( starttime=s_t, endtime = e_t)
-                            tr.stats.starttime -= atime_each - (dist-ref1_dist) * ref_slow
-                        elif rel_time == 2: # each window has a distinct shift, but offset is common to all stations
-                            s_t += atime_each
-                            e_t += atime_each
-                            tr.trim( starttime=s_t, endtime = e_t)
-                            tr.stats.starttime -= atime_ref
-                        elif rel_time == 3:  # each station has an individual, chosen-phase shift, phase arrival set to zero
-                            s_t += atime_each
-                            e_t += atime_each
-                            tr.trim( starttime=s_t, endtime = e_t)
-                            tr.stats.starttime -= atime_each
-                        elif rel_time == 4: # use same window around chosen phase for all stations, phase arrival set to zero
-                            s_t += atime_ref
-                            e_t += atime_ref
-                            tr.trim( starttime=s_t, endtime = e_t)
-                            tr.stats.starttime -= atime_ref
+                        if(len(arrivals_each) == 0):
+                            if(dist < 10 and dphase == 'P'):  # in case first arrival is upgoing P, try 'p'
+                                arrivals_each = model.get_travel_times(source_depth_in_km=ev_depth1,distance_in_degree=dist,phase_list='p')
+                        if(len(arrivals_each) == 0):  # did it still fail?
+#%% ---- Can't calculate traveltime
+                                print('model.get_travel_times failed: dist, depth, phase  ' + tr.stats.station + '   ' + str(ref1_dist) + '   ' +
+                                      '   ' + str(ev_depth1) + '   ' + dphase)
+                                tra1_in_range -= 1 # don't count this trace after all
+                                rejector = True
                         else:
-                            print('invalid rel_time, must be integer 0 to 4')
-                            sys.exit()
-                    if len(tr.data) > 0:
+                            # atime_each is phase arrival on this trace
+                            # atime_ref  is phase arrival on reference trace
+
+                            if dphase == 'PKP':
+                                atime_each = arrivals_each[-1].time  # use last instance for AB branch
+                            else:
+                                atime_each = arrivals_each[0].time
+                            # start time has a shift proportional to ref_dist at phase slowness at ref_dist
+                            # preserves slowness of arrivals at ref_dist, sharp even if tt curve has curvature
+                            # uniform relative window limits around phase
+                            if rel_time == 1:
+                                s_t += atime_each
+                                e_t += atime_each
+                                tr.trim( starttime=s_t, endtime = e_t)
+                                tr.stats.starttime -= atime_each - ((dist-ref1_dist) * ref_slow + off_center_shift)
+                            # window time sets 0 at chosen phase only on reference trace
+                            # keeps true slowness, but blurs arcuate slowness curves
+                            # uniform relative window limits around phase
+                            elif rel_time == 2:
+                                s_t += atime_each
+                                e_t += atime_each
+                                tr.trim( starttime=s_t, endtime = e_t)
+                                tr.stats.starttime -= atime_ref
+                            # window time sets 0 at chosen phase on all traces
+                            # set phase to 0 slowness
+                            # uniform relative window limits around phase
+                            elif rel_time == 3:
+                                s_t += atime_each
+                                e_t += atime_each
+                                # print(f'data length before {len(tr.data)} atime_each {atime_each}')
+                                # print(f's_t {s_t} e_t {e_t} trace start {tr.stats.starttime}')
+                                tr.trim( starttime=s_t, endtime = e_t)
+                                tr.stats.starttime -= atime_each
+                                # print(f'data length after {len(tr.data)}')
+                            # window time sets 0 at chosen phase only on reference trace
+                            # set phase to 0 slowness
+                            # use same absolute window around chosen phase for all stations
+                            elif rel_time == 4:
+                                s_t += atime_ref
+                                e_t += atime_ref
+                                tr.trim( starttime=s_t, endtime = e_t)
+                                tr.stats.starttime -= atime_ref
+                            else:
+                                sys.exit('Invalid rel_time parameter, must be integer 0 to 4')
+#%% ---- Reject if not in time window
+                    if len(tr.data) > 0 and rejector == False:
                         st_pickalign1 += tr
                     else:
                         nodata1 += 1
-        else:
-            print(tr.stats.station + ' not found in station list ')
-#            sys.exit()
 
+#%% ---- Reject if not in station (static) list
+        else:
+            print(tr.stats.station + ' not found in station list with statics')
+        #     print('    ' + str(tra1_in_range) + '  traces in range')
+        #     print('    ' + str(len(st_pickalign1)) + '  traces after alignment and correlation selection')
+        #     print('    ' + str(nodata1) + '  traces with no data')
+    #            sys.exit()
+
+#%% -- Second event
     for tr in st2: # find lat-lon from list, chop, statics, traces one by one
         if float(year2) < 1970: # fix the damn 1969 -> 2069 bug in Gibbon's LASA data
             temp_t = str(tr.stats.starttime)
             temp_tt = '19' + temp_t[2:]
             tr.stats.starttime = UTCDateTime(temp_tt)
+        if JST: # if necessary, convert JST -> UTC, time in Greenwich 9 hours earlier than Japan
+            tr.stats.starttime = tr.stats.starttime - 9*60*60
         if tr.stats.station in st_names:  # find station in station list
             ii = st_names.index(tr.stats.station)
             tra2_sta_found += 1
 
-            if stat_corr != 1 or float(st_corr[ii]) > corr_threshold: # if using statics, reject low correlations
+            if stat_corr ==0 or float(st_corr[ii]) > corr_threshold: # if using statics, reject low correlations
                 stalat = float(st_lats[ii]) # look up lat & lon again to find distance
                 stalon = float(st_lons[ii])
 
@@ -302,58 +384,91 @@ def pro3pair(eq_num1, eq_num2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
                 dist = distance[0]/(1000*111)
 
                 in_range = 0  # flag for whether this trace goes into stack
-
                 if ref_loc == False:  # check whether trace is in distance range from earthquake
                     if min_dist < dist and dist < max_dist:
                         in_range = 1
                         tra2_in_range += 1
                 elif ref_loc == True:  # alternately, check whether trace is close enough to ref_location
                     ref_distance = gps2dist_azimuth(ref_lat,ref_lon,stalat,stalon)
-                    ref2_dist = ref_distance[0]/(1000*111)
-                    if ref2_dist < ref_rad:
+                    ref_degree_dist = ref_distance[0]/(1000*111)
+                    if ref_degree_dist < ref_rad:
                         in_range = 1
                         tra2_in_range += 1
-
                 if in_range == 1:   # trace fulfills the specified criteria for being in range
                     s_t = t2 + start_buff
                     e_t = t2 + end_buff
-                    if stat_corr == 1: # apply static station corrections
+
+#%% ---- Apply static
+                    if stat_corr == 1 or stat_corr == 2: # apply static station corrections
                         tr.stats.starttime -= float(st_shift[ii])
-                    if rel_time == 0:  #  don't adjust absolute time
+                    if rel_time == 0:  #  use absolute time, ignore time of chose phase
                         tr.trim(starttime=s_t,endtime = e_t)
                     else:              # shift relative to a chosen phase
                         arrivals_each = model.get_travel_times(source_depth_in_km=ev_depth2,distance_in_degree=dist,phase_list=[dphase])
-                        atime_each = arrivals_each[0].time
-                        if rel_time == 1: # each window has a shift proportional to ref_dist at phase slowness at ref_dist
-                            s_t += atime_each
-                            e_t += atime_each
-                            tr.trim( starttime=s_t, endtime = e_t)
-                            tr.stats.starttime -= atime_each - (dist-ref1_dist) * ref_slow
-                        elif rel_time == 2: # each window has a distinct shift, but offset is common to all stations
-                            s_t += atime_each
-                            e_t += atime_each
-                            tr.trim( starttime=s_t, endtime = e_t)
-                            tr.stats.starttime -= atime_ref
-                        elif rel_time == 3:  # each station has an individual, chosen-phase shift, phase arrival set to zero
-                            s_t += atime_each
-                            e_t += atime_each
-                            tr.trim( starttime=s_t, endtime = e_t)
-                            tr.stats.starttime -= atime_each
-                        elif rel_time == 4: # use same window around chosen phase for all stations, phase arrival set to zero
-                            s_t += atime_ref
-                            e_t += atime_ref
-                            tr.trim( starttime=s_t, endtime = e_t)
-                            tr.stats.starttime -= atime_ref
+                        if(len(arrivals_each) == 0):
+                            if(dist < 10 and dphase == 'P'):  # in case first arrival is upgoing P, try 'p'
+                                arrivals_each = model.get_travel_times(source_depth_in_km=ev_depth2,distance_in_degree=dist,phase_list='p')
+                        if(len(arrivals_each) == 0):  # did it still fail?
+#%% ---- Can't calculate traveltime
+                                print('model.get_travel_times failed: dist, depth, phase  ' + tr.stats.station + '   ' + str(dist) + '   ' +
+                                      '   ' + str(ev_depth2) + '   ' + dphase)
+                                tra2_in_range -= 1 # don't count this trace after all
+                                rejector = True
                         else:
-                            print('invalid rel_time, must be integer 0 to 4')
-                            sys.exit()
-                    if len(tr.data) > 0:
+                            # atime_each is phase arrival on this trace
+                            # atime_ref  is phase arrival on reference trace
+
+                            if dphase == 'PKP':
+                                atime_each = arrivals_each[-1].time  # use last instance for AB branch
+                            else:
+                                atime_each = arrivals_each[0].time
+                            # start time has a shift proportional to ref_dist at phase slowness at ref_dist
+                            # preserves slowness of arrivals at ref_dist, sharp even if tt curve has curvature
+                            # uniform relative window limits around phase
+                            if rel_time == 1:
+                                s_t += atime_each
+                                e_t += atime_each
+                                tr.trim( starttime=s_t, endtime = e_t)
+                                tr.stats.starttime -= atime_each - ((dist-ref1_dist) * ref_slow + off_center_shift)
+                            # window time sets 0 at chosen phase only on reference trace
+                            # keeps true slowness, but blurs arcuate slowness curves
+                            # uniform relative window limits around phase
+                            elif rel_time == 2:
+                                s_t += atime_each
+                                e_t += atime_each
+                                tr.trim( starttime=s_t, endtime = e_t)
+                                tr.stats.starttime -= atime_ref
+                            # window time sets 0 at chosen phase on all traces
+                            # set phase to 0 slowness
+                            # uniform relative window limits around phase
+                            elif rel_time == 3:
+                                s_t += atime_each
+                                e_t += atime_each
+                                tr.trim( starttime=s_t, endtime = e_t)
+                                tr.stats.starttime -= atime_each
+                            # window time sets 0 at chosen phase only on reference trace
+                            # set phase to 0 slowness
+                            # use same absolute window around chosen phase for all stations
+                            elif rel_time == 4:
+                                s_t += atime_ref
+                                e_t += atime_ref
+                                tr.trim( starttime=s_t, endtime = e_t)
+                                tr.stats.starttime -= atime_ref
+                            else:
+                                sys.exit('Invalid rel_time parameter, must be integer 0 to 4')
+#%% ---- Reject if not in time window
+                    if len(tr.data) > 0 and rejector == False:
                         st_pickalign2 += tr
                     else:
                         nodata2 += 1
-        else:
-            print(tr.stats.station + ' not found in station list')
 
+#%% ---- Reject if not in station (static) list
+        # else:
+        #     print(tr.stats.station + ' not found in station list with statics')
+        #     print('    ' + str(tra1_in_range) + '  traces in range')
+        #     print('    ' + str(len(st_pickalign1)) + '  traces after alignment and correlation selection')
+        #     print('    ' + str(nodata1) + '  traces with no data')
+#            sys.exit()
 
     print('After alignment + range and correlation selection')
     print('1st event, Traces found: ' + str(tra1_sta_found) + ' Traces in range: ' + str(tra1_in_range) + ' Traces with no data: ' + str(nodata1))
@@ -361,12 +476,10 @@ def pro3pair(eq_num1, eq_num2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
 
     print(f'ref1_distance  {ref1_dist:.3f}  relative start time  {atime_ref:.3f}')
     if ref_loc == True:
-        print(f'ref2_distance  {ref2_dist:.3f}  relative start time  {atime_ref:.3f}')
         print('ref_loc == True, ref_lat: ' + str(ref_lat) + ' ref_lon: ' + str(ref_lon))
     print(f'last station: distance {dist:.3f}  last station lat: {stalat:.3f}   last station lon: {stalon:.3f}')
 
 
-    #%%
     #print(st) # at length
     if verbose:
         print(st1.__str__(extended=True))
@@ -386,38 +499,50 @@ def pro3pair(eq_num1, eq_num2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
     st_pickalign1.taper(taper_frac, max_length = max_taper_length)
     st_pickalign2.taper(taper_frac, max_length = max_taper_length)
 
-#%%  Cull further by imposing SNR threshold on both traces
+#%%  Check station is there for both events and impose SNR threshold
     st1good = Stream()
     st2good = Stream()
     for tr1 in st_pickalign1:
         for tr2 in st_pickalign2:
             if ((tr1.stats.network  == tr2.stats.network) &
-                (tr1.stats.station  == tr2.stats.station)):
-                if skip_SNR == 1:
+                (tr1.stats.station  == tr2.stats.station)): # if this is a match, then station is on both lists
+                if apply_SNR == False:
                     st1good += tr1
                     st2good += tr2
                 else:
                     # estimate median noise
-                    t_noise1_start  = int(len(tr1.data) * taper_frac)
-                    t_noise2_start  = int(len(tr2.data) * taper_frac)
-                    t_noise1_end    = int(len(tr1.data) * (-start_buff)/(end_buff - start_buff))
-                    t_noise2_end    = int(len(tr2.data) * (-start_buff)/(end_buff - start_buff))
-                    noise1          = np.median(abs(tr1.data[t_noise1_start:t_noise1_end]))
-                    noise2          = np.median(abs(tr2.data[t_noise2_start:t_noise2_end]))
-        # estimate median signal
-                    t_signal1_start = int(len(tr1.data) * (-start_buff)/(end_buff - start_buff))
-                    t_signal2_start = int(len(tr2.data) * (-start_buff)/(end_buff - start_buff))
-                    t_signal1_end   = t_signal1_start + int(len(tr1.data) * signal_dur/(end_buff - start_buff))
-                    t_signal2_end   = t_signal2_start + int(len(tr2.data) * signal_dur/(end_buff - start_buff))
-                    signal1         = np.median(abs(tr1.data[t_signal1_start:t_signal1_end]))
-                    signal2         = np.median(abs(tr2.data[t_signal2_start:t_signal2_end]))
+                    len1 = len(tr1.data)
+                    len2 = len(tr2.data)
+                    if len1 != len2:
+                        print('len1 is not equal to len2')
+                    len_both = len1
+                    buff_time = end_buff - start_buff
+
+                    time_to_signal_start = (precursor_shift - start_buff)
+                    if time_to_signal_start - taper_frac * (buff_time) < noise_win_max: # noise window < max length
+                        t_noise_start  = int(tr1.stats.sampling_rate * taper_frac * buff_time) # start just after taper
+                        t_noise_end    = int(tr1.stats.sampling_rate * time_to_signal_start)   # end at beam start
+                        if t_noise_end - t_noise_start < 20:
+                            print('Very short to no window (less than 20 points) to estimate noise')
+                    else:  # plenty of leader, set noise window to max length
+                        time_to_noise_start = time_to_signal_start - noise_win_max
+                        t_noise_start  = int(tr1.stats.sampling_rate * time_to_noise_start)  # noise window = noise_win_max
+                        t_noise_end    = int(tr1.stats.sampling_rate * time_to_signal_start) # end at beam start
+
+                    # estimate median noise and signal
+                    noise1          = np.median(abs(tr1.data[t_noise_start:t_noise_end]))
+                    noise2          = np.median(abs(tr2.data[t_noise_start:t_noise_end]))
+                    t_signal_start = int(tr.stats.sampling_rate * time_to_signal_start)
+                    t_signal_end   = int(t_signal_start + tr.stats.sampling_rate * signal_dur)
+                    signal1         = np.median(abs(tr1.data[t_signal_start:t_signal_end]))
+                    signal2         = np.median(abs(tr2.data[t_signal_start:t_signal_end]))
         #            test SNR
                     SNR1 = signal1/noise1;
                     SNR2 = signal2/noise2;
-                    if (SNR1 > qual_threshold and SNR2 > qual_threshold):
+                    if (SNR1 > SNR_thres and SNR2 > SNR_thres):
                         st1good += tr1
                         st2good += tr2
-    if skip_SNR == 1:
+    if apply_SNR == False:
         print('Matches (no SNR test): ' + str(len(st1good)) + ' traces')
     else:
         print('Match and above SNR threshold: ' + str(len(st1good)) + ' traces')
@@ -451,23 +576,26 @@ def pro3pair(eq_num1, eq_num2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
             distance = gps2dist_azimuth(stalat,stalon,ev_lat2,ev_lon2)
             tr.stats.distance=distance[0]/(1000*111) # distance in km
 
-    print(f'Min distance is   {min_dist_auto:.3f}   Max distance is {max_dist_auto:.3f}')
-    print(f'Min time is   {min_time_plot:.2f}   Max time is {max_time_plot:.2f}')
+    print(f'        Min distance is   {min_dist_auto:.3f}   Max distance is {max_dist_auto:.3f}')
+    print(f'        Min time is   {min_time_plot:.2f}   Max time is {max_time_plot:.2f}')
     if min_time_plot > start_buff:
         print(f'Min time {min_time_plot:.2f} > start_buff {start_buff:.2f}')
-        print(colored('Write zero-filling into pro3 for this code to work','red'))
-        sys.exit(-1)
+        print(colored('Warning: write zero-filling into pro3_pair?','red'))
+        # sys.exit(-1)
     if max_time_plot < end_buff:
         print(f'Max time {max_time_plot:.2f} < end_buff {end_buff:.2f}')
-        print(colored('Write zero-filling into pro3 for this code to work','red'))
-        sys.exit(-1)
+        print(colored('Warning: write zero-filling into pro3_pair?','red'))
+        # sys.exit(-1)
 
-    #%%
-    # plot traces
-    fig_index = 3
-    plt.close(fig_index)
-    plt.figure(fig_index,figsize=(8,8))
-    plt.xlim(start_buff,end_buff)
+    #%% plot traces
+    # fig_index = 3
+    # plt.close(fig_index)
+    # plt.figure(fig_index,figsize=(8,8))
+    # plt.xlim(start_buff,end_buff)
+
+    fig_tit = str(eq_num1) + ' and ' + str(eq_num2) + ' traces'
+    plt.figure(fig_tit,figsize=(10,10))
+    plt.xlim(min_time_plot,max_time_plot)
 
     if auto_dist == True:
         dist_diff = max_dist_auto - min_dist_auto # add space at extremes
@@ -478,110 +606,124 @@ def pro3pair(eq_num1, eq_num2, stat_corr = 1, simple_taper = 0, skip_SNR = 0,
     for tr in st1good:
         dist_offset = tr.stats.distance # trying for approx degrees
         ttt = np.arange(len(tr.data)) * tr.stats.delta + (tr.stats.starttime - t1)
-        if red_plot == 1:
-            shift = red_time + (dist_offset - red_dist) * red_slow
-            ttt = ttt - shift
         plt.plot(ttt, (tr.data - np.median(tr.data))*plot_scale_fac /(tr.data.max()
             - tr.data.min()) + dist_offset, color = 'green')
 
     for tr in st2good:
         dist_offset = tr.stats.distance # trying for approx degrees
         ttt = np.arange(len(tr.data)) * tr.stats.delta + (tr.stats.starttime - t2)
-        if red_plot == 1:
-            shift = red_time + (dist_offset - red_dist) * red_slow
-            ttt = ttt - shift
         ttt = ttt
         plt.plot(ttt, (tr.data - np.median(tr.data))*plot_scale_fac /(tr.data.max()
             - tr.data.min()) + dist_offset, color = 'red')
     print('And made it to here.')
 
-#%% Plot traveltime curves
-    if rel_time != 1:
-        if plot_tt:
-            # first traveltime curve
-            line_pts = 50
-            dist_vec  = np.arange(min_dist_auto, max_dist_auto, (max_dist_auto - min_dist_auto)/line_pts) # distance grid
-            time_vec1 = np.arange(min_dist_auto, max_dist_auto, (max_dist_auto - min_dist_auto)/line_pts) # empty time grid of same length (filled with -1000)
+#%% -- Traveltime curves
+    if plot_tt:
+        # first traveltime curve
+        line_pts = 50
+        dist_vec  = np.arange(min_dist_auto, max_dist_auto, (max_dist_auto - min_dist_auto)/line_pts) # distance grid
+        time_vec1 = np.arange(min_dist_auto, max_dist_auto, (max_dist_auto - min_dist_auto)/line_pts) # empty time grid of same length (filled with -1000)
+
+        for i in range(0,line_pts):
+            arrivals = model.get_travel_times(source_depth_in_km=ev_depth1,distance_in_degree=dist_vec[i],phase_list=[dphase])
+            if(len(arrivals) == 0 and dist_vec[i] < 10 and dphase == 'P'):  # in case first arrival is upgoing P, which is 'p'
+                arrivals = model.get_travel_times(source_depth_in_km=ev_depth1,distance_in_degree=dist_vec[i],phase_list='p')
+                if(len(arrivals) == 0):
+                    print('model.get_travel_times failed: dist, phase  ' + str(dist_vec[i]) + '   ' + dphase)
+            num_arrivals = len(arrivals)
+            found_it = 0
+            for j in range(0,num_arrivals):
+                if arrivals[j].name == dphase:
+                    time_vec1[i] = arrivals[j].time
+                    found_it = 1
+            if found_it == 0:
+                time_vec1[i] = np.nan
+        # second traveltime curve
+        if dphase2 != 'no':
+            time_vec2 = np.arange(min_dist_auto, max_dist_auto, (max_dist_auto - min_dist_auto)/line_pts) # empty time grid of same length (filled with -1000)
             for i in range(0,line_pts):
-                arrivals = model.get_travel_times(source_depth_in_km=ev_depth1,distance_in_degree
-                                            =dist_vec[i],phase_list=[dphase])
+                arrivals = model.get_travel_times(source_depth_in_km=ev_depth1,distance_in_degree=dist_vec[i],phase_list=[dphase2])
+                if(len(arrivals) == 0 and dist_vec[i] < 10 and dphase2 == 'P'):  # in case first arrival is upgoing P, which is 'p'
+                    arrivals = model.get_travel_times(source_depth_in_km=ev_depth1,distance_in_degree=dist_vec[i],phase_list='p')
+                    if(len(arrivals) == 0):
+                        print('model.get_travel_times failed: dist, phase  ' + str(dist_vec[i]) + '   ' + dphase2)
                 num_arrivals = len(arrivals)
                 found_it = 0
                 for j in range(0,num_arrivals):
-                    if arrivals[j].name == dphase:
-                        time_vec1[i] = arrivals[j].time
+                    if arrivals[j].name == dphase2:
+                        time_vec2[i] = arrivals[j].time
                         found_it = 1
                 if found_it == 0:
-                    time_vec1[i] = np.nan
-            # second traveltime curve
-            if dphase2 != 'no':
-                time_vec2 = np.arange(min_dist_auto, max_dist_auto, (max_dist_auto - min_dist_auto)/line_pts) # empty time grid of same length (filled with -1000)
-                for i in range(0,line_pts):
-                    arrivals = model.get_travel_times(source_depth_in_km=ev_depth1,distance_in_degree
-                                                =dist_vec[i],phase_list=[dphase2])
-                    num_arrivals = len(arrivals)
-                    found_it = 0
-                    for j in range(0,num_arrivals):
-                        if arrivals[j].name == dphase2:
-                            time_vec2[i] = arrivals[j].time
-                            found_it = 1
-                    if found_it == 0:
-                        time_vec2[i] = np.nan
-                if   rel_time == 3 or rel_time == 4:
-                    time_vec2 = time_vec2 - time_vec1
-                elif rel_time == 2:
-                    time_vec2 = time_vec2 - atime_ref
-                plt.plot(time_vec2,dist_vec, color = 'orange')
-            # third traveltime curve
-            if dphase3 != 'no':
-                time_vec3 = np.arange(min_dist_auto, max_dist_auto, (max_dist_auto - min_dist_auto)/line_pts) # empty time grid of same length (filled with -1000)
-                for i in range(0,line_pts):
-                    arrivals = model.get_travel_times(source_depth_in_km=ev_depth1,distance_in_degree
-                                                =dist_vec[i],phase_list=[dphase3])
-                    num_arrivals = len(arrivals)
-                    found_it = 0
-                    for j in range(0,num_arrivals):
-                        if arrivals[j].name == dphase3:
-                            time_vec3[i] = arrivals[j].time
-                            found_it = 1
-                    if found_it == 0:
-                        time_vec3[i] = np.nan
-                if   rel_time == 3 or rel_time == 4:
-                    time_vec2 = time_vec2 - time_vec1
-                elif rel_time == 2:
-                    time_vec2 = time_vec2 - atime_ref
-                plt.plot(time_vec3,dist_vec, color = 'yellow')
-            # fourth traveltime curve
-            # if dphase4 != 'no':
-            #     time_vec4 = np.arange(min_dist, max_dist_auto, (max_dist_auto - min_dist)/line_pts) # empty time grid of same length (filled with -1000)
-            #     for i in range(0,line_pts):
-            #         arrivals = model.get_travel_times(source_depth_in_km=ev_depth1,distance_in_degree
-            #                                     =dist_vec[i],phase_list=[dphase4])
-            #         num_arrivals = len(arrivals)
-            #         found_it = 0
-            #         for j in range(0,num_arrivals):
-            #             if arrivals[j].name == dphase4:
-            #                 time_vec4[i] = arrivals[j].time
-            #                 found_it = 1
-            #         if found_it == 0:
-            #             time_vec4[i] = np.nan
-            #     if   rel_time == 3 or rel_time == 4:
-            #         time_vec2 = time_vec2 - time_vec1
-            #     elif rel_time == 2:
-            #         time_vec2 = time_vec2 - atime_ref
-            #     plt.plot(time_vec4,dist_vec, color = 'purple')
-
-            # if   rel_time == 3 or rel_time == 4:
-            #     time_vec1 = time_vec1 - time_vec1
-            # elif rel_time == 2:
-            #     time_vec1 = time_vec1 - atime_ref
-            # plt.plot(time_vec1,dist_vec, color = 'blue')
-            # if no_plots == False:
-            #     plt.show()
+                    time_vec2[i] = np.nan
+            if   rel_time == 1:
+                time_vec2 = time_vec2 - time_vec1 + (dist_vec - ref1_dist) * ref_slow
+            if   rel_time == 3:
+                time_vec2 = time_vec2 - time_vec1
+            elif rel_time == 2 or rel_time == 4:
+                time_vec2 = time_vec2 - atime_ref
+            plt.plot(time_vec2,dist_vec, color = 'orange')
+        # third traveltime curve
+        if dphase3 != 'no':
+            time_vec3 = np.arange(min_dist_auto, max_dist_auto, (max_dist_auto - min_dist_auto)/line_pts) # empty time grid of same length (filled with -1000)
+            for i in range(0,line_pts):
+                arrivals = model.get_travel_times(source_depth_in_km=ev_depth1,distance_in_degree=dist_vec[i],phase_list=[dphase3])
+                if(len(arrivals) == 0 and dist_vec[i] < 10 and dphase3 == 'P'):  # in case first arrival is upgoing P, which is 'p'
+                    arrivals = model.get_travel_times(source_depth_in_km=ev_depth1,distance_in_degree=dist_vec[i],phase_list='p')
+                    if(len(arrivals) == 0):
+                        print('model.get_travel_times failed: dist, phase  ' + str(dist_vec[i]) + '   ' + dphase3)
+                num_arrivals = len(arrivals)
+                found_it = 0
+                for j in range(0,num_arrivals):
+                    if arrivals[j].name == dphase3:
+                        time_vec3[i] = arrivals[j].time
+                        found_it = 1
+                if found_it == 0:
+                    time_vec3[i] = np.nan
+            if   rel_time == 1:
+                time_vec3 = time_vec3 - time_vec1 + (dist_vec - ref1_dist) * ref_slow
+            if   rel_time == 3:
+                time_vec3 = time_vec3 - time_vec1
+            elif rel_time == 2 or rel_time == 4:
+                time_vec3 = time_vec3 - atime_ref
+            plt.plot(time_vec3,dist_vec, color = 'yellow')
+        # fourth traveltime curve
+        if dphase4 != 'no':
+            time_vec4 = np.arange(min_dist_auto, max_dist_auto, (max_dist_auto - min_dist_auto)/line_pts) # empty time grid of same length (filled with -1000)
+            for i in range(0,line_pts):
+                arrivals = model.get_travel_times(source_depth_in_km=ev_depth1,distance_in_degree=dist_vec[i],phase_list=[dphase4])
+                if(len(arrivals) == 0 and dist_vec[i] < 10 and dphase4 == 'P'):  # in case first arrival is upgoing P, which is 'p'
+                    arrivals = model.get_travel_times(source_depth_in_km=ev_depth1,distance_in_degree=dist_vec[i],phase_list='p')
+                    if(len(arrivals) == 0):
+                        print('model.get_travel_times failed: dist, phase  ' + str(dist_vec[i]) + '   ' + dphase4)
+                num_arrivals = len(arrivals)
+                found_it = 0
+                for j in range(0,num_arrivals):
+                    if arrivals[j].name == dphase4:
+                        time_vec4[i] = arrivals[j].time
+                        found_it = 1
+                if found_it == 0:
+                    time_vec4[i] = np.nan
+            if   rel_time == 1:
+                time_vec4 = time_vec4 - time_vec1 + (dist_vec - ref1_dist) * ref_slow
+            if   rel_time == 3:
+                time_vec4 = time_vec4 - time_vec1
+            elif rel_time == 2 or rel_time == 4:
+                time_vec4 = time_vec4 - atime_ref
+            plt.plot(time_vec4,dist_vec, color = 'purple')
+        if   rel_time == 1:
+            time_vec1 = (dist_vec - ref1_dist) * ref_slow
+        if   rel_time == 3:
+            time_vec1 = time_vec1 - time_vec1
+        elif rel_time == 2 or rel_time == 4:
+            time_vec1 = time_vec1 - atime_ref
+        plt.plot(time_vec1,dist_vec, color = 'blue')
 
     plt.xlabel('Time (s)')
     plt.ylabel('Epicentral distance from event (°)')
-    plt.title(dphase + ' for ' + fname1[43:53] + ' vs ' + fname2[43:53])
+    if ARRAY == 1:
+        plt.title(dphase + ' for ' + fname1[43:53] + ' vs ' + fname2[43:53])
+    else:
+        plt.title(dphase + ' for ' + fname1[44:54] + ' vs ' + fname2[44:54])
     if no_plots == False:
         plt.show()
 

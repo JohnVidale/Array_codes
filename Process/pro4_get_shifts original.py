@@ -4,13 +4,12 @@
 #  plots traces before and after time shift
 #  saves aligned traces (not generally used) and static corrections, used in pro3 codes
 #  John Vidale, 2/2019
-#   revisited by Vidale 7/2020
-#   revisited by Vidale 4/2022
+#   revisited vy Vidale 7/2020
 
-def pro4_get_shifts(eq_num, use_ref_trace = True, ref_trace = 'nothing', event_no = 0,
+def pro4statics(eq_file, use_ref_trace = 0, ref_trace = 'nothing', event_no = 0,
                 dphase = 'PcP', dphase2 = 'PKiKP', dphase3 = 'P', dphase4 = 'PP',
                 start_beam = -1, end_beam = 3, plot_scale_fac = 0.05,
-                start_buff = -10, end_buff = 30, corr_threshold = 0,
+                start_buff = -10, end_buff = 30, qual_threshold = 0, corr_threshold = 0,
                 max_time_shift = 2, min_dist = 17, max_dist = 21, ARRAY = 0, auto_dist = 1):
 
     from obspy import UTCDateTime
@@ -24,36 +23,31 @@ def pro4_get_shifts(eq_num, use_ref_trace = True, ref_trace = 'nothing', event_n
     import sys
     from obspy.taup import TauPyModel
     import matplotlib.pyplot as plt
-    from termcolor import colored
     model = TauPyModel(model='iasp91')
 
     import warnings   # don't show any warnings
     if not sys.warnoptions:
         warnings.simplefilter("ignore")
 
-    print(colored('Running pro4_get_shifts', 'cyan'))
-    use_sel = False  # in case binned seismograms are input
+    print('pro4_get_shifts is starting')
 
-    #%% Read station location file
-    if use_sel == True:
-        sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/bin_hinet.txt'
-    elif ARRAY == 0: # Hinet set
+    #%% Get station location file
+    if   ARRAY == 0: # Hinet set
         sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_hinet.txt'
-    elif ARRAY == 1: #         LASA set
+    elif ARRAY == 1: # LASA set
         sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_LASA.txt'
-    elif ARRAY == 2: #         China set
+    elif ARRAY == 2: # China set
         sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_ch.txt'
-    else: #         NORSAR set
-        sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_NORSAR.txt'
     with open(sta_file, 'r') as file:
         lines = file.readlines()
-    print(str(len(lines)) + ' statics read from ' + sta_file)
+    print('    ' + str(len(lines)) + ' stations read from ' + sta_file)
     # Load station coords into arrays
+        # old line: station_index = range(343)
     station_index = range(len(lines))
-    st_names = []
     st_lats  = []
     st_lons  = []
     st_deps  = []
+    st_names = []
     for ii in station_index:
         line = lines[ii]
         split_line = line.split()
@@ -62,11 +56,12 @@ def pro4_get_shifts(eq_num, use_ref_trace = True, ref_trace = 'nothing', event_n
         st_lons.append( split_line[2])
         st_deps.append( split_line[3])
 
-    if ARRAY == 0:  # shorten and make upper case Hi-net station names to match station list
+    if ARRAY == 0: # stupid kludge to reduce Hi-net names by one letter and equalize capitalization
         for ii in station_index:
-            this_name = st_names[ii]
-            this_name_truc = this_name[0:5]
-            st_names[ii]  = this_name_truc.upper()
+            tested_name = st_names[ii]
+            this_name_truc = tested_name[0:5]
+            name_truc_cap  = this_name_truc.upper()
+            st_names[ii]   = name_truc_cap
 
     # initialize lists of statics
     sta_names   = []
@@ -77,19 +72,20 @@ def pro4_get_shifts(eq_num, use_ref_trace = True, ref_trace = 'nothing', event_n
     sta_corrs   = []
 
     #%% Parameter list
-    #dphase  = 'PKIKP'        # phase to be aligned
-    #dphase2 = 'PKiKP'        # another phase to have traveltime plotted
-    #dphase3 = 'PKP'          # another phase to have traveltime plotted
-    #dphase4 = 'pP'           # another phase to have traveltime plotted
-    #ref_trace = 'N.SZW'      # trace with reference waveform
-    #start_beam = 2           # start of correlation window (more positive is earlier)
-    start_beam = -start_beam  # damn Obspy definition: more positive moves window start time earlier
-    #end_beam   = 7           # plots end Xs before PKiKP
+    #dphase  = 'PKIKP'       # phase to be aligned
+    #dphase2 = 'PKiKP'      # another phase to have traveltime plotted
+    #dphase3 = 'PKP'        # another phase to have traveltime plotted
+    #dphase4 = 'pP'        # another phase to have traveltime plotted
+    #ref_trace = 'N.SZW'   # trace with reference waveform
+    #start_beam = 2       # start of correlation window (more positive is earlier)
+    start_beam = -start_beam
+    #end_beam   = 7       # plots end Xs before PKiKP
     #max_time_shift = 2       # searches up to this time shift for alignment
-    #corr_threshold = 0.      # threshold that correlation is good enough to keep trace
+    #corr_threshold = 0.  # threshold that correlation is good enough to keep trace
     #max_dist = 151
     #min_dist = 150.6
     #plot_scale_fac = 0.2    #  Bigger numbers make each trace amplitude bigger on plot
+    #qual_threshold =  0 # minimum SNR
     plot_tt = True           # plot the traveltimes?
     plot_flag = False     # plot for each trace?  Watch out, can be lots, one for each station pair!!
     min_dist_auto = 180 # for use in auto-scaling y axis in trace gathers
@@ -97,62 +93,37 @@ def pro4_get_shifts(eq_num, use_ref_trace = True, ref_trace = 'nothing', event_n
 
     #%% Get saved event info, also used to name files
     #  event 2016-05-28T09:47:00.000 -56.241 -26.935 78
-    fname = '/Users/vidale/Documents/Research/IC/EvLocs/event' + str(eq_num) + '.txt'
-    print('Event location file: ' + fname)
-    file = open(fname, 'r')
+    file = open('/Users/vidale/Documents/PyCode/EvLocs/' + eq_file, 'r')
     lines=file.readlines()
     split_line = lines[0].split()
-#            ids.append(split_line[0])  ignore label for now
+#            ids.append(split_line[0])  ignore label, now "event"
     t           = UTCDateTime(split_line[1])
     date_label  = split_line[1][0:10]
-    year_label  = split_line[1][0:4]
-    year_short_label  = split_line[1][2:4]
-    month_label   = split_line[1][5:7]
-    day_label     = split_line[1][8:10]
-    hour_label    = split_line[1][11:13]
-    minute_label  = split_line[1][14:16]
-    # print(date_label + ' year_label ' + year_label + ' hour_label ' + hour_label + ' min_label ' + minute_label)
     ev_lat      = float(      split_line[2])
     ev_lon      = float(      split_line[3])
     ev_depth    = float(      split_line[4])
-    # print('        date_label ' + date_label + ' time ' + str(t) + ' lat ' + str(ev_lat) + ' lon ' + str( ev_lon) + ' depth ' + str(ev_depth))
+
+    print('        Date label ' + date_label + ' lat ' + str(ev_lat) + ' lon ' + str(ev_lon))
 
     st = Stream()
 #    fname     = 'HD' + date_label + '.mseed'
-    fname     = '/Users/vidale/Documents/Research/IC/Pro_Files/HD' + date_label + 'sel.mseed'  # sel file has windowing, shift?, filtering
+    fname     = 'HD' + date_label + 'sel.mseed'  # sel file has windowing, shift?, filtering
 
-    print('Seismogram file: ' + fname)
+    print('        File ' + fname)
 
-    # os.chdir('/Users/vidale/Documents/Research/IC/Pro_Files/')
-    # os.system('pwd')
+    os.chdir('/Users/vidale/Documents/PyCode/Pro_Files/')
+    os.system('pwd')
     st=read(fname)
     print('    ' + str(len(st)) + '  traces read in')
-    print('    First trace: ' + str(len(st[0].data)) + ' time pts ')
+    print('         First trace has : ' + str(len(st[0].data)) + ' time pts ')
 
     #%% Reference trace
     trim_start = t + start_buff
     trim_end   = t +   end_buff
     time_buff = end_buff - start_buff
     tr_ref = Trace()
-    #%% -- pick out chosen reference trace
-    if use_ref_trace == True:
-        for tr in st: # loop over seismograms to find reference trace, put it in tr_ref
-            if (tr.stats.station == ref_trace): # found it
-                print('    found reference station ' + tr.stats.station)
-                tr_ref = tr.copy()
-                starttime = trim_start - time_buff
-                endtime = trim_end + time_buff
-                # print(f'start_buff {start_buff} end_buff {end_buff}')
-                # print(f'start_beam {start_beam} end_beam {end_beam}')
-                # print(f'time_buff {time_buff} trim_end {trim_end}')
-                # print(f'trim_start {trim_start} trim_end {trim_end}')
-                # print(f'starttime {starttime} endtime {endtime}')
-                tr_ref.trim(starttime = starttime, endtime = endtime)
-                nt_ref = len(tr_ref.data)
-                tr_ref.normalize()
-
-    #%% -- or else stack a new reference trace
-    else:
+    #%% Stack reference trace
+    if use_ref_trace == 0:
         counter = 0
         for tr in st: # loop over seismograms to find reference trace, put it in tr_ref
             if counter == 0:  # copy first trace to stack
@@ -174,10 +145,20 @@ def pro4_get_shifts(eq_num, use_ref_trace = True, ref_trace = 'nothing', event_n
                     tr_ref.data[it] += tr_add[it]
                 counter = counter + 1
         tr_ref.data = tr_ref.data/counter
+
+    #%% Pick reference trace
+    if use_ref_trace == 1:
+        for tr in st: # loop over seismograms to find reference trace, put it in tr_ref
+            if (tr.stats.station == ref_trace): # found it
+                tr_ref = tr.copy()
+                tr_ref.trim(starttime = trim_start - time_buff, endtime = trim_end + time_buff)
+                nt_ref = len(tr_ref.data)
+                tr_ref.normalize()
+                print('        found reference station ' + tr.stats.station)
     if len(tr_ref.data) == 0:
         sys.exit('Reference trace empty, will not work!')
 
-    #%% -- Plot reference trace
+    #%% Plot reference trace
     plt.close(4)
     plt.figure(4,figsize=(10,10))
     plt.xlim(start_buff, end_buff)
@@ -186,7 +167,7 @@ def pro4_get_shifts(eq_num, use_ref_trace = True, ref_trace = 'nothing', event_n
     time = np.arange(nt_ref) * tr_ref.stats.delta + start_buff
     plt.plot(time, tr_ref.data, color = 'black')
     plt.xlabel('Time (s)')
-    if use_ref_trace == True:
+    if use_ref_trace == 1:
         plt.title('Reference trace ' + dphase + ' for ' + fname[2:12] + '  ' + ref_trace)
         plt.ylabel('Normed amp')
     else:
@@ -251,10 +232,13 @@ def pro4_get_shifts(eq_num, use_ref_trace = True, ref_trace = 'nothing', event_n
     ##            if coeff > corr_threshold:
     #            # write out station_name, dt, coeff
     #            # record shifted waveform in stgood
-    print('        corr threshhold is ' + str(corr_threshold))
-    print('    ' + str(good_corr) + ' traces with good correlation' + str(bad_corr) + '  with bad' + str(good_corr + bad_corr) + ' total')
+    print('    ' + str(good_corr) + ' traces with good correlation')
     if(good_corr == 0):
         sys.exit('No traces is a failure')
+    print('    ' + str(bad_corr) + '  traces with bad correlation')
+    print('    ' + str(good_corr + bad_corr) + ' out of total')
+    print('        corr threshhold is ' + str(corr_threshold))
+
 
     plt.close(5)
     plt.figure(5,figsize=(10,10))
@@ -341,7 +325,7 @@ def pro4_get_shifts(eq_num, use_ref_trace = True, ref_trace = 'nothing', event_n
 
     plt.xlabel('Time (s)')
     plt.ylabel('Epicentral distance from event (°)')
-    plt.title('Post-alignment ' + dphase + ' for ' + fname[48:58] + ' #' + str(eq_num))
+    plt.title('Post-alignment ' + dphase + ' for ' + fname[2:12] + '   ' + str(event_no))
     plt.show()
 
     # plot traces
@@ -440,11 +424,11 @@ def pro4_get_shifts(eq_num, use_ref_trace = True, ref_trace = 'nothing', event_n
 
     plt.xlabel('Time (s)')
     plt.ylabel('Epicentral distance from event (°)')
-    plt.title('Pre-alignment ' + dphase + ' for ' + fname[48:58] + ' #' + str(eq_num))
+    plt.title('Pre-alignment ' + dphase + ' for ' + fname[2:12] + '   ' + str(event_no))
     plt.show()
 
     #  Save stats
-    fname_stats = '/Users/vidale/Documents/GitHub/Array_codes/Files/Kawa_HiNet_statics.txt'
+    fname_stats = '/Users/vidale/Documents/PyCode/Mseed/fine_statics.txt'
 
     #  Save station static correction files
     #fname_stats = 'Statics' + etime[:10] + dphase + ref_trace + '.txt'

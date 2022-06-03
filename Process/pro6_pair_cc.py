@@ -105,7 +105,7 @@ def pro6_cc_pair(eq_num1, eq_num2, slow_delta = 0.0005,
 #%% Find envelope and tshift
     for slow_i in range(total_slows):
 
-        if slow_i % 50 == 0:
+        if slow_i % 100 == 0:
             print('Measuring time shifts, ' + str(slow_i) + ' finished slownesses out of ' + str(total_slows))
 
         if len(st1[slow_i].data) == 0: # test for zero-length traces, indexing errors

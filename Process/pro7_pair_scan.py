@@ -15,7 +15,7 @@ def pro7_pair_scan(eq_num1, eq_num2, slow_delta = 0.0005, turn_off_black = 1,
               nR_plots  = 3, nT_plots = 3, slow_incr = 0.01, NS = False,
               ARRAY = 0, auto_slice = True, two_slice_plots = False, beam_sums = True,
               wiggly_plots = 0, start_beam = 0, end_beam = 0, log_plot = False,
-              log_plot_range = 2, no_tdiff_plot = False,
+              log_plot_range = 2, tdiff_plots_too = False,
               wig_scale_fac = 1, tdiff_scale_fac = 1):
 
     from obspy import read
@@ -59,7 +59,7 @@ def pro7_pair_scan(eq_num1, eq_num2, slow_delta = 0.0005, turn_off_black = 1,
     # date_label = '2018-04-02' # dates in filename
     date_label1  = split_line1[1][0:10]
     date_label2  = split_line2[1][0:10]
-    save_name = '/Users/vidale/Documents/Research/IC/Plots/' + date_label1 + '_' + date_label2 + '_'
+    save_name = '/Users/vidale/Documents/Research/IC/Plots_hold/' + date_label1 + '_' + date_label2 + '_'
     ev_lat       = float(split_line1[2])
     ev_lon       = float(split_line1[3])
     ev_depth     = float(split_line1[4])
@@ -78,14 +78,12 @@ def pro7_pair_scan(eq_num1, eq_num2, slow_delta = 0.0005, turn_off_black = 1,
     ref_az       = ref_distance[1]
     ref_back_az  = ref_distance[2]
 
+    # Estimate slowness of reference phase
     arrivals_ref   = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree=ref_dist, phase_list=[ref_phase])
     arrival_time = arrivals_ref[0].time
+    atime_rayp = arrivals_ref[0].ray_param
+    event_pred_slo  = atime_rayp * 2 * np.pi / (111. * 360.) # convert to s/km
 
-    # Estimate slowness of reference phase
-    arrivals1 = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree=ref_dist-0.5,phase_list=[ref_phase])
-    arrivals2 = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree=ref_dist+0.5,phase_list=[ref_phase])
-    dtime = arrivals2[0].time - arrivals1[0].time
-    event_pred_slo  = dtime/111.  # s/km
     # convert to pred rslo and tslo
     if NS == True:    #  rotate predicted slowness to N and E
         print(f'Array  lat {ref_lat:.0f}, lon  {ref_lon:.0f}, Event lat {ev_lat:.0f}, lon {ev_lon:.0f}, az {ref_az:.0f}, baz {ref_back_az:.0f}')
@@ -160,7 +158,7 @@ def pro7_pair_scan(eq_num1, eq_num2, slow_delta = 0.0005, turn_off_black = 1,
         print(f'slowR_lo  is {slowR_lo}  and slowR_hi  is {slowR_hi}  and slowT_lo  is {slowT_lo}  and slowT_hi is {slowT_hi}')
         print(f'ZslowR_lo is {ZslowR_lo} and ZslowR_hi is {ZslowR_hi} and ZslowT_lo is {ZslowT_lo} and ZslowT_hi is {ZslowT_hi}')
 
-        #%% -- Re-make subset with more limited grid of slownesses
+        #%% -- Re-make subset with more limited grid of slownesses and times
         slowR_lo   = ZslowR_lo
         slowR_hi   = ZslowR_hi
         slowT_lo   = ZslowT_lo
@@ -247,18 +245,16 @@ def pro7_pair_scan(eq_num1, eq_num2, slow_delta = 0.0005, turn_off_black = 1,
 
 
                 #%% -- -- plot R tdiff
-                if no_tdiff_plot == False:
+                if tdiff_plots_too == True:
                     stack_arrayR_Tdf = np.zeros((slowR_n,stack_nt))
                     for it in range(stack_nt):  # check points one at a time
                         for slowR_i in range(slowR_n):  # loop over slownesses
                             num_val = Rcentral_st[slowR_i].data[it]
                             stack_arrayR_Tdf[slowR_i, it] = num_val
 
-                    y, x = np.mgrid[slice(stack_Rslows[0], stack_Rslows[-1] + slow_delta, slow_delta),
-                                 slice(ttt[0], ttt[-1] + dt, dt)]
-
+                    y, x = np.meshgrid(stack_Rslows,ttt)
                     fig, ax = plt.subplots(1, figsize=(10,3))
-                    c = ax.pcolormesh(x, y, stack_arrayR_Tdf, cmap=plt.cm.coolwarm, vmin= -tdiff_clip, vmax=tdiff_clip)
+                    c = ax.pcolormesh(x, y, np.transpose(stack_arrayR_Tdf), cmap=plt.cm.coolwarm, vmin= -tdiff_clip, vmax=tdiff_clip)
                     fig.subplots_adjust(bottom=0.2)
                     ax.axis([x.min(), x.max(), y.min(), y.max()])
                     fig.colorbar(c, ax=ax, label='time shift (s)')
@@ -277,14 +273,12 @@ def pro7_pair_scan(eq_num1, eq_num2, slow_delta = 0.0005, turn_off_black = 1,
                         num_val = Rcentral_am[slowR_i].data[it]
                         stack_arrayR_Amp[slowR_i, it] = num_val
 
-                y, x = np.mgrid[slice(stack_Rslows[0], stack_Rslows[-1] + slow_delta, slow_delta),
-                             slice(ttt[0], ttt[-1] + dt, dt)]
-
+                y, x = np.meshgrid(stack_Rslows,ttt)
                 fig, ax = plt.subplots(1, figsize=(10,3))
                 if log_plot == True:
-                    c = ax.pcolormesh(x, y, stack_arrayR_Amp - global_max, cmap=plt.cm.gist_rainbow_r, vmin= - log_plot_range, vmax=0)
+                    c = ax.pcolormesh(x, y, np.transpose(stack_arrayR_Amp - global_max), cmap=plt.cm.gist_rainbow_r, vmin= - log_plot_range, vmax=0)
                 else:
-                    c = ax.pcolormesh(x, y, stack_arrayR_Amp, cmap=plt.cm.gist_rainbow_r, vmin= 0, vmax=global_max)
+                    c = ax.pcolormesh(x, y, np.transpose(stack_arrayR_Amp), cmap=plt.cm.gist_rainbow_r, vmin= 0, vmax=global_max)
                 fig.subplots_adjust(bottom=0.2)
                 ax.axis([x.min(), x.max(), y.min(), y.max()])
                 if log_plot == True:
@@ -330,18 +324,16 @@ def pro7_pair_scan(eq_num1, eq_num2, slow_delta = 0.0005, turn_off_black = 1,
                     Tcentral_am += amp_ave[lowest_Rindex*slowT_n + slowT_i]
 
                 #%% -- -- plot T tdiff
-                if no_tdiff_plot == False:
+                if tdiff_plots_too == True:
                     stack_arrayT_Tdf = np.zeros((slowT_n,stack_nt))
                     for it in range(stack_nt):  # check points one at a time
                         for slowT_i in range(slowT_n):  # for this station, loop over slownesses
                             num_val = Tcentral_st[slowT_i].data[it]
                             stack_arrayT_Tdf[slowT_i, it] = num_val
 
-                    y, x = np.mgrid[slice(stack_Tslows[0], stack_Tslows[-1] + slow_delta, slow_delta),
-                                 slice(ttt[0], ttt[-1] + dt, dt)]
-
+                    y, x = np.meshgrid(stack_Tslows,ttt)
                     fig, ax = plt.subplots(1, figsize=(10,3))
-                    c = ax.pcolormesh(x, y, stack_arrayT_Tdf, cmap=plt.cm.coolwarm, vmin= -tdiff_clip, vmax=tdiff_clip)
+                    c = ax.pcolormesh(x, y, np.transpose(stack_arrayT_Tdf), cmap=plt.cm.coolwarm, vmin= -tdiff_clip, vmax=tdiff_clip)
                     fig.subplots_adjust(bottom=0.2)
                     ax.axis([x.min(), x.max(), y.min(), y.max()])
                     fig.colorbar(c, ax=ax, label='time shift (s)')
@@ -360,14 +352,12 @@ def pro7_pair_scan(eq_num1, eq_num2, slow_delta = 0.0005, turn_off_black = 1,
                         num_val = Tcentral_am[slowT_i].data[it]
                         stack_arrayT_Amp[slowT_i, it] = num_val
 
-                y, x = np.mgrid[slice(stack_Tslows[0], stack_Tslows[-1] + slow_delta, slow_delta),
-                             slice(ttt[0], ttt[-1] + dt, dt)]
-
+                y, x = np.meshgrid(stack_Tslows,ttt)
                 fig, ax = plt.subplots(1, figsize=(10,3))
                 if log_plot == True:
-                    c = ax.pcolormesh(x, y, stack_arrayT_Amp - global_max, cmap=plt.cm.gist_rainbow_r, vmin= - log_plot_range, vmax=0)
+                    c = ax.pcolormesh(x, y, np.transpose(stack_arrayT_Amp - global_max), cmap=plt.cm.gist_rainbow_r, vmin= - log_plot_range, vmax=0)
                 else:
-                    c = ax.pcolormesh(x, y, stack_arrayT_Amp, cmap=plt.cm.gist_rainbow_r, vmin= 0, vmax=global_max)
+                    c = ax.pcolormesh(x, y, np.transpose(stack_arrayT_Amp), cmap=plt.cm.gist_rainbow_r, vmin= 0, vmax=global_max)
                 fig.subplots_adjust(bottom=0.2)
                 ax.axis([x.min(), x.max(), y.min(), y.max()])
                 if log_plot == True:
@@ -434,14 +424,12 @@ def pro7_pair_scan(eq_num1, eq_num2, slow_delta = 0.0005, turn_off_black = 1,
                 num_val = centralR_Dst[slowR_i].data[it]
                 stack_array[slowR_i, it] = num_val
 
-        y, x = np.mgrid[slice(stack_Rslows[0], stack_Rslows[-1] + slow_delta, slow_delta),
-                     slice(ttt[0], ttt[-1] + dt, dt)]
-
+        y, x = np.meshgrid(stack_Rslows,ttt)
         fig, ax = plt.subplots(1, figsize=(10,3))
         print(f'len(x) is {len(x)} and len(y) is {len(y)}')
         print(f'len(stack_Rslows) is {len(stack_Rslows)} and len(ttt) is {len(ttt)}')
         print(f'slowR_n is {slowR_n} and stack_nt is {stack_nt}')
-        c = ax.pcolormesh(x, y, stack_array, cmap=plt.cm.coolwarm, vmin=-tdiff_clip, vmax=tdiff_clip)
+        c = ax.pcolormesh(x, y, np.transpose(stack_array), cmap=plt.cm.coolwarm, vmin=-tdiff_clip, vmax=tdiff_clip)
         fig.colorbar(c, ax=ax, label='time lag (s)')
         fig.subplots_adjust(bottom=0.2)
         ax.axis([x.min(), x.max(), y.min(), y.max()])
@@ -467,12 +455,10 @@ def pro7_pair_scan(eq_num1, eq_num2, slow_delta = 0.0005, turn_off_black = 1,
                 num_val = centralT_Dst[slowT_i].data[it]
                 stack_array[slowT_i, it] = num_val
 
-        y, x = np.mgrid[slice(stack_Tslows[0], stack_Tslows[-1] + slow_delta, slow_delta),
-                     slice(ttt[0], ttt[-1] + dt, dt)]
-
+        y, x = np.meshgrid(stack_Tslows,ttt)
         fig, ax = plt.subplots(1, figsize=(10,3))
         fig.subplots_adjust(bottom=0.2)
-        c = ax.pcolormesh(x, y, stack_array, cmap=plt.cm.coolwarm, vmin=-tdiff_clip, vmax=tdiff_clip)
+        c = ax.pcolormesh(x, y, np.transpose(stack_array), cmap=plt.cm.coolwarm, vmin=-tdiff_clip, vmax=tdiff_clip)
         fig.colorbar(c, ax=ax, label='time lag (s)')
         ax.axis([x.min(), x.max(), y.min(), y.max()])
         c = ax.scatter(arrival_time, 0, color='black'  , s=50, alpha=0.75)
@@ -497,14 +483,12 @@ def pro7_pair_scan(eq_num1, eq_num2, slow_delta = 0.0005, turn_off_black = 1,
                 num_val = centralR_Ast[slowR_i].data[it]
                 stack_array[slowR_i, it] = num_val
 
-        y, x = np.mgrid[slice(stack_Rslows[0], stack_Rslows[-1] + slow_delta, slow_delta),
-                     slice(ttt[0], ttt[-1] + dt, dt)]
-
+        y, x = np.meshgrid(stack_Rslows,ttt)
         fig, ax = plt.subplots(1, figsize=(10,3))
         print(f'len(x) is {len(x)} and len(y) is {len(y)}')
         print(f'len(stack_Rslows) is {len(stack_Rslows)} and len(ttt) is {len(ttt)}')
         print(f'slowR_n is {slowR_n} and stack_nt is {stack_nt}')
-        c = ax.pcolormesh(x, y, stack_array, cmap=plt.cm.gist_rainbow_r, vmin=0)
+        c = ax.pcolormesh(x, y, np.transpose(stack_array), cmap=plt.cm.gist_rainbow_r, vmin=0)
         fig.colorbar(c, ax=ax, label='linear amplitude')
         fig.subplots_adjust(bottom=0.2)
         ax.axis([x.min(), x.max(), y.min(), y.max()])
@@ -530,12 +514,10 @@ def pro7_pair_scan(eq_num1, eq_num2, slow_delta = 0.0005, turn_off_black = 1,
                 num_val = centralT_Ast[slowT_i].data[it]
                 stack_array[slowT_i, it] = num_val
 
-        y, x = np.mgrid[slice(stack_Tslows[0], stack_Tslows[-1] + slow_delta, slow_delta),
-                     slice(ttt[0], ttt[-1] + dt, dt)]
-
+        y, x = np.meshgrid(stack_Tslows,ttt)
         fig, ax = plt.subplots(1, figsize=(10,3))
         fig.subplots_adjust(bottom=0.2)
-        c = ax.pcolormesh(x, y, stack_array, cmap=plt.cm.gist_rainbow_r, vmin=0)
+        c = ax.pcolormesh(x, y, np.transpose(stack_array), cmap=plt.cm.gist_rainbow_r, vmin=0)
         fig.colorbar(c, ax=ax, label='linear amplitude')
         ax.axis([x.min(), x.max(), y.min(), y.max()])
         c = ax.scatter(arrival_time, 0, color='black'  , s=50, alpha=0.75)
@@ -571,18 +553,16 @@ def pro7_pair_scan(eq_num1, eq_num2, slow_delta = 0.0005, turn_off_black = 1,
                 fig_index += 1
                 it_start = int(round((snap_start - start_buff)/dt))
                 it_end   = int(round((snap_end   - start_buff)/dt))
-                # plt.savefig(save_name + str(start_buff + snap_start) + '_' + str(start_buff + snap_end) + '_Abeam.png')
+                plt.savefig(save_name + str(start_buff + snap_start) + '_' + str(start_buff + snap_end) + '_Abeam.png')
                 for slowR_i in range(slowR_n):  # loop over radial slownesses
                     for slowT_i in range(slowT_n):  # loop over transverse slownesses
                         index = slowR_i*slowT_n + slowT_i
                         num_val = np.nanmean(tdiff[index].data[it_start:it_end])
                         stack_slice[slowR_i, slowT_i] = num_val
 
-                y1, x1 = np.mgrid[slice(stack_Rslows[0], stack_Rslows[-1] + slow_delta, slow_delta),
-                             slice(stack_Tslows[0], stack_Tslows[-1] + slow_delta, slow_delta)]
-
+                y1, x1 = np.meshgrid(stack_Rslows,stack_Tslows)
                 fig, ax = plt.subplots(1, figsize=(7,0.8*7))
-                c = ax.pcolormesh(x1, y1, stack_slice, cmap=plt.cm.coolwarm, vmin=-tdiff_clip, vmax=tdiff_clip)
+                c = ax.pcolormesh(x1, y1, np.transpose(stack_slice), cmap=plt.cm.coolwarm, vmin=-tdiff_clip, vmax=tdiff_clip)
                 ax.axis([x1.min(), x1.max(), y1.min(), y1.max()])
                 fig.colorbar(c, ax=ax, label = 'time shift (s)')
                 c = ax.scatter(pred_Eslo, pred_Nslo, color='black'  , s=50, alpha=0.75)
@@ -614,11 +594,9 @@ def pro7_pair_scan(eq_num1, eq_num2, slow_delta = 0.0005, turn_off_black = 1,
                         num_val = np.nanmean(amp_ave[index].data[it_start:it_end])
                         stack_slice[slowR_i, slowT_i] = num_val
 
-                y1, x1 = np.mgrid[slice(stack_Rslows[0], stack_Rslows[-1] + slow_delta, slow_delta),
-                             slice(stack_Tslows[0], stack_Tslows[-1] + slow_delta, slow_delta)]
-
+                y1, x1 = np.meshgrid(stack_Rslows,stack_Tslows)
                 fig, ax = plt.subplots(1, figsize=(7,0.8*7))
-                c = ax.pcolormesh(x1, y1, stack_slice, cmap=plt.cm.gist_rainbow_r)
+                c = ax.pcolormesh(x1, y1, np.transpose(stack_slice), cmap=plt.cm.gist_rainbow_r)
                 ax.axis([x1.min(), x1.max(), y1.min(), y1.max()])
                 if log_plot == True:
                     fig.colorbar(c, ax=ax, label = 'log amp')
@@ -781,11 +759,9 @@ def pro7_pair_scan(eq_num1, eq_num2, slow_delta = 0.0005, turn_off_black = 1,
                                                      ))/np.nansum(amp_ave_thres[start_index:end_index].data)
                 stack_slice[slowR_i, slowT_i] = num_val
 
-        y1, x1 = np.mgrid[slice(stack_Rslows[0], stack_Rslows[-1] + slow_delta, slow_delta),
-                     slice(stack_Tslows[0], stack_Tslows[-1] + slow_delta, slow_delta)]
-
+        y1, x1 = np.meshgrid(stack_Rslows,stack_Tslows)
         fig, ax = plt.subplots(1, figsize=(7,0.8*7*(slowR_n/slowT_n)))  # try to make correct aspect ratio plot
-        c = ax.pcolormesh(x1, y1, stack_slice, cmap=plt.cm.coolwarm, vmin = -tdiff_clip, vmax = tdiff_clip)
+        c = ax.pcolormesh(x1, y1, np.transpose(stack_slice), cmap=plt.cm.coolwarm, vmin = -tdiff_clip, vmax = tdiff_clip)
         fig.colorbar(c, ax=ax, label='time shift (s)')
         ax.axis([x1.min(), x1.max(), y1.min(), y1.max()])
         circle1 = plt.Circle((0, 0), 0.019, color='black', fill=False)
@@ -818,18 +794,16 @@ def pro7_pair_scan(eq_num1, eq_num2, slow_delta = 0.0005, turn_off_black = 1,
                     num_val = np.nanmean(amp_ave[index].data[start_index:end_index])
                 stack_slice[slowR_i, slowT_i] = num_val
 
-        y1, x1 = np.mgrid[slice(stack_Rslows[0], stack_Rslows[-1] + slow_delta, slow_delta),
-                     slice(stack_Tslows[0], stack_Tslows[-1] + slow_delta, slow_delta)]
-
+        y1, x1 = np.meshgrid(stack_Rslows,stack_Tslows)
         fig, ax = plt.subplots(1, figsize=(7,0.8*7*(slowR_n/slowT_n)))
         smax = np.max(stack_slice)
         smin = np.min(stack_slice)
         if log_plot == True:
             if (smax - smin) < log_plot_range:  # use full color scale even if range is less than specified
                 log_plot_range = smax - smin
-            c = ax.pcolormesh(x1, y1, stack_slice - smax, cmap=plt.cm.gist_rainbow_r, vmin= - log_plot_range, vmax=0)
+            c = ax.pcolormesh(x1, y1, np.transpose(stack_slice - smax), cmap=plt.cm.gist_rainbow_r, vmin= - log_plot_range, vmax=0)
         else:
-            c = ax.pcolormesh(x1, y1, stack_slice/smax, cmap=plt.cm.gist_rainbow_r, vmin = 0)
+            c = ax.pcolormesh(x1, y1, np.transpose(stack_slice/smax), cmap=plt.cm.gist_rainbow_r, vmin = 0)
         if log_plot == True:
             fig.colorbar(c, ax=ax, label='log amplitude')
         else:

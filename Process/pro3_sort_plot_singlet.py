@@ -7,12 +7,15 @@
 # John Vidale 2/2019
 
 def pro3singlet(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1,
-            max_taper_length = 5., simple_taper = 0, skip_SNR = 0, SNR_thres = 0,
+            max_taper_length = 1., simple_taper = True, apply_SNR = False, SNR_thres = 0,
             dphase = 'P', dphase2 = '', dphase3 = '', dphase4 = '',
-            start_buff = -10, end_buff = 10, start_beam = 0, end_beam = 0,
-            freq_min = 0.25, freq_max = 1, do_filt = 1, plot_scale_fac = 0.2,
-            min_dist = 0, max_dist = 180, plot_auto_dist = True, do_decimate = 0,
-            alt_statics = 0, statics_file = 'nothing', ARRAY = 0, ref_loc = 0, ref_rad = 0.4,
+            start_buff      =   -10, end_buff   =    10,
+            start_beam      =     0, end_beam   =     0,
+            precursor_shift = -1000, signal_dur = -1000,
+            freq_min = 0.25, freq_max = 1, do_filt = 1, plot_scale_fac = 1,
+            min_dist = 0, max_dist = 180, plot_auto_dist = True, do_decimate = True, decimate_fac = 10,
+            alt_statics = 0, statics_file = 'nothing', ARRAY = 0,
+            ref_rad = 180, ref_loc = False, ref_lat = 0, ref_lon = 0,
             verbose = 0, fig_index = 1, JST = False):
 # 0 is Hinet, 1 is LASA, 2 is NORSAR
 
@@ -31,20 +34,24 @@ def pro3singlet(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1,
     from termcolor import colored
     model = TauPyModel(model='iasp91')
 
+    if precursor_shift == -1000: # if precursor_ shift is not specified, use beam time for SNR decisions
+        precursor_shift = start_beam
+        signal_dur = end_beam - start_beam
+
 #    import sys # don't show any warnings
 #    import warnings
 #
 #    if not sys.warnoptions:
 #        warnings.simplefilter("ignore")
 
-    print(colored('Running pro3b_sort_plot_singlet', 'cyan'))
+    print(colored('Running pro3_sort_plot_singlet', 'cyan'))
     start_time_wc = time.time()
 
 #%% -- Event info
     #  input event data with 1-line file of format
     #  event 2016-05-28T09:47:00.000 -56.241 -26.935 78
     fname = '/Users/vidale/Documents/Research/IC/EvLocs/event' + str(eq_num) + '.txt'
-    print('Opening ' + fname)
+    print('Opening event file ' + fname)
     file = open(fname, 'r')
     lines=file.readlines()
     split_line = lines[0].split()
@@ -57,27 +64,27 @@ def pro3singlet(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1,
     day_label     = split_line[1][8:10]
     hour_label    = split_line[1][11:13]
     minute_label  = split_line[1][14:16]
-    print(date_label + ' year_label ' + year_label + ' hour_label ' + hour_label + ' min_label ' + minute_label)
     ev_lat      = float(      split_line[2])
     ev_lon      = float(      split_line[3])
     ev_depth    = float(      split_line[4])
-    print('        date_label ' + date_label + ' time ' + str(t) + ' lat ' + str(ev_lat) + ' lon ' + str( ev_lon) + ' depth ' + str(ev_depth))
+    print('    event parameters: ' + str(t) + ' lat ' + str(ev_lat) + ' lon ' + str( ev_lon) + ' depth ' + str(ev_depth))
 
 #%% -- Station locations and statics
-    if stat_corr == 1:  # load static terms, only applies to Hinet, LASA, and China
+    if stat_corr != 0:  # load static terms, only applies to Hinet and LASA
         if ARRAY == 0:
-            if alt_statics == 0: # standard set
+            if   stat_corr == 1: # standard set
                 sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_statics_hinet.txt'
-            else: # custom set made by this event for this event
-                sta_file = ('/Users/vidale/Documents/GitHub/Array_codes/Files/Tuned_Statics/' + 'HA' +
-                   date_label[:10] + 'pro4_' + dphase + '.statics')
+            elif stat_corr == 2: # custom set made for SSI to Hi-Net PKiKP
+                sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/SSI_HiNet_statics.txt'
+            elif stat_corr == 3: # custom set made for Kawa PKiKP for Hi-Net
+                sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/Kawa_HiNet_statics.txt'
         elif ARRAY == 1:
             sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_statics_LASA.txt'
         elif ARRAY == 2:
             sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_statics_ch.txt'
         with open(sta_file, 'r') as file:
             lines = file.readlines()
-        print('    ' + str(len(lines)) + ' coarse station statics read from ' + sta_file)
+        print('    ' + str(len(lines)) + ' station statics read from ' + sta_file)
         # Load station coords into arrays
         station_index = range(len(lines))
         st_names = []
@@ -132,9 +139,9 @@ def pro3singlet(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1,
             st_names[ii]  = this_name_truc.upper()
 
 #%%  -- Rest of parameters
-#    stat_corr = 1 # apply station static corrections
-#    rel_time = 1          # timing is relative to a chosen phase, otherwise relative to OT
-#    dphase  = 'PKIKP'       # phase to be aligned
+#    stat_corr = 1, 2, or 3 # apply station static corrections
+#    rel_time = 1           # timing is relative to a chosen phase, otherwise relative to OT
+#    dphase  = 'PKIKP'      # phase to be aligned
 #    dphase2 = 'PKiKP'      # another phase to have traveltime plotted
 #    dphase3 = 'PKP'        # another phase to have traveltime plotted
 #    dphase4 = 'pP'        # another phase to have traveltime plotted
@@ -145,26 +152,27 @@ def pro3singlet(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1,
 #    corr_threshold = 0.7  # minimum correlation in measuring shift to use station
     plot_tt = 1           # plot the traveltimes?
     plot_auto_dist = 1    # plot just the traces, not potentially bigger dist_min to dist_max
-    # if ref_loc ==true,  use distance to (ref_lat,ref_lon) to filter stations
-    # if ref_loc ==false, use distance to earthquake loc to filter stations
+    # if ref_loc == True,  use distance to (ref_lat,ref_lon) to filter stations
+    # if ref_loc == False, use min_dist and max_dist to earthquake loc to filter stations
     #    ref_rad = 0.4    # ° radius (°) set by input or at top
-    if ARRAY == 0:
-        ref_lat = 36  # °N, around middle of Japan
-        ref_lon = 139 # °E
-    if ARRAY == 1:
-        ref_lat = 46.7      # °N keep only inner rings A-D if radius is 0.4°
-        ref_lon = -106.22   # °E
-    if ARRAY == 2:
-        ref_lat = 38      # °N
-        ref_lon = 104.5   # °E
-#        ref_rad = 0.4    # ° radius (°) set by input or at top
+    if ref_loc == False:  # use default array centers unless specified
+        if ARRAY == 0:
+            ref_lat = 36  # °N, around middle of Japan
+            ref_lon = 139 # °E
+        if ARRAY == 1:
+            ref_lat = 46.7      # °N keep only inner rings A-D if radius is 0.4°
+            ref_lon = -106.22   # °E
+        if ARRAY == 2:
+            ref_lat = 38      # °N
+            ref_lon = 104.5   # °E
 
 #%% -- Test taper, needs adjustment?
 #   Is taper too long compared to noise estimation window?
     totalt = end_buff - start_buff
     noise_time_skipped = taper_frac * totalt
     noise_time_skipped = min(noise_time_skipped,10.0) # set max of 10s to taper length
-    if simple_taper == 0:
+    print(f'        noise time at start skipped due to taper length: {noise_time_skipped:.2f} seconds')
+    if simple_taper == False:
         if noise_time_skipped >= -0.5 * start_buff:
             print('        ' + 'Specified taper of ' + str(taper_frac * totalt) +
                ' is not big enough compared to available noise estimation window ' +
@@ -179,7 +187,7 @@ def pro3singlet(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1,
     if rel_time == 0: # SNR requirement not implemented for unaligned traces
         SNR_thres = 0
 
-#%% Load and waveforms
+#%% Load waveforms
     st = Stream()
     # fname     = '/Users/vidale/Documents/GitHub/LASA_data/HD' + date_label + '.mseed'
     if ARRAY == 1:
@@ -189,22 +197,26 @@ def pro3singlet(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1,
         mseed_name = year_short_label + '-' +month_label + '-' + day_label
         fname     = '/Users/vidale/Documents/Research/IC/Mseed/HD20' + mseed_name + '.mseed'
 
-    print('file name attempt: ' + fname)
+    print('Opening data file: ' + fname)
     st=read(fname)
+    print('data len ' + str(len(st[0].data)) + ' # traces ' + str(len(st)) + ' delta ' + str(st[0].stats.delta))
 #%% -- Ensure 10 sps
-    if do_decimate != 0:
-        st.decimate(do_decimate, no_filter=True)
+    if do_decimate == True:
+        st.decimate(decimate_fac, no_filter=True)
 
-    print('        ' + fname)
     print('    ' + str(len(st)) + '  traces read in')
     if(len(st) == 0):
-        exit('No traces is a failure')
-    print('        First trace has : ' + str(len(st[0].data)) + ' time pts ')
-    print('        Start time : ' + str(st[0].stats.starttime) + '  event time : ' + str(t))
+        exit('Failure: No traces read.')
+    print('        1st trace parameters')
+    print('        Start time: ' + str(st[0].stats.starttime) + '  event time : ' + str(t))
+    if JST: # if necessary, convert JST -> UTC, time in Greenwich 9 hours earlier than Japan
+        print('        Start lag: ' + str((st[0].stats.starttime - 9*60*60) - t))
+    else:
+        print('        Start lag: ' + str(st[0].stats.starttime - t))
     # print('    ' + str(len(st)) + '  traces after decimation')
     nt = len(st[0].data)
     dt = st[0].stats.delta
-    print('        First trace has : ' + str(nt) + ' time pts, time sampling of ' + str(dt) + ' and thus duration of ' + str((nt-1)*dt))
+    print('        Time pts: ' + str(nt) + ' time sampling: ' + str(dt) + ' duration: ' + str((nt-1)*dt))
 
 #%% Select and process traces
     st_pickalign = Stream()
@@ -212,31 +224,28 @@ def pro3singlet(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1,
     tra_in_range  = 0
     tra_sta_found = 0
     nodata        = 0
+    no_tt_calc    = 0
     min_dist_auto = 180
     max_dist_auto = 0
     min_time_plot =  1000000
     max_time_plot = -1000000
 
-    # not used in all cases, but printed out below
-    # only used if rel_slow == 1, preserves 0 slowness, otherwise 0 is set to phase slowness
+    # find reference distance and slowness at array center
     ref_distance = gps2dist_azimuth(ref_lat,ref_lon,ev_lat,ev_lon)
     ref1_dist  = ref_distance[0]/(1000*111)
-    dist_minus = ref1_dist - 0.5
-    dist_plus  = ref1_dist + 0.5
     arrivals_ref   = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree=ref1_dist, phase_list=[dphase])
-    if(len(arrivals_ref) == 0 and ref1_dist < 10 and dphase == 'P'):  # in case first arrival is upgoing P, which is 'p'
+    if(len(arrivals_ref) == 0 and ref1_dist < 10 and dphase == 'P'):  # in case first arrival might be upgoing P, which is 'p'
         arrivals_ref   = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree=ref1_dist, phase_list='p')
-    arrivals_minus = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree=dist_minus,phase_list=[dphase])
-    if(len(arrivals_minus) == 0 and dist_minus < 10 and dphase == 'P'):
-        arrivals_minus   = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree=dist_minus, phase_list='p')
-    arrivals_plus  = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree=dist_plus ,phase_list=[dphase])
-    if(len(arrivals_plus) == 0 and dist_plus < 10 and dphase == 'P'):
-        arrivals_plus   = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree=dist_plus, phase_list='p')
-    if(len(arrivals_ref) == 0 or len(arrivals_minus) == 0 or len(arrivals_plus) == 0):
+    if(len(arrivals_ref) == 0):
         print('model.get_travel_times failed: dist, phase  ' + str(ref1_dist) + '   ' + dphase)
-
-    atime_ref = arrivals_ref[0].time  # phase arrival time at reference distance
-    ref_slow = arrivals_plus[0].time - arrivals_minus[0].time  # dt over 1 degree at ref distance
+    if dphase == 'PKP':  # use last element; first element might be BC, with limited range and thus step in [0] element
+        atime_rayp = arrivals_ref[-1].ray_param  # ray parameter (s/radian) at reference distance
+        atime_ref  = arrivals_ref[-1].time       # phase arrival time at reference distance
+    else:  # use first element
+        atime_rayp = arrivals_ref[0].ray_param
+        atime_ref  = arrivals_ref[0].time
+    ref_slow  = atime_rayp * 2 * np.pi / 360. # convert to s/°
+    # print(f'ref_slow {ref_slow:.2f}')
 
     for tr in st: # traces one by one, find lat-lon
         if float(year_label) < 1970: # fix the damn 1969 -> 2069 bug in Gibbon's LASA data
@@ -250,7 +259,7 @@ def pro3singlet(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1,
             tra_sta_found += 1
 
             corr = 1
-            if stat_corr == 1:
+            if stat_corr != 0:
                 corr = float(st_corr[ii])
 
 #%% -- Reject low correlation
@@ -258,6 +267,7 @@ def pro3singlet(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1,
                 stalat = float(st_lats[ii]) # look up lat & lon again to find distance
                 stalon = float(st_lons[ii])
 
+#%% -- Reject out of range
                 distance = gps2dist_azimuth(stalat,stalon,ev_lat,ev_lon) # Get traveltimes again, hard to store
                 tr.stats.distance=distance[0] # distance in km
                 dist = distance[0]/(1000*111)
@@ -271,46 +281,47 @@ def pro3singlet(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1,
                         tra_in_range += 1
                 elif ref_loc == True:  # alternately, check whether trace is close enough to ref_location
                     ref_distance = gps2dist_azimuth(ref_lat,ref_lon,stalat,stalon)
-                    ref2_dist = ref_distance[0]/(1000*111)
-                    if ref2_dist < ref_rad:
+                    ref_degree_dist = ref_distance[0]/(1000*111)
+                    if ref_degree_dist < ref_rad:
                         in_range = 1
                         tra_in_range += 1
-#%% -- Reject out of range
+
                 if in_range == 1:   # trace fulfills the specified criteria for being in range
-                    s_t = t + start_buff
-                    e_t = t + end_buff
+                    s_t = t  + start_buff
+                    e_t = t  + end_buff
+
 #%% -- Apply static
-                    if stat_corr == 1: # apply static station corrections
+                    if stat_corr != 0: # apply static station corrections
                         tr.stats.starttime -= float(st_shift[ii])
                     if rel_time == 0:  #  use absolute time, ignore time of chose phase
                         tr.trim(starttime=s_t,endtime = e_t)
                     else:              # shift relative to a chosen phase
-                        # print(f'        dist_m is   {dist:.2f}   ev_depth is {ev_depth:.2f}   dphase is {dphase}')
-                        arrivals_each = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree=dist,phase_list=[dphase])
-                        # print(f'        cal_time is   {arrivals_each[0].time:.2f}')
+                        arrivals_each = model.get_travel_times(source_depth_in_km=ev_depth, distance_in_degree=dist,phase_list=[dphase])
                         if(len(arrivals_each) == 0):
                             if(dist < 10 and dphase == 'P'):  # in case first arrival is upgoing P, try 'p'
-                                arrivals_each = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree=dist,phase_list='p')
+                                arrivals_each = model.get_travel_times(source_depth_in_km=ev_depth, distance_in_degree=dist,phase_list='p')
                         if(len(arrivals_each) == 0):  # did it still fail?
 #%% -- Can't calculate traveltime
-                                print('model.get_travel_times failed: dist, depth, phase  ' + tr.stats.station + '   ' + str(ref1_dist) + '   ' +
-                                      '   ' + str(ev_depth) + '   ' + dphase)
+                                print(f'travel_time failed: station {tr.stats.station} dist {dist:.2f} phase {dphase}')
                                 tra_in_range -= 1 # don't count this trace after all
                                 rejector = True
+                                no_tt_calc += 1
                         else:
                             # atime_each is phase arrival on this trace
                             # atime_ref  is phase arrival on reference trace
 
-                            atime_each = arrivals_each[0].time
+                            if dphase == 'PKP':
+                                atime_each = arrivals_each[-1].time  # use last instance for AB branch
+                            else:
+                                atime_each = arrivals_each[0].time
                             # start time has a shift proportional to ref_dist at phase slowness at ref_dist
-                            # preserves slowness of arrivals at ref_dist
+                            # preserves slowness of arrivals at ref_dist, sharp even if tt curve has curvature
                             # uniform relative window limits around phase
                             if rel_time == 1:
                                 s_t += atime_each
                                 e_t += atime_each
                                 tr.trim( starttime=s_t, endtime = e_t)
                                 tr.stats.starttime -= atime_each - (dist-ref1_dist) * ref_slow
-                                # print('Station ' + tr.stats.station + ' s_t  ' + str(s_t) + ' e_t ' + str(e_t)  + ' traveltime ' + str(atime_each) + ' length trace ' + str(len(tr.data)))
                             # window time sets 0 at chosen phase only on reference trace
                             # keeps true slowness, but blurs arcuate slowness curves
                             # uniform relative window limits around phase
@@ -343,11 +354,11 @@ def pro3singlet(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1,
                     else:
                         nodata += 1
 #%% -- Reject if not in station (static) list
-        else:
-            print(tr.stats.station + ' not found in station list with statics')
+    #     else:
+    #         print(tr.stats.station + ' not found in station list with statics')
     print('    ' + str(tra_in_range) + '  traces in range')
-    print('    ' + str(len(st_pickalign)) + '  traces after alignment and correlation selection')
-    print('    ' + str(nodata) + '  traces with no data')
+    print('        ' + str(nodata) + '  traces with no data,  ' + str(no_tt_calc) + '  traces tt calc failed')
+    print('    ' + str(len(st_pickalign)) + '  traces after alignment, check for data, tt calc, correlation selection')
 
     #print(st) # at length
     if verbose:
@@ -359,38 +370,43 @@ def pro3singlet(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1,
     st_pickalign.detrend(type='simple')
     st_pickalign.taper(taper_frac, max_length = max_taper_length)
     if do_filt == 1:
+        print('Filter' + ' min ' + str(freq_min) + ' max ' + str(freq_max))
+        print('data len ' + str(len(st_pickalign[0].data)) + ' # traces ' + str(len(st_pickalign)) + ' delta ' + str(st_pickalign[0].stats.delta))
         st_pickalign.filter('bandpass', freqmin=freq_min, freqmax=freq_max, corners=4, zerophase=True)
     st_pickalign.taper(taper_frac, max_length = max_taper_length)
 
 #%%  -- Cull by SNR threshold
-    if skip_SNR == 1:
+    if apply_SNR == False:
         stgood = st_pickalign.copy()
     else:
         stgood = Stream()
+        buff_time = end_buff - start_buff
+        time_to_signal_start = (precursor_shift - start_buff)
+        print(f'SNR parameters: start buffer {start_buff:.1f} end buffer {end_buff:.1f} pre_shift {precursor_shift:.1f} sig duration {signal_dur:.1f} SNR onset offset {precursor_shift:.1f}')
         for tr in st_pickalign:
             # estimate median noise
-            time_to_beam_start = (start_beam - start_buff)
-            if time_to_beam_start - taper_frac * (end_buff - start_buff) < noise_win_max: # noise window < max length
-                t_noise_start  = int(len(tr.data) * taper_frac)  # start just after taper
-                t_noise_end    = int(len(tr.data) * time_to_beam_start / (end_buff - start_buff))  # end at beam start
+            if time_to_signal_start - taper_frac * buff_time < noise_win_max: # noise window < max length
+                t_noise_start  = int(tr.stats.sampling_rate * taper_frac * buff_time) # start just after taper
+                t_noise_end    = int(tr.stats.sampling_rate * time_to_signal_start)   # end at beam start
+                if t_noise_end - t_noise_start < 20:
+                    print('Very short to no window (less than 20 points) to estimate noise')
             else:  # plenty of leader, set noise window to max length
-                time_to_noise_start = time_to_beam_start - noise_win_max
-                t_noise_start  = int(len(tr.data) *  time_to_noise_start / (end_buff - start_buff))  # start just after taper
-                t_noise_end    = int(len(tr.data) *  time_to_beam_start  / (end_buff - start_buff))  # end at beam start
+                time_to_noise_start = time_to_signal_start - noise_win_max
+                t_noise_start  = int(tr.stats.sampling_rate * time_to_noise_start)  # noise window = noise_win_max
+                t_noise_end    = int(tr.stats.sampling_rate * time_to_signal_start) # end at beam start
             noise = np.median(abs(tr.data[t_noise_start:t_noise_end]))
 
             # estimate median signal
-            t_signal_start = t_noise_end
-            t_signal_end    = int(len(tr.data) * (end_beam - start_buff)/(end_buff - start_buff))
+            t_signal_start = int(tr.stats.sampling_rate * time_to_signal_start)
+            t_signal_end   = int(t_signal_start + tr.stats.sampling_rate * signal_dur)
             signal = np.median(abs(tr.data[t_signal_start:t_signal_end]))
 
             # test SNR
             SNR = signal/noise;
-#            print('set noise window to max length: ' + str(t_noise_start) + ' start   ' + str(t_noise_end) + ' end')
-#            print('set signal window: ' + str(t_signal_start) + ' start   ' + str(t_signal_end) + ' end')
-#            print('SNR: ' + str(SNR))
             if (SNR > SNR_thres):
                 stgood += tr
+            # else:
+            #     print('Failed SNR test: SNR ' + str(SNR))
 
     print('    ' + str(len(stgood)) + '  traces above SNR threshold')
     if verbose:
@@ -409,6 +425,7 @@ def pro3singlet(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1,
             # atime   = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree=distance[0], phase_list=[dphase])
             # tr.stats.atime = atime
             tr.stats.distance=distance[0]/(1000*111) # distance in degrees
+            # print(tr.stats.station + '  ' + str(tr.stats.distance))
             if tr.stats.distance < min_dist_auto:
                 min_dist_auto = tr.stats.distance
             if tr.stats.distance > max_dist_auto:
@@ -421,18 +438,19 @@ def pro3singlet(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1,
     print(f'        Min time is   {min_time_plot:.2f}   Max time is {max_time_plot:.2f}')
     if min_time_plot > start_buff:
         print(f'Min time {min_time_plot:.2f} > start_buff {start_buff:.2f}')
-        print(colored('Write zero-filling into pro3 for this code to work','red'))
-        sys.exit(-1)
+        print(colored('Warning: write zero-filling into pro3?','red'))
+    #     sys.exit(-1)
     if max_time_plot < end_buff:
         print(f'Max time {max_time_plot:.2f} < end_buff {end_buff:.2f}')
-        print(colored('Write zero-filling into pro3 for this code to work','red'))
-        sys.exit(-1)
+        print(colored('Warning: write zero-filling into pro3?','red'))
+    #     sys.exit(-1)
 
 #%% -- Set x, y limits
     # plt.close(fig_index)
 
-    fig_tit = str(eq_num) + '_traces'
-    plt.figure(fig_tit,figsize=(10,10))
+    # fig_tit = str(eq_num) + '_traces'
+    # plt.figure(fig_tit,figsize=(10,10), num = fig_index)
+    plt.figure(figsize=(10,10), num = fig_index)
     plt.xlim(min_time_plot,max_time_plot)
 
 #%%  -- Set distance limits
@@ -445,6 +463,8 @@ def pro3singlet(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1,
         plt.ylim(min_dist,max_dist)
 
     for tr in stgood:
+        # list stations with distance to ID best traces for correlations
+        # print('        Distance is ' + str(tr.stats.distance) + ' for station ' + tr.stats.station)
         dist_offset = tr.stats.distance
 
         ttt = np.arange(len(tr.data)) * tr.stats.delta + (tr.stats.starttime - t)
@@ -470,7 +490,7 @@ def pro3singlet(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1,
             if(len(arrivals) == 0 and dist_vec[i] < 10 and dphase == 'P'):  # in case first arrival is upgoing P, which is 'p'
                 arrivals = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree=dist_vec[i],phase_list='p')
                 if(len(arrivals) == 0):
-                    print('model.get_travel_times failed: dist, phase  ' + str(dist_vec[i]) + '   ' + dphase)
+                    print(f'travel_time failed: blue ttime1 dist {dist_vec[i]:.2f} phase {dphase}')
             num_arrivals = len(arrivals)
             found_it = 0
             for j in range(0,num_arrivals):
@@ -487,7 +507,7 @@ def pro3singlet(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1,
                 if(len(arrivals) == 0 and dist_vec[i] < 10 and dphase2 == 'P'):  # in case first arrival is upgoing P, which is 'p'
                     arrivals = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree=dist_vec[i],phase_list='p')
                     if(len(arrivals) == 0):
-                        print('model.get_travel_times failed: dist, phase  ' + str(dist_vec[i]) + '   ' + dphase2)
+                        print(f'travel_time failed: orange ttime2 dist {dist_vec[i]:.2f} phase {dphase2}')
                 num_arrivals = len(arrivals)
                 found_it = 0
                 for j in range(0,num_arrivals):
@@ -511,7 +531,7 @@ def pro3singlet(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1,
                 if(len(arrivals) == 0 and dist_vec[i] < 10 and dphase3 == 'P'):  # in case first arrival is upgoing P, which is 'p'
                     arrivals = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree=dist_vec[i],phase_list='p')
                     if(len(arrivals) == 0):
-                        print('model.get_travel_times failed: dist, phase  ' + str(dist_vec[i]) + '   ' + dphase3)
+                        print(f'travel_time failed: yellow ttime3 dist {dist_vec[i]:.2f} phase {dphase3}')
                 num_arrivals = len(arrivals)
                 found_it = 0
                 for j in range(0,num_arrivals):
@@ -535,7 +555,7 @@ def pro3singlet(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1,
                 if(len(arrivals) == 0 and dist_vec[i] < 10 and dphase4 == 'P'):  # in case first arrival is upgoing P, which is 'p'
                     arrivals = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree=dist_vec[i],phase_list='p')
                     if(len(arrivals) == 0):
-                        print('model.get_travel_times failed: dist, phase  ' + str(dist_vec[i]) + '   ' + dphase4)
+                        print(f'travel_time failed: purple ttime4 dist {dist_vec[i]:.2f} phase {dphase4}')
                 num_arrivals = len(arrivals)
                 found_it = 0
                 for j in range(0,num_arrivals):
@@ -561,7 +581,7 @@ def pro3singlet(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1,
 
     plt.xlabel('Time (s)')
     plt.ylabel('Epicentral distance from event (°)')
-    plt.title(date_label + ' event #' + str(eq_num))
+    plt.title(date_label + ' event #' + str(eq_num) + ' ' + dphase)
 #    os.chdir('/Users/vidale/Documents/PyCode/Plots')
 #    plt.savefig(date_label + '_' + str(event_no) + '_raw.png')
     plt.show()

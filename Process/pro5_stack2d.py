@@ -8,8 +8,8 @@
 # John Vidale 2/2019
 
 def pro5stack2d(eq_num, slow_delta = 0.0005, slowR_lo = -0.1, slowR_hi = 0.1, slowT_lo = -0.1, slowT_hi = 0.1,
-              start_buff = -50, end_buff = 50, norm = 1, ARRAY = 0, NS = False, decimate_fac = 0,
-              ref_loc = 0, ref_lat = 36.3, ref_lon = 138.5, stack_option = 1):
+              start_buff = -50, end_buff = 50, norm = True, ARRAY = 0, NS = False, decimate_fac = 0,
+              ref_loc = False, ref_lat = 36.3, ref_lon = 138.5, stack_option = 1, min_dist = 0, max_dist = 180):
 
     from obspy import UTCDateTime
     from obspy import Stream, Trace
@@ -47,17 +47,20 @@ def pro5stack2d(eq_num, slow_delta = 0.0005, slowR_lo = -0.1, slowR_hi = 0.1, sl
 #%% Get location file
     if ARRAY == 0: # Hinet set
         sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_hinet.txt'
-        if ref_loc == 0:
-            ref_lat = 36.3
-            ref_lon = 138.5
     elif ARRAY == 1:         # LASA set
         sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_LASA.txt'
-        if ref_loc == 0:
-            ref_lat = 46.69
-            ref_lon = -106.22
     elif ARRAY == 2: # China set and center
         sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_ch.txt'
-        if ref_loc == 0:
+
+#%% Set array reference location if not input
+    if ref_loc == False:
+        if ARRAY == 0: # Hinet set
+            ref_lat = 36.3
+            ref_lon = 138.5
+        elif ARRAY == 1:         # LASA set
+            ref_lat = 46.69
+            ref_lon = -106.22
+        elif ARRAY == 2: # China set and center
             ref_lat = 38      # °N
             ref_lon = 104.5   # °E
     with open(sta_file, 'r') as file:
@@ -133,19 +136,31 @@ def pro5stack2d(eq_num, slow_delta = 0.0005, slowR_lo = -0.1, slowR_hi = 0.1, sl
     ref_back_az = ref_dist_az[2]
 
 #%% select by window, norm, and adjust start time to align picked times
-    done = 0
     if env_stack == 1:
         for tr in st: #  #convert oscillating seismograms to envelopes
             tr.data = np.abs(hilbert(tr.data))
 
+    done = 0  # kludge to get centroid of array
+    ave_lat = 0
+    ave_lon = 0
+    cnt = 0
+    for tr in st: #  #convert oscillating seismograms to envelopes
+        cnt = cnt + 1
+        ave_lat = ave_lat + float(st_lats[ii])
+        ave_lon = ave_lon + float(st_lons[ii])
+    ave_lat = ave_lat / cnt
+    ave_lon = ave_lon / cnt
+    print(f'Average latitude  {ave_lat:.3f}   Average longitude  {ave_lon:.3f}')
+
     for tr in st: # traces one by one, find lat-lon by searching entire inventory.  Inefficient but cheap
         if tr.stats.station in st_names:  # find station in station list
             ii = st_names.index(tr.stats.station)
-            if norm == 1:
+            if norm == True:
                 tr.normalize() # trace divided abs(max of trace)
             stalat = float(st_lats[ii])
             stalon = float(st_lons[ii]) # use lat & lon to find distance and back-az
-            rel_dist_az = gps2dist_azimuth(stalat,stalon,ref_lat,ref_lon)
+            # rel_dist_az = gps2dist_azimuth(stalat,stalon,ref_lat,ref_lon)
+            rel_dist_az = gps2dist_azimuth(stalat,stalon,ave_lat,ave_lon)
             rel_dist    = rel_dist_az[0]/1000  # km
             rel_back_az = rel_dist_az[1]       # radians
 
@@ -185,11 +200,31 @@ def pro5stack2d(eq_num, slow_delta = 0.0005, slowR_lo = -0.1, slowR_hi = 0.1, sl
                             nend1 = stack_nt - nshift
                             nbeg2 = nshift
                             nend2 = stack_nt
+                        if nend1 - nbeg1 != nend2 - nbeg2:
+                            print('nbeg1 ' + str(nbeg1) + ', nend1 '+ str(nend1) + ', nbeg2 ' + str(nbeg2) + ', nend2 ' + str(nend2))
+                        if len(arr) < nend1 or len(arr) < nend2:
+                            print('str(len(arr)) < nend1 or len(arr) < nend2:  len(arr) ' + str(len(arr)) + ', nend1 ' + str(nend1) + ', nend2 ' + str(nend2))
+                            print('Sorry, fast code cannot handle running into end of trace')
+                            sys.exit(-1)
                         if nend1 >= 0 and nbeg1 <= stack_nt:
                             stack[indx].data[nbeg1 : nend1] += arr[nbeg2 : nend2]
             done += 1
-            if done%100 == 0:
+            if done == 1:
                 print('Done stacking ' + str(done) + ' out of ' + str(len(st)) + ' stations.')
+                elapsed_time_wc = time.time() - start_time_wc
+                print(f'So far it has taken   {elapsed_time_wc:.1f}   seconds')
+            elif done == 10:
+                print('Done stacking ' + str(done) + ' out of ' + str(len(st)) + ' stations.')
+                elapsed_time_wc = time.time() - start_time_wc
+                print(f'So far it has taken   {elapsed_time_wc:.1f}   seconds')
+            elif done == 100:
+                print('Done stacking ' + str(done) + ' out of ' + str(len(st)) + ' stations.')
+                elapsed_time_wc = time.time() - start_time_wc
+                print(f'So far it has taken   {elapsed_time_wc:.1f}   seconds')
+            elif done%200 == 0:
+                print('Done stacking ' + str(done) + ' out of ' + str(len(st)) + ' stations.')
+                elapsed_time_wc = time.time() - start_time_wc
+                print(f'So far it has taken   {elapsed_time_wc:.1f}   seconds')
         else:
             print(tr.stats.station + ' not found in station list')
 

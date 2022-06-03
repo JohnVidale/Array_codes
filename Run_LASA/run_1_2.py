@@ -16,10 +16,10 @@ os.chdir('/Users/vidale/Documents/GitHub/Array_codes')
 #%% Import functions
 from pro2_con_stfs             import pro2_convstf
 from pro2_plot_conv            import pro2_test
-from pro3a_sort_plot_pair      import pro3pair
-from pro3b_sort_plot_singlet   import pro3singlet
-from pro5a_stack               import pro5stack
-from pro5b_stack2d             import pro5stack2d
+from pro3_sort_plot_pair       import pro3pair
+from pro3_sort_plot_singlet    import pro3singlet
+from pro5_stack1d              import pro5stack1d
+from pro5_stack2d              import pro5stack2d
 from pro6_pair_cc              import pro6_cc_pair
 from pro6_singlet              import pro6_singlet
 from pro7_pair_scan            import pro7_pair_scan
