@@ -444,7 +444,7 @@ def pro4_get_shifts(eq_num, use_ref_trace = True, ref_trace = 'nothing', event_n
     plt.show()
 
     #  Save stats
-    fname_stats = '/Users/vidale/Documents/GitHub/Array_codes/Files/Kawa_HiNet_statics.txt'
+    fname_stats = '/Users/vidale/Documents/GitHub/Array_codes/Files/SSI_HF_HiNet_statics.txt'
 
     #  Save station static correction files
     #fname_stats = 'Statics' + etime[:10] + dphase + ref_trace + '.txt'

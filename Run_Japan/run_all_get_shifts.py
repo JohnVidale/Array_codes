@@ -10,8 +10,9 @@ import os
 from run_individual_get_shifts      import run_individual_get_shifts
 
 #%% PKiKP alignment
-# run_individual_get_shifts(eq_num = 161, start_buff = -10, end_buff = 10, precursor_shift = -3, signal_dur = 5, min_dist = 148, max_dist = 155.43)
-run_individual_get_shifts(eq_num = 101, start_buff = -10, end_buff = 10, precursor_shift = 1, signal_dur = 7, min_dist = 13.5, max_dist = 24.5)
+run_individual_get_shifts(eq_num = 161, start_buff = -10, end_buff = 10, min_dist = 148, max_dist = 165)
+# run_individual_get_shifts(eq_num = 161, start_buff = -10, end_buff = 10, precursor_shift = -3, signal_dur = 5, min_dist = 148, max_dist = 165)
+# run_individual_get_shifts(eq_num = 101, start_buff = -10, end_buff = 10, precursor_shift = 1, signal_dur = 7, min_dist = 13.5, max_dist = 24.5)
 
 # run_individual_get_shifts(
 #     start_buff = -10, end_buff = 10, start_beam_align = -4, end_beam_align = 1, min_dist = 148, max_dist = 155,

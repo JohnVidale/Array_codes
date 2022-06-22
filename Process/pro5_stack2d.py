@@ -51,6 +51,12 @@ def pro5stack2d(eq_num, slow_delta = 0.0005, slowR_lo = -0.1, slowR_hi = 0.1, sl
         sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_LASA.txt'
     elif ARRAY == 2: # China set and center
         sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_ch.txt'
+    elif ARRAY == 3: #         NORSAR set
+        sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_NORSAR.txt'
+    elif ARRAY == 4: #         Warramunga set
+        sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_AU_WR.txt'
+    elif ARRAY == 5: #         Yellowknife set
+        sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_CN_YK.txt'
 
 #%% Set array reference location if not input
     if ref_loc == False:
@@ -63,6 +69,12 @@ def pro5stack2d(eq_num, slow_delta = 0.0005, slowR_lo = -0.1, slowR_hi = 0.1, sl
         elif ARRAY == 2: # China set and center
             ref_lat = 38      # °N
             ref_lon = 104.5   # °E
+        elif ARRAY == 4:
+            ref_lat = -19.90  # °N Warramunga
+            ref_lon = 134.42  # °E
+        elif ARRAY == 5:
+            ref_lat =  62.49  # °N Yellowknife
+            ref_lon = -114.6  # °E
     with open(sta_file, 'r') as file:
         lines = file.readlines()
     print(str(len(lines)) + ' stations read from ' + sta_file)
@@ -144,6 +156,7 @@ def pro5stack2d(eq_num, slow_delta = 0.0005, slowR_lo = -0.1, slowR_hi = 0.1, sl
     ave_lat = 0
     ave_lon = 0
     cnt = 0
+    bad_trace = False
     for tr in st: #  #convert oscillating seismograms to envelopes
         cnt = cnt + 1
         ave_lat = ave_lat + float(st_lats[ii])
@@ -201,11 +214,16 @@ def pro5stack2d(eq_num, slow_delta = 0.0005, slowR_lo = -0.1, slowR_hi = 0.1, sl
                             nbeg2 = nshift
                             nend2 = stack_nt
                         if nend1 - nbeg1 != nend2 - nbeg2:
-                            print('nbeg1 ' + str(nbeg1) + ', nend1 '+ str(nend1) + ', nbeg2 ' + str(nbeg2) + ', nend2 ' + str(nend2))
+                            print('nend1 - nbeg1 != nend2 - nbeg2:  nbeg1 ' + str(nbeg1) + ', nend1 '+ str(nend1) + ', nbeg2 ' + str(nbeg2) + ', nend2 ' + str(nend2))
+                        # print('str(len(arr)) < nend1 or len(arr) < nend2:  len(arr) ' + str(len(arr)) + ', nend1 ' + str(nend1) + ', nend2 ' + str(nend2))
                         if len(arr) < nend1 or len(arr) < nend2:
-                            print('str(len(arr)) < nend1 or len(arr) < nend2:  len(arr) ' + str(len(arr)) + ', nend1 ' + str(nend1) + ', nend2 ' + str(nend2))
-                            print('Sorry, fast code cannot handle running into end of trace')
-                            sys.exit(-1)
+                            # print('str(len(arr)) < nend1 or len(arr) < nend2:  len(arr) ' + str(len(arr)) + ', nend1 ' + str(nend1) + ', nend2 ' + str(nend2))
+                            # print('Sorry, fast code cannot handle running into end of trace')
+                            # print('A trace from ' + tr.stats.station + ' is rejected')
+                            bad_trace = True
+                            continue
+                            # print(tr.stats.station + ' being rejected, 1st break')
+                            # sys.exit(-1)
                         if nend1 >= 0 and nbeg1 <= stack_nt:
                             stack[indx].data[nbeg1 : nend1] += arr[nbeg2 : nend2]
             done += 1
@@ -225,8 +243,11 @@ def pro5stack2d(eq_num, slow_delta = 0.0005, slowR_lo = -0.1, slowR_hi = 0.1, sl
                 print('Done stacking ' + str(done) + ' out of ' + str(len(st)) + ' stations.')
                 elapsed_time_wc = time.time() - start_time_wc
                 print(f'So far it has taken   {elapsed_time_wc:.1f}   seconds')
+
         else:
             print(tr.stats.station + ' not found in station list')
+    if bad_trace == True:
+        print(colored('There was a trace not long enough for stacking, check start and stop times', 'red'))
 
 #%% take envelope, decimate envelope
     stack_raw = stack.copy()

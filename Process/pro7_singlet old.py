@@ -8,13 +8,12 @@ def pro7_singlet(eq_num, slow_delta = 0.0005, turn_off_black = 0,
               start_buff = 50, end_buff = 50, fig_index = 401, do_T = False, do_R = False,
               ZslowR_lo = -0.1, ZslowR_hi = 0.1, ZslowT_lo = -0.1, ZslowT_hi = 0.1,
               Zstart_buff = 50, Zend_buff = 50, zoom = False, ref_phase = 'blank', min_amp = 0.2,
-              R_slow_plot = 0.004, T_slow_plot = -0.00, PKiKP_beam = False,
+              R_slow_plot = 0.004, T_slow_plot = -0.00,
               snaptime = 0, snaps = 0, snap_depth = 1, PKiKP_beam_plot = True,
               nR_plots  = 1, nT_plots = 1, slow_incr = 0.01, NS = False,
               ARRAY = 0, auto_slice = True, two_slice_plots = True, beam_sums = 1,
               wiggly_plots = False, max_wiggly_plot = True, start_beam = 0, end_beam = 0, log_plot = False,
-              log_plot_range = 3, wig_scale_fac = 1, ref_loc = True, ref_lat = 0, ref_lon = 0,
-              freq_min = 0, freq_max = 0):
+              log_plot_range = 2, wig_scale_fac = 1, ref_loc = True, ref_lat = 0, ref_lon = 0):
 
     from obspy import read
     from obspy.taup import TauPyModel
@@ -33,9 +32,9 @@ def pro7_singlet(eq_num, slow_delta = 0.0005, turn_off_black = 0,
     print(colored('Running pro7b_singlet', 'cyan'))
     start_time_wc = time.time()
 
-    orig_start_buff = start_buff
-    orig_end_buff   = end_buff
     if zoom == True:
+        orig_start_buff = start_buff
+        orig_end_buff   = end_buff
         if Zstart_buff  < start_buff:
             print(f'Zstart_buff of {Zstart_buff:.1f} cannot be < start_buff of {start_buff:.1f}')
             Zstart_buff = start_buff
@@ -76,8 +75,6 @@ def pro7_singlet(eq_num, slow_delta = 0.0005, turn_off_black = 0,
     ref_dist     = ref_distance[0]/(1000*111)
     ref_az       = ref_distance[1]
     ref_back_az  = ref_distance[2]
-    if zoom == False:
-        log_plot = True
 
     print(ref_phase + ' is ref phase, depth is ' + str(ev_depth) + ' at distance ' + str(ref_dist))
 
@@ -181,7 +178,7 @@ def pro7_singlet(eq_num, slow_delta = 0.0005, turn_off_black = 0,
             if (amp_ave[slow_i].data[it] < (min_amp * global_max)):
                 amp_ave_thres[slow_i].data[it] = np.nan
 
-    if log_plot:  # convert amp envelope array to log amp and record global_max of logs
+    if log_plot == True:  # convert amp envelope array to log amp and record global_max of logs
         global_max = -100  # different global max if converting to plotting log amp
                            # remember logs can be negative
         for slow_i in range(len(amp_ave)): # find global max of amp_ave
@@ -231,13 +228,13 @@ def pro7_singlet(eq_num, slow_delta = 0.0005, turn_off_black = 0,
 
                 fig_index += 1
                 fig, ax = plt.subplots(1, figsize=(10,3), num = fig_index)
-                if log_plot:
+                if log_plot == True:
                     c = ax.pcolormesh(x, y, stack_arrayR_Amp - global_max, cmap=plt.cm.gist_rainbow_r, vmin= - log_plot_range, vmax=0)
                 else:
                     c = ax.pcolormesh(x, y, stack_arrayR_Amp, cmap=plt.cm.gist_rainbow_r, vmin= 0, vmax=global_max)
                 fig.subplots_adjust(bottom=0.2)
                 ax.axis([x.min(), x.max(), y.min(), y.max()])
-                if log_plot:
+                if log_plot == True:
                     fig.colorbar(c, ax=ax, label='log amplitude')
                 else:
                     fig.colorbar(c, ax=ax, label='linear amplitude')
@@ -287,13 +284,13 @@ def pro7_singlet(eq_num, slow_delta = 0.0005, turn_off_black = 0,
 
                 fig_index += 1
                 fig, ax = plt.subplots(1, figsize=(10,3), num = fig_index)
-                if log_plot:
+                if log_plot == True:
                     c = ax.pcolormesh(x, y, stack_arrayT_Amp - global_max, cmap=plt.cm.gist_rainbow_r, vmin= - log_plot_range, vmax=0)
                 else:
                     c = ax.pcolormesh(x, y, stack_arrayT_Amp, cmap=plt.cm.gist_rainbow_r, vmin= 0, vmax=global_max)
                 fig.subplots_adjust(bottom=0.2)
                 ax.axis([x.min(), x.max(), y.min(), y.max()])
-                if log_plot:
+                if log_plot == True:
                     fig.colorbar(c, ax=ax, label='log amplitude')
                 else:
                     fig.colorbar(c, ax=ax, label='linear amplitude')
@@ -346,7 +343,7 @@ def pro7_singlet(eq_num, slow_delta = 0.0005, turn_off_black = 0,
         for it in range(stack_nt):  # check points one at a time
             for slowR_i in range(slowR_n):  # for this station, loop over slownesses
                 num_val = centralR_Ast[slowR_i].data[it]
-                if log_plot:
+                if log_plot == True:
                     stack_array[slowR_i, it] = num_val - global_max
                 else:
                     stack_array[slowR_i, it] = num_val
@@ -362,7 +359,7 @@ def pro7_singlet(eq_num, slow_delta = 0.0005, turn_off_black = 0,
         print(f'x1 is {x.shape[0]} and x2 is {x.shape[1]}')
         print(f'len(stack_Rslows) is {len(stack_Rslows)} and len(ttt) is {len(ttt)}')
         print(f'slowR_n is {slowR_n} and stack_nt is {stack_nt}')
-        if log_plot:
+        if log_plot == True:
             c = ax.pcolormesh(x, y, np.transpose(stack_array), cmap=plt.cm.gist_rainbow_r, vmin = -log_plot_range, vmax=0)
             fig.colorbar(c, ax=ax, label='log amplitude')
         else:
@@ -371,8 +368,6 @@ def pro7_singlet(eq_num, slow_delta = 0.0005, turn_off_black = 0,
         fig.subplots_adjust(bottom=0.2)
         ax.axis([x.min(), x.max(), y.min(), y.max()])
         c = ax.scatter(arrival_time, event_pred_slo, color='black'  , s=50, alpha=0.75)
-        plt.plot((Zstart_buff, Zstart_buff), (y.min(), y.max()), color = 'red', linewidth=4)
-        plt.plot((Zend_buff,     Zend_buff), (y.min(), y.max()), color = 'red', linewidth=4)
         plt.xlabel('Time (s)')
         if NS == True:
             plt.ylabel('North Slowness (s/km)')
@@ -389,7 +384,7 @@ def pro7_singlet(eq_num, slow_delta = 0.0005, turn_off_black = 0,
         for it in range(stack_nt):  # check points one at a time
             for slowT_i in range(slowT_n):  # for this station, loop over slownesses
                 num_val = centralT_Ast[slowT_i].data[it]
-                if log_plot:
+                if log_plot == True:
                     stack_array[slowT_i, it] = num_val - global_max
                 else:
                     stack_array[slowT_i, it] = num_val
@@ -398,7 +393,7 @@ def pro7_singlet(eq_num, slow_delta = 0.0005, turn_off_black = 0,
 
         fig_index += 1
         fig, ax = plt.subplots(1, figsize=(10,3), num = fig_index)
-        if log_plot:
+        if log_plot == True:
             c = ax.pcolormesh(x, y, np.transpose(stack_array), cmap=plt.cm.gist_rainbow_r, vmin = -log_plot_range, vmax=0)
             fig.colorbar(c, ax=ax, label='log amplitude')
         else:
@@ -407,8 +402,6 @@ def pro7_singlet(eq_num, slow_delta = 0.0005, turn_off_black = 0,
         fig.subplots_adjust(bottom=0.2)
         ax.axis([x.min(), x.max(), y.min(), y.max()])
         c = ax.scatter(arrival_time, 0, color='black'  , s=50, alpha=0.75)
-        plt.plot((Zstart_buff, Zstart_buff), (y.min(), y.max()), color = 'red')
-        plt.plot((Zend_buff,     Zend_buff), (y.min(), y.max()), color = 'red')
         plt.xlabel('Time (s)')
         if NS == True:
             plt.ylabel('East Slowness (s/km)')
@@ -449,7 +442,7 @@ def pro7_singlet(eq_num, slow_delta = 0.0005, turn_off_black = 0,
                 fig, ax = plt.subplots(1, figsize=(7,0.8*7), num = fig_index)
                 c = ax.pcolormesh(x1, y1, stack_slice, cmap=plt.cm.gist_rainbow_r)
                 ax.axis([x1.min(), x1.max(), y1.min(), y1.max()])
-                if log_plot:
+                if log_plot == True:
                     fig.colorbar(c, ax=ax, label = 'log amp')
                 else:
                     fig.colorbar(c, ax=ax, label = 'linear amp')
@@ -469,7 +462,7 @@ def pro7_singlet(eq_num, slow_delta = 0.0005, turn_off_black = 0,
                 plt.show()
 
     #%% Beam sum plots
-    if (beam_sums == True or max_wiggly_plot == True) and zoom:
+    if beam_sums == True or max_wiggly_plot == True:
     #%% -- R-T amplitude averaged over time window
         stack_slice = np.zeros((slowR_n,slowT_n))
         if start_beam == 0 and end_beam == 0: # entire volume is summed
@@ -502,19 +495,17 @@ def pro7_singlet(eq_num, slow_delta = 0.0005, turn_off_black = 0,
         smin = np.min(stack_slice)
 
         max_xy = np.where(stack_slice == stack_slice.max() ) # find indices of slowness with max amplitude, needed for max_wiggle_plot
-        if len(max_xy[0]) == 2:  # rare case of two identical maxima, just use first one
-               max_xy = max_xy[0]
         print('Beam max - (x,y):' + str(max_xy[0]) + '  ' + str(max_xy[1]) + ' out of nR, nT slownesses ' + str(slowR_n) + '  ' + str(slowR_n))
         Rslow_max = int(max_xy[0]) * slow_delta + slowR_lo
         Tslow_max = int(max_xy[1]) * slow_delta + slowT_lo
 
-        if log_plot:
+        if log_plot == True:
             if (smax - smin) < log_plot_range:  # use full color scale even if range is less than specified
                 log_plot_range = smax - smin
             c = ax.pcolormesh(x1, y1, np.transpose(stack_slice - smax), cmap=plt.cm.gist_rainbow_r, vmin= - log_plot_range, vmax=0)
         else:
             c = ax.pcolormesh(x1, y1, np.transpose(stack_slice/smax), cmap=plt.cm.gist_rainbow_r, vmin = 0)
-        if log_plot:
+        if log_plot == True:
             fig.colorbar(c, ax=ax, label='log amplitude')
         else:
             fig.colorbar(c, ax=ax, label='linear amplitude')
@@ -525,8 +516,8 @@ def pro7_singlet(eq_num, slow_delta = 0.0005, turn_off_black = 0,
         ax.add_artist(circle2)  #outer core limit
 
         c = ax.scatter(pred_Eslo, pred_Nslo, color='purple' , s=50, alpha=1) # predicted slowness
-        c = ax.scatter(Tslow_max, Rslow_max, color='white' , s=40, alpha=1)  # max amp observed
-        c = ax.scatter(        0,         0, color='black' , s=30, alpha=1)  # (0,0)
+        c = ax.scatter(Tslow_max, Rslow_max, color='white' , s=30, alpha=1)  # max amp observed
+        c = ax.scatter(        0,         0, color='black' , s=50, alpha=1)  # (0,0)
 
         if NS == True:
             plt.xlabel('East Slowness (s/km)')
@@ -535,10 +526,10 @@ def pro7_singlet(eq_num, slow_delta = 0.0005, turn_off_black = 0,
             plt.xlabel('Transverse Slowness (s/km)')
             plt.ylabel('Radial Slowness (s/km)')
         # plt.title(f'{date_label} {ref_phase} {start_buff:.1f} to {end_buff:.1f} beam amp #{eq_num}')
-        plt.title(f'{ref_phase} {eq_num} {pred_Eslo:.4f} {pred_Nslo:.4f} {Tslow_max:.4f} {Rslow_max:.4f} {start_buff:.1f} {end_buff:.1f}s, {freq_min}- {freq_max}')
+        plt.title(f'{ref_phase} {eq_num} {pred_Eslo:.4f} {pred_Nslo:.4f} {Tslow_max:.4f} {Rslow_max:.4f} {start_buff:.1f} {end_buff:.1f}s beam')
         os.chdir('/Users/vidale/Documents/Research/IC/Plots_hold')
         # plt.savefig(date_label + '_' + str(start_buff) + '_' + str(end_buff) + '_beam.png')
-        plt.savefig(f'beam_{eq_num:02}_{fig_index}_{ref_phase}_{start_buff:.0f}_{end_buff:.0f}s')
+        plt.savefig(f'{eq_num:02}_{ref_phase}_{start_buff:.0f}_{end_buff:.0f}s_beam')
         plt.show()
 
     #%% Wiggly plots
@@ -592,7 +583,7 @@ def pro7_singlet(eq_num, slow_delta = 0.0005, turn_off_black = 0,
     if wiggly_plots == True:
         #%% -- -- R amp and tdiff vs time plots with black line for time shift
         scale_plot_wig = wig_scale_fac / (200 * global_max)
-        if log_plot:
+        if log_plot == True:
             scale_plot_wig /= 30  # not quite sure why this renormalization works
             # scale_plot_tdiff = plot_scale_fac / 500.
         fig_tit = str(eq_num) + '_Ramp'
@@ -638,7 +629,7 @@ def pro7_singlet(eq_num, slow_delta = 0.0005, turn_off_black = 0,
     #    plt.savefig(date_label1 + '_' + str(start_buff) + '_' + str(end_buff) + '_stack.png')
 
     #%% Wiggly plot at max amplitude
-    if max_wiggly_plot == True and zoom:
+    if max_wiggly_plot == True:
         # have already read wiggle beams
         # if beam_sums == False or wiggly_plots == False:
         #     print(colored('Need beam_sums and wiggly_plots True to make max_wiggly_plot', 'magenta'))
@@ -649,43 +640,27 @@ def pro7_singlet(eq_num, slow_delta = 0.0005, turn_off_black = 0,
         max_trace = st[iii]
 
         max_trace.data /= max(abs(max_trace.data))
-        if log_plot:
+        if log_plot == True:
             scale_plot_wig /= 30  # not quite sure why this renormalization works
         # fig_tit = str(eq_num) + '_maxamp'
         fig_index += 1
         plt.figure(figsize=(10,5), num = fig_index)
         plt.xlim(orig_start_buff,orig_end_buff)
-        plt.ylim(-1.1, 1.1)
+        plt.ylim(-1, 1)
         ttt = (np.arange(len(max_trace)) * centralR_st[0].stats.delta
           + (centralR_st[0].stats.starttime - t))
-
-        # normalize in zoom window
-        questor = (ttt >= Zstart_buff) & (ttt < Zend_buff) # identify zoom window
-        ts_sel = max_trace[questor]  #extract zoom wondow
-        max_env = max(abs(ts_sel))
-        max_trace.data = max_trace.data/(max_env)
-
         print('Length of ttt and max_trace:  ' + str(len(ttt)) + '  ' +  str(len(max_trace)))
         plt.plot(ttt, max_trace, color = 'black')
-        plt.plot((Zstart_buff, Zstart_buff), (-1, 1), color = 'red')
-        plt.plot((Zend_buff,     Zend_buff), (-1, 1), color = 'red')
 
         plt.xlabel('Time (s)')
         plt.ylabel('Amplitude')
 
         plt.title(f'{ref_phase} {date_label}  max amp stack in event {eq_num}  Rslow  {Rslow_max:.4f}  Tslow {Tslow_max:.4f}')
         # os.chdir('/Users/vidale/Documents/Research/IC/Plots_hold')
-        # if zoom:
-        #     plt.savefig('wig_' + date_label + '_' + str(eq_num) + '_' + str(start_buff) + '_' + str(end_buff) + '_' + str(fig_index) + '.png')
+        # plt.savefig(date_label1 + '_' + str(start_buff) + '_' + str(end_buff) + '_stack.png')
 
     #%% PKiKP envelope plot
-    if PKiKP_beam_plot == True and zoom == False:
-
-        name_str = folder_name + 'Pro_files/HD' + date_label + '_' # re-read amp_ave, which has had log taken
-        fname  = name_str + 'amp_ave.mseed'
-        amp_ave = Stream()
-        amp_ave = read(fname)
-
+    if PKiKP_beam_plot == True:
         PKiKP_env_trace = Stream()
         PKiKP_env_trace = amp_ave[0] #just chosen to get right dimension and dt
         PKiKP_env_trace.data *= 0
@@ -695,51 +670,32 @@ def pro7_singlet(eq_num, slow_delta = 0.0005, turn_off_black = 0,
                 index = slowR_i*slowT_n + slowT_i
                 slowR_actual = stack_Rslows[slowR_i]
                 slowT_actual = stack_Tslows[slowT_i]
-                if PKiKP_beam:
-                    slow_amp = np.sqrt((slowR_actual * slowR_actual) + (slowT_actual * slowT_actual))
-                    if slow_amp < 0.019:
-                        PKiKP_env_trace.data += amp_ave[index].data
-                        # print(f'included slowness Rindex {slowR_i} Tindex {slowT_i}  Rslow  {slowR_actual:.4f}  Tslow {slowT_actual:.4f} slow_amp {slow_amp:.4f}')
-                else:
-                    slow_anomaly = np.sqrt(((slowR_actual - pred_Nslo) * (slowR_actual - pred_Nslo)) +
-                                           ((slowT_actual - pred_Eslo) * (slowT_actual - pred_Eslo)))
-                    # print(f'included Rslow  {slowR_actual:.4f}  Tslow {slowT_actual:.4f} pred_Nslo  {pred_Nslo:.4f}  pred_Eslo {pred_Eslo:.4f} slow_anomaly {slow_anomaly:.4f}')
-                    if slow_anomaly < 0.01:
-                        PKiKP_env_trace.data += amp_ave[index].data
-                        # print(f'included Rslow  {slowR_actual:.4f}  Tslow {slowT_actual:.4f} pred_Nslo  {pred_Nslo:.4f}  pred_Eslo {pred_Eslo:.4f} slow_anomaly {slow_anomaly:.4f}')
+                slow_amp = np.sqrt((slowR_actual * slowR_actual) + (slowT_actual * slowT_actual))
+                if slow_amp < 0.019:
+                    PKiKP_env_trace.data += amp_ave[index].data
+                    # print(f'included slowness Rindex {slowR_i} Tindex {slowT_i}  Rslow  {slowR_actual:.4f}  Tslow {slowT_actual:.4f} slow_amp {slow_amp:.4f}')
 
         PKiKP_env_trace.data /= max(abs(PKiKP_env_trace.data))
         fig_index += 1
         plt.figure(figsize=(10,5), num = fig_index)
         plt.xlim(start_buff,end_buff)
-        plt.ylim(0, 1.2)
+        plt.ylim(0, 1)
         # ttt = (np.arange(len(amp_ave)) * amp_ave[0].stats.delta
         #   + (amp_ave.stats.starttime - t))
         ttt = (np.arange(stack_nt)*dt + start_buff)
-
-        # normalize in zoom window
-        questor = (ttt >= Zstart_buff) & (ttt < Zend_buff) # identify zoom window
-        ts_sel = PKiKP_env_trace[questor]  #extract zoom wondow
-        max_env = max(ts_sel)
-        PKiKP_env_trace.data = PKiKP_env_trace.data/(max_env)
-
         print('diff ' + str(start_buff) + ' stack_nt ' + str(stack_nt))
 
         print('Length of ttt and PKiKP envelope:  ' + str(len(ttt)) + '  ' +  str(len(PKiKP_env_trace)))
         plt.plot(ttt, PKiKP_env_trace, color = 'black')
-        plt.plot((Zstart_buff, Zstart_buff), (0, 1), color = 'red')
-        plt.plot((Zend_buff,     Zend_buff), (0, 1), color = 'red')
+        plt.plot((start_buff, start_buff), (0, 1), color = 'red')
+        plt.plot((end_buff,     end_buff), (0, 1), color = 'red')
 
         plt.xlabel('Time (s)')
         plt.ylabel('Amplitude')
 
-        if PKiKP_beam:
-            plt.title(f'{date_label}  PKiKP stack in event {eq_num}  sum inside 0.01 s/° , {freq_min} - {freq_max}')
-        else:
-            plt.title(f'{eq_num} PKiKP stack, sum within 0.019 s/° of prediction, {freq_min} - {freq_max}')
-        os.chdir('/Users/vidale/Documents/Research/IC/Plots_hold')
-        if zoom == False:
-            plt.savefig('env_' + date_label + '_' + str(eq_num) + '_' + str(start_buff) + '_' + str(end_buff) + '_' + str(fig_index))
+        plt.title(f'{date_label}  PKiKP stack in event {eq_num}  sum inside 0.019 s/°')
+        # os.chdir('/Users/vidale/Documents/Research/IC/Plots_hold')
+        # plt.savefig(date_label1 + '_' + str(start_buff) + '_' + str(end_buff) + '_stack.png')
 
     #  Save processed files
 #    fname = 'HD' + date_label + '_slice.mseed'
@@ -747,7 +703,4 @@ def pro7_singlet(eq_num, slow_delta = 0.0005, turn_off_black = 0,
 
     elapsed_time_wc = time.time() - start_time_wc
     print(f'This job took {elapsed_time_wc:.1f} seconds')
-    if zoom:
-        os.system('say "Seven with zoom"')
-    else:
-        os.system('say "Seven no zoom"')
+    os.system('say "Seven"')

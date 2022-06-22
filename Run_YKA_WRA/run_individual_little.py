@@ -1,19 +1,19 @@
 #!/usr/bin/env python
 # John Vidale 7/2020
 
-def run_individual(eq_num = 1, start_buff = 980, end_buff = 1180,
+def run_individual_little(eq_num = 401, start_buff = 980, end_buff = 1180,
     precursor_shift  = -1000, signal_dur     = -1000,
     start_buff_stack =   -30, end_buff_stack =    40,
     start_beam_stack =     0, end_beam_stack =     0,
-    beam_width = 0.015, beam_step = 0.0005, beam_offset = -0.01, freq_min = 1, freq_max = 3, slow_delta = 0.0025,
-    min_dist = 0, max_dist = 180, dphase  = 'PKiKP', JST = True, R_slow_plot = -0.0154, T_slow_plot = 0.0066,
+    beam_width = 0.04, beam_step = 0.005, beam_offset = 0.00, freq_min = 1, freq_max = 3, slow_delta = 0.0025,
+    min_dist = 0, max_dist = 180, dphase  = 'PKiKP', JST = False, R_slow_plot = 0, T_slow_plot = 0,
     fig_index = 401, stat_corr = 1, apply_SNR = False):
 
     import os
     #%% close plots
 
     #%% Import functions
-    from pro2_dec                import pro2decimate
+    # from pro2_dec                import pro2decimate
     from pro3_sort_plot_singlet  import pro3singlet
     from pro4_get_shifts         import pro4_get_shifts
     from pro5_stack1d            import pro5stack1d
@@ -23,9 +23,8 @@ def run_individual(eq_num = 1, start_buff = 980, end_buff = 1180,
     import matplotlib.pyplot as plt
     from termcolor import colored
 
-    plt.close('all')
-    print_stuff = 'Running event ' + str(eq_num) + ' phase ' +  dphase
-    print(colored(print_stuff, 'green'))
+    # plt.close('all')
+    print(colored('Running event ' + str(eq_num) + ' phase ' +  dphase, 'green'))
     #%% Workflow selection
     do_3  = True  # pair of events
     do_5  = True
@@ -36,7 +35,16 @@ def run_individual(eq_num = 1, start_buff = 980, end_buff = 1180,
     ev_directory = '/Users/vidale/Documents/Research/IC/EvLocs'
     os.chdir(ev_directory)
 
-    ARRAY     = 0
+    if eq_num < 100 or (eq_num < 400 and eq_num >= 300):
+        ARRAY = 1 # LASA
+    elif (eq_num >= 100 and eq_num < 200):
+        ARRAY = 0 # HiNet
+    elif (eq_num >= 200 and eq_num < 300):
+        ARRAY = 2 # China
+    elif (eq_num >= 400 and eq_num < 500):
+        ARRAY = 4 # WRA
+    elif (eq_num >= 500 and eq_num < 600):
+        ARRAY = 5 # YKA
 
     ref_loc = False   # Override default array center with selection
     ref_rad = 180     # selected radius of stations around ref_loc
@@ -56,9 +64,9 @@ def run_individual(eq_num = 1, start_buff = 980, end_buff = 1180,
     # max_dist = 25
 
     # dphase  = 'PKiKP'
-    dphase2 = 'PKiKP'
-    dphase3 = 'PKIKP'
-    dphase4 = 'PKP'
+    dphase2 = 'pPKiKP'
+    dphase3 = 'sPKiKP'
+    dphase4 = 'S'
 
     # decimate_fac = 5
     # decimate, in 100 sps, out 20 sps
@@ -78,11 +86,12 @@ def run_individual(eq_num = 1, start_buff = 980, end_buff = 1180,
     snaps           = 0
 
 #%%  Parameters for filtering, sorting, and beaming
-    freq_min     = 1
-    freq_max     = 3
+    # freq_min     = 1
+    # freq_max     = 3
 
     # beam_offset = 0.0
     # beam_width = 0.02
+    zoom = 1
     slowR_lo   = -beam_width + beam_offset
     slowR_hi   =  beam_width + beam_offset
     slowT_lo   = -beam_width
@@ -93,14 +102,14 @@ def run_individual(eq_num = 1, start_buff = 980, end_buff = 1180,
     ZslowT_hi  =  beam_width
     slow_delta =  beam_step
     NS         =  True   # 0 plot slowness R-T, 1 plot slowness N-S
-    plot_scale_fac = 0.1
+    plot_scale_fac = 0.02
     log_plot = 0
 
     # stat_corr = 3
 
     slowR_lo_1D = -0.04
     slowR_hi_1D =  0.04
-    slow_delta_1D = 0.0002
+    slow_delta_1D = 0.0005
     dec_fac = 1 # decimation factor
 
     rel_time = 1   # phase alignment details
@@ -115,6 +124,7 @@ def run_individual(eq_num = 1, start_buff = 980, end_buff = 1180,
         pro3singlet(ARRAY = ARRAY, stat_corr = stat_corr,
             eq_num = eq_num, simple_taper = simple_taper, rel_time = rel_time,
             start_buff = start_buff_stack, end_buff = end_buff_stack,
+            zoom = zoom, Zstart_buff = start_beam_stack, Zend_buff = end_beam_stack,
             start_beam = start_beam_stack, end_beam = end_beam_stack,
             precursor_shift = precursor_shift, signal_dur = signal_dur,
             plot_scale_fac = plot_scale_fac, fig_index = fig_index, apply_SNR = apply_SNR,
@@ -153,8 +163,19 @@ def run_individual(eq_num = 1, start_buff = 980, end_buff = 1180,
         pro7_singlet(eq_num = eq_num,
             slowR_lo = slowR_lo, slowR_hi = slowR_hi, slowT_lo = slowT_lo, slowT_hi = slowT_hi, slow_delta = slow_delta,
             ref_phase = dphase, start_buff = start_buff_stack, end_buff = end_buff_stack,
-            zoom = 1, ZslowR_lo = ZslowR_lo, ZslowR_hi = ZslowR_hi, ZslowT_lo = ZslowT_lo, ZslowT_hi = ZslowT_hi,
+            zoom = False, ZslowR_lo = ZslowR_lo, ZslowR_hi = ZslowR_hi, ZslowT_lo = ZslowT_lo, ZslowT_hi = ZslowT_hi,
+            Zstart_buff = start_beam_stack, Zend_buff = end_beam_stack,
+            two_slice_plots = True, wiggly_plots = False, freq_min = freq_min, freq_max = freq_max,
+            fig_index = fig_index + 10, snaptime = snaptime, snaps=snaps, ARRAY = ARRAY, NS = NS,
+            ref_loc = ref_loc, ref_lat = ref_lat, ref_lon = ref_lon, R_slow_plot = R_slow_plot, T_slow_plot = T_slow_plot)
+
+#%%  pro7plotstack --  snapshots of 2D stack results for individual events
+    if do_7 == True:
+        pro7_singlet(eq_num = eq_num,
+            slowR_lo = slowR_lo, slowR_hi = slowR_hi, slowT_lo = slowT_lo, slowT_hi = slowT_hi, slow_delta = slow_delta,
+            ref_phase = dphase, start_buff = start_buff_stack, end_buff = end_buff_stack,
+            zoom = True, ZslowR_lo = ZslowR_lo, ZslowR_hi = ZslowR_hi, ZslowT_lo = ZslowT_lo, ZslowT_hi = ZslowT_hi,
             Zstart_buff = start_beam_stack, Zend_buff = end_beam_stack,
             two_slice_plots = True, wiggly_plots = False,
-            fig_index = fig_index + 10, snaptime = snaptime, snaps=snaps, ARRAY = ARRAY, NS = NS,
+            fig_index = fig_index + 20, snaptime = snaptime, snaps=snaps, ARRAY = ARRAY, NS = NS,
             ref_loc = ref_loc, ref_lat = ref_lat, ref_lon = ref_lon, R_slow_plot = R_slow_plot, T_slow_plot = T_slow_plot)

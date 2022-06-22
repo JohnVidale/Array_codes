@@ -7,16 +7,17 @@
 # John Vidale 2/2019
 
 def pro3singlet(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1,
-            max_taper_length = 1., simple_taper = True, apply_SNR = False, SNR_thres = 0,
+            max_taper_length = 3., simple_taper = True, apply_SNR = False, SNR_thres = 0,
             dphase = 'P', dphase2 = '', dphase3 = '', dphase4 = '',
             start_buff      =   -10, end_buff   =    10,
             start_beam      =     0, end_beam   =     0,
+            Zstart_buff     =   -10, Zend_buff  =    10, zoom = 0,
             precursor_shift = -1000, signal_dur = -1000,
             freq_min = 0.25, freq_max = 1, do_filt = 1, plot_scale_fac = 1,
-            min_dist = 0, max_dist = 180, plot_auto_dist = True, do_decimate = True, decimate_fac = 10,
+            min_dist = 0, max_dist = 180, plot_auto_dist = True, do_decimate = False, decimate_fac = 1,
             alt_statics = 0, statics_file = 'nothing', ARRAY = 0,
             ref_rad = 180, ref_loc = False, ref_lat = 0, ref_lon = 0,
-            verbose = 0, fig_index = 1, JST = False):
+            verbose = False, fig_index = 1, JST = False):
 # 0 is Hinet, 1 is LASA, 2 is NORSAR
 
 #%% Import
@@ -82,6 +83,8 @@ def pro3singlet(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1,
             sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_statics_LASA.txt'
         elif ARRAY == 2:
             sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_statics_ch.txt'
+        elif ARRAY == 4:
+            sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_statics_WR.txt'
         with open(sta_file, 'r') as file:
             lines = file.readlines()
         print('    ' + str(len(lines)) + ' station statics read from ' + sta_file)
@@ -108,6 +111,13 @@ def pro3singlet(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1,
                 st_lons.append( split_line[2])
                 st_shift.append(split_line[3])
                 st_corr.append(split_line[4]) # but really std dev
+            elif ARRAY == 4:
+                st_lats.append( split_line[1])
+                st_lons.append( split_line[2])
+                st_shift.append(split_line[3])
+                st_corr.append(split_line[4]) # but really std dev
+            else:
+                exit('Failure: Asking for non-existent statics.')
 
     else: # no static terms, always true for NORSAR
         if ARRAY == 0: # Hinet set
@@ -116,8 +126,12 @@ def pro3singlet(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1,
             sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_LASA.txt'
         elif ARRAY == 2: #         China set
             sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_ch.txt'
-        else: #         NORSAR set
+        elif ARRAY == 3: #         NORSAR set
             sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_NORSAR.txt'
+        elif ARRAY == 4: #         Warramunga set
+            sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_AU_WR.txt'
+        elif ARRAY == 5: #         Yellowknife set
+            sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_CN_YK.txt'
         with open(sta_file, 'r') as file:
             lines = file.readlines()
         print('    ' + str(len(lines)) + ' stations read from ' + sta_file)
@@ -129,6 +143,7 @@ def pro3singlet(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1,
         for ii in station_index:
             line = lines[ii]
             split_line = line.split()
+            # print('input station ' + split_line[0])
             st_names.append(split_line[0])
             st_lats.append( split_line[1])
             st_lons.append( split_line[2])
@@ -159,12 +174,18 @@ def pro3singlet(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1,
         if ARRAY == 0:
             ref_lat = 36  # °N, around middle of Japan
             ref_lon = 139 # °E
-        if ARRAY == 1:
+        elif ARRAY == 1:
             ref_lat = 46.7      # °N keep only inner rings A-D if radius is 0.4°
             ref_lon = -106.22   # °E
-        if ARRAY == 2:
+        elif ARRAY == 2:
             ref_lat = 38      # °N
             ref_lon = 104.5   # °E
+        elif ARRAY == 4:
+            ref_lat = -19.90  # °N Warramunga
+            ref_lon = 134.42  # °E
+        elif ARRAY == 5:
+            ref_lat =  62.49  # °N Yellowknife
+            ref_lon = -114.6  # °E
 
 #%% -- Test taper, needs adjustment?
 #   Is taper too long compared to noise estimation window?
@@ -193,6 +214,9 @@ def pro3singlet(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1,
     if ARRAY == 1:
         mseed_name = year_short_label + month_label + day_label + '_' + hour_label + minute_label
         fname     = '/Users/vidale/Documents/Research/IC/Mseed/L' + mseed_name + '.mseed'
+    elif ARRAY == 4 or ARRAY == 5:
+        mseed_name = year_label + month_label + day_label + '_' + hour_label + minute_label
+        fname     = '/Users/vidale/Documents/Research/IC/Mseed/' + mseed_name + '.mseed'
     else:
         mseed_name = year_short_label + '-' +month_label + '-' + day_label
         fname     = '/Users/vidale/Documents/Research/IC/Mseed/HD20' + mseed_name + '.mseed'
@@ -248,6 +272,7 @@ def pro3singlet(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1,
     # print(f'ref_slow {ref_slow:.2f}')
 
     for tr in st: # traces one by one, find lat-lon
+        # print('station ' + tr.stats.station + ' relative start time ' + str(tr.stats.starttime  - t) + ' duration ' + str(len(tr.data)*tr.stats.delta))
         if float(year_label) < 1970: # fix the damn 1969 -> 2069 bug in Gibbon's LASA data
             temp_t = str(tr.stats.starttime)
             temp_tt = '19' + temp_t[2:]
@@ -293,6 +318,7 @@ def pro3singlet(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1,
 #%% -- Apply static
                     if stat_corr != 0: # apply static station corrections
                         tr.stats.starttime -= float(st_shift[ii])
+                        # print('static correction is' + str(st_shift[ii]) + ' for station ' + tr.stats.station)
                     if rel_time == 0:  #  use absolute time, ignore time of chose phase
                         tr.trim(starttime=s_t,endtime = e_t)
                     else:              # shift relative to a chosen phase
@@ -302,7 +328,7 @@ def pro3singlet(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1,
                                 arrivals_each = model.get_travel_times(source_depth_in_km=ev_depth, distance_in_degree=dist,phase_list='p')
                         if(len(arrivals_each) == 0):  # did it still fail?
 #%% -- Can't calculate traveltime
-                                print(f'travel_time failed: station {tr.stats.station} dist {dist:.2f} phase {dphase}')
+                                # print(f'travel_time failed: station {tr.stats.station} dist {dist:.2f} phase {dphase}')
                                 tra_in_range -= 1 # don't count this trace after all
                                 rejector = True
                                 no_tt_calc += 1
@@ -354,14 +380,14 @@ def pro3singlet(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1,
                     else:
                         nodata += 1
 #%% -- Reject if not in station (static) list
-    #     else:
-    #         print(tr.stats.station + ' not found in station list with statics')
+        # else:
+        #     print(tr.stats.station + ' not found in station list with statics')
     print('    ' + str(tra_in_range) + '  traces in range')
     print('        ' + str(nodata) + '  traces with no data,  ' + str(no_tt_calc) + '  traces tt calc failed')
     print('    ' + str(len(st_pickalign)) + '  traces after alignment, check for data, tt calc, correlation selection')
 
     #print(st) # at length
-    if verbose:
+    if verbose == True:
         print(st.__str__(extended=True))
         if rel_time == 1:
             print(st_pickalign.__str__(extended=True))
@@ -409,7 +435,7 @@ def pro3singlet(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1,
             #     print('Failed SNR test: SNR ' + str(SNR))
 
     print('    ' + str(len(stgood)) + '  traces above SNR threshold')
-    if verbose:
+    if verbose == True:
         for tr in stgood:
             print('        Distance is ' + str(tr.stats.distance/(1000*111)) + ' for station ' + tr.stats.station)
 
@@ -467,14 +493,22 @@ def pro3singlet(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1,
         # print('        Distance is ' + str(tr.stats.distance) + ' for station ' + tr.stats.station)
         dist_offset = tr.stats.distance
 
+
         ttt = np.arange(len(tr.data)) * tr.stats.delta + (tr.stats.starttime - t)
 
 #%%  -- Set time limits
-        if len(tr.data) > 0:
+        if len(tr.data) > 0:  # plot if data exists
             if tr.data.max() - tr.data.min() > 0:
+                if zoom:  # normalize plot amp to zoom window if zooming
+                    get_window_max = tr.copy()
+                    get_window_max.trim(starttime = Zstart_buff,endtime = Zend_buff)
+                    if len(get_window_max.data) > 0:  # only norm if zoom window exists
+                        if get_window_max.data.max() - get_window_max.data.min() > 0:
+                            win_max = max(abs(get_window_max.data))
+                            tr.data = tr.data/(1.5*win_max)
                 plt.plot(ttt, (tr.data - np.median(tr.data))*plot_scale_fac /(tr.data.max() - tr.data.min()) + dist_offset, color = 'black')
             else:
-                print('Max ' + str(tr.data.max()) + ' equals min ' + str(tr.data.min()) + ', skip plotting')
+                print('Max ' + str(tr.data.max()) + ' equals min ' + str(tr.data.min()) + ', no trace, skip plotting')
         else:
             nodata += 1
             print('Trace ' + tr.stats.station + ' has : ' + str(len(tr.data)) + ' time pts, skip plotting')
@@ -522,7 +556,7 @@ def pro3singlet(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1,
                 time_vec2 = time_vec2 - time_vec1
             elif rel_time == 2 or rel_time == 4:
                 time_vec2 = time_vec2 - atime_ref
-            plt.plot(time_vec2,dist_vec, color = 'orange')
+            plt.plot(time_vec2,dist_vec, color = 'orange', label = dphase2)
         # third traveltime curve
         if dphase3 != 'no':
             time_vec3 = np.arange(min_dist_auto, max_dist_auto, (max_dist_auto - min_dist_auto)/line_pts) # empty time grid of same length (filled with -1000)
@@ -546,7 +580,7 @@ def pro3singlet(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1,
                 time_vec3 = time_vec3 - time_vec1
             elif rel_time == 2 or rel_time == 4:
                 time_vec3 = time_vec3 - atime_ref
-            plt.plot(time_vec3,dist_vec, color = 'yellow')
+            plt.plot(time_vec3,dist_vec, color = 'yellow', label = dphase3)
         # fourth traveltime curve
         if dphase4 != 'no':
             time_vec4 = np.arange(min_dist_auto, max_dist_auto, (max_dist_auto - min_dist_auto)/line_pts) # empty time grid of same length (filled with -1000)
@@ -570,20 +604,23 @@ def pro3singlet(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1,
                 time_vec4 = time_vec4 - time_vec1
             elif rel_time == 2 or rel_time == 4:
                 time_vec4 = time_vec4 - atime_ref
-            plt.plot(time_vec4,dist_vec, color = 'purple')
+            plt.plot(time_vec4,dist_vec, color = 'purple', label = dphase4)
         if   rel_time == 1:
             time_vec1 = (dist_vec - ref1_dist) * ref_slow
         if   rel_time == 3:
             time_vec1 = time_vec1 - time_vec1
         elif rel_time == 2 or rel_time == 4:
             time_vec1 = time_vec1 - atime_ref
-        plt.plot(time_vec1,dist_vec, color = 'blue')
+        plt.plot(time_vec1,dist_vec, color = 'blue', label = dphase)
+        plt.plot((Zstart_buff, Zstart_buff), (min_dist,max_dist), color = 'red', label = 'beam start')
+        plt.plot((Zend_buff, Zend_buff), (min_dist,max_dist), color = 'red', label = 'beam end')
 
     plt.xlabel('Time (s)')
     plt.ylabel('Epicentral distance from event (°)')
-    plt.title(date_label + ' event #' + str(eq_num) + ' ' + dphase)
-#    os.chdir('/Users/vidale/Documents/PyCode/Plots')
-#    plt.savefig(date_label + '_' + str(event_no) + '_raw.png')
+    plt.title(date_label + ' event #' + str(eq_num) + ' ' + dphase + ' freq ' + str(freq_min) + ' to ' + str(freq_max) + ' Hz')
+    plt.legend(loc="upper left")
+    os.chdir('/Users/vidale/Documents/Research/IC/Plots_hold')
+    plt.savefig('section_' + date_label + '_' + str(eq_num) + '_' + str(freq_min) + '-' + str(freq_max))
     plt.show()
 
 

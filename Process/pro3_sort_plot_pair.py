@@ -10,7 +10,7 @@ def pro3pair(eq_num1, eq_num2, stat_corr = 1, simple_taper = 0, apply_SNR = Fals
             rel_time = 1, start_buff = -200, end_buff = 500, precursor_shift = 0, signal_dur = 0,
             plot_scale_fac = 0.05, corr_threshold = 0, off_center_shift = 0,
             freq_min = 1, freq_max = 3, min_dist = 0, max_dist = 180, auto_dist = True, ARRAY = 0,
-            ref_loc = False, ref_rad = 0.4, JST = False,
+            ref_loc = False, ref_rad = 0.4, JST = True,
             max_taper_length = 5., no_plots = False, taper_frac = 0.05):
 
 
@@ -105,12 +105,14 @@ def pro3pair(eq_num1, eq_num2, stat_corr = 1, simple_taper = 0, apply_SNR = Fals
        + str(ev_lat2) + ' lon ' + str( ev_lon2) + ' depth ' + str(ev_depth2))
 
 #%% Get station location file
-    if stat_corr == 1 or stat_corr == 2:  # load static terms, only applies to Hinet and LASA
+    if stat_corr == 1 or stat_corr == 2 or stat_corr == 3:  # load static terms, only applies to Hinet and LASA
         if ARRAY == 0:
             if stat_corr == 1: # standard set
                 sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_statics_hinet.txt'
             elif stat_corr == 2: # custom set made for SSI to Hi-Net PKiKP
                 sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/SSI_HiNet_statics.txt'
+            elif stat_corr == 3: # custom set made for Kawa PKiKP for Hi-NetP
+                sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/Kawa_HiNet_statics.txt'
         elif ARRAY == 1:
             sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_statics_LASA.txt'
         elif ARRAY == 2:
@@ -356,8 +358,8 @@ def pro3pair(eq_num1, eq_num2, stat_corr = 1, simple_taper = 0, apply_SNR = Fals
                         nodata1 += 1
 
 #%% ---- Reject if not in station (static) list
-        else:
-            print(tr.stats.station + ' not found in station list with statics')
+        # else:
+        #     print(tr.stats.station + ' not found in station list with statics')
         #     print('    ' + str(tra1_in_range) + '  traces in range')
         #     print('    ' + str(len(st_pickalign1)) + '  traces after alignment and correlation selection')
         #     print('    ' + str(nodata1) + '  traces with no data')
@@ -369,7 +371,7 @@ def pro3pair(eq_num1, eq_num2, stat_corr = 1, simple_taper = 0, apply_SNR = Fals
             temp_t = str(tr.stats.starttime)
             temp_tt = '19' + temp_t[2:]
             tr.stats.starttime = UTCDateTime(temp_tt)
-        if JST: # if necessary, convert JST -> UTC, time in Greenwich 9 hours earlier than Japan
+        if JST == True and eq_num2 != '180': # if necessary, convert JST -> UTC, time in Greenwich 9 hours earlier than Japan
             tr.stats.starttime = tr.stats.starttime - 9*60*60
         if tr.stats.station in st_names:  # find station in station list
             ii = st_names.index(tr.stats.station)
@@ -502,6 +504,7 @@ def pro3pair(eq_num1, eq_num2, stat_corr = 1, simple_taper = 0, apply_SNR = Fals
 #%%  Check station is there for both events and impose SNR threshold
     st1good = Stream()
     st2good = Stream()
+    print(f'SNR parameters: start buffer {start_buff:.1f} end buffer {end_buff:.1f} pre_shift {precursor_shift:.1f} sig duration {signal_dur:.1f}')
     for tr1 in st_pickalign1:
         for tr2 in st_pickalign2:
             if ((tr1.stats.network  == tr2.stats.network) &
@@ -519,7 +522,7 @@ def pro3pair(eq_num1, eq_num2, stat_corr = 1, simple_taper = 0, apply_SNR = Fals
                     buff_time = end_buff - start_buff
 
                     time_to_signal_start = (precursor_shift - start_buff)
-                    if time_to_signal_start - taper_frac * (buff_time) < noise_win_max: # noise window < max length
+                    if time_to_signal_start - taper_frac * buff_time < noise_win_max: # noise window < max length
                         t_noise_start  = int(tr1.stats.sampling_rate * taper_frac * buff_time) # start just after taper
                         t_noise_end    = int(tr1.stats.sampling_rate * time_to_signal_start)   # end at beam start
                         if t_noise_end - t_noise_start < 20:
@@ -532,6 +535,7 @@ def pro3pair(eq_num1, eq_num2, stat_corr = 1, simple_taper = 0, apply_SNR = Fals
                     # estimate median noise and signal
                     noise1          = np.median(abs(tr1.data[t_noise_start:t_noise_end]))
                     noise2          = np.median(abs(tr2.data[t_noise_start:t_noise_end]))
+
                     t_signal_start = int(tr.stats.sampling_rate * time_to_signal_start)
                     t_signal_end   = int(t_signal_start + tr.stats.sampling_rate * signal_dur)
                     signal1         = np.median(abs(tr1.data[t_signal_start:t_signal_end]))
@@ -661,7 +665,7 @@ def pro3pair(eq_num1, eq_num2, stat_corr = 1, simple_taper = 0, apply_SNR = Fals
                 time_vec2 = time_vec2 - time_vec1
             elif rel_time == 2 or rel_time == 4:
                 time_vec2 = time_vec2 - atime_ref
-            plt.plot(time_vec2,dist_vec, color = 'orange')
+            plt.plot(time_vec2,dist_vec, color = 'orange', label = dphase2)
         # third traveltime curve
         if dphase3 != 'no':
             time_vec3 = np.arange(min_dist_auto, max_dist_auto, (max_dist_auto - min_dist_auto)/line_pts) # empty time grid of same length (filled with -1000)
@@ -685,7 +689,7 @@ def pro3pair(eq_num1, eq_num2, stat_corr = 1, simple_taper = 0, apply_SNR = Fals
                 time_vec3 = time_vec3 - time_vec1
             elif rel_time == 2 or rel_time == 4:
                 time_vec3 = time_vec3 - atime_ref
-            plt.plot(time_vec3,dist_vec, color = 'yellow')
+            plt.plot(time_vec3,dist_vec, color = 'yellow', label = dphase3)
         # fourth traveltime curve
         if dphase4 != 'no':
             time_vec4 = np.arange(min_dist_auto, max_dist_auto, (max_dist_auto - min_dist_auto)/line_pts) # empty time grid of same length (filled with -1000)
@@ -709,14 +713,15 @@ def pro3pair(eq_num1, eq_num2, stat_corr = 1, simple_taper = 0, apply_SNR = Fals
                 time_vec4 = time_vec4 - time_vec1
             elif rel_time == 2 or rel_time == 4:
                 time_vec4 = time_vec4 - atime_ref
-            plt.plot(time_vec4,dist_vec, color = 'purple')
+            plt.plot(time_vec4,dist_vec, color = 'purple', label = dphase4)
         if   rel_time == 1:
             time_vec1 = (dist_vec - ref1_dist) * ref_slow
         if   rel_time == 3:
             time_vec1 = time_vec1 - time_vec1
         elif rel_time == 2 or rel_time == 4:
             time_vec1 = time_vec1 - atime_ref
-        plt.plot(time_vec1,dist_vec, color = 'blue')
+        plt.plot(time_vec1,dist_vec, color = 'blue', label = dphase)
+        plt.legend(loc="upper left")
 
     plt.xlabel('Time (s)')
     plt.ylabel('Epicentral distance from event (°)')

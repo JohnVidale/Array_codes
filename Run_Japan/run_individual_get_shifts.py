@@ -17,7 +17,7 @@ def run_individual_get_shifts(eq_num = 1, min_dist = 0,
     os.chdir(ev_directory)
 
     ARRAY = 0 # 0 is Hi-Net
-    JST   = True # UTC or JST
+    JST   = False # UTC or JST
 
     ref_loc = False   # 0 select stations by distance from epicenter, 1 select stations by distance from ref location
     ref_rad = 180 # radius of stations around ref_loc chosen
@@ -38,13 +38,13 @@ def run_individual_get_shifts(eq_num = 1, min_dist = 0,
     dphase4 = 'PKP'
 
 #%% Parameters for static calculation
-    freq_min     = 1
-    freq_max     = 2.5
+    freq_min     = 2
+    freq_max     = 8
     # start_beam_align = 4  # times before pick are now normal, negative
     # end_beam_align   = 2
     corr_threshold = 0.5
     max_time_shift = 1.2
-    apply_SNR      = True
+    apply_SNR      = False
     SNR_thres      = 1.5
     simple_taper   = True
     stat_corr = 0
@@ -62,8 +62,8 @@ def run_individual_get_shifts(eq_num = 1, min_dist = 0,
         fig_index = 102, JST = JST)
 
 #%%  pro4_get_shifts -- measures statics
-    pro4_get_shifts(eq_num = eq_num, use_ref_trace = True, ref_trace = 'N.TOW',
-        dphase = dphase, dphase2 = dphase2, dphase3 = dphase3, dphase4 = dphase4,
-        start_beam = precursor_shift, end_beam = signal_dur + precursor_shift, start_buff = start_buff, end_buff = end_buff,
-        plot_scale_fac = 0.05, corr_threshold = corr_threshold,
-        max_time_shift = max_time_shift, min_dist = min_dist, max_dist = max_dist, ARRAY = ARRAY)
+    # pro4_get_shifts(eq_num = eq_num, use_ref_trace = True, ref_trace = 'N.TOW',
+    #     dphase = dphase, dphase2 = dphase2, dphase3 = dphase3, dphase4 = dphase4,
+    #     start_beam = precursor_shift, end_beam = signal_dur + precursor_shift, start_buff = start_buff, end_buff = end_buff,
+    #     plot_scale_fac = 0.05, corr_threshold = corr_threshold,
+    #     max_time_shift = max_time_shift, min_dist = min_dist, max_dist = max_dist, ARRAY = ARRAY)
