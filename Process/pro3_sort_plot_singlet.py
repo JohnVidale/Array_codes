@@ -6,14 +6,14 @@
 # plot lines are blue, orange, yellow, purple for phases 1 through 4
 # John Vidale 2/2019
 
-def pro3singlet(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1,
+def pro3singlet(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1, shift_tt = 0,
             max_taper_length = 3., simple_taper = True, apply_SNR = False, SNR_thres = 0,
             dphase = 'P', dphase2 = '', dphase3 = '', dphase4 = '',
             start_buff      =   -10, end_buff   =    10,
             start_beam      =     0, end_beam   =     0,
             Zstart_buff     =   -10, Zend_buff  =    10, zoom = 0,
             precursor_shift = -1000, signal_dur = -1000,
-            freq_min = 0.25, freq_max = 1, do_filt = 1, plot_scale_fac = 1,
+            freq_min = 0.25, freq_max = 1, do_filt = 1, zerophase = True, plot_scale_fac = 1,
             min_dist = 0, max_dist = 180, plot_auto_dist = True, do_decimate = False, decimate_fac = 1,
             alt_statics = 0, statics_file = 'nothing', ARRAY = 0,
             ref_rad = 180, ref_loc = False, ref_lat = 0, ref_lon = 0,
@@ -47,6 +47,7 @@ def pro3singlet(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1,
 
     print(colored('Running pro3_sort_plot_singlet', 'cyan'))
     start_time_wc = time.time()
+    plot_sta_names = True
 
 #%% -- Event info
     #  input event data with 1-line file of format
@@ -85,6 +86,8 @@ def pro3singlet(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1,
             sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_statics_ch.txt'
         elif ARRAY == 4:
             sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_statics_WR.txt'
+        elif ARRAY == 5:
+            sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_statics_YK.txt'
         with open(sta_file, 'r') as file:
             lines = file.readlines()
         print('    ' + str(len(lines)) + ' station statics read from ' + sta_file)
@@ -101,26 +104,26 @@ def pro3singlet(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1,
             split_line = line.split()
             st_names.append(split_line[0])
             if ARRAY == 0 or ARRAY == 1:
-                st_dist.append(split_line[1])
+                st_dist.append( split_line[1])
                 st_lats.append( split_line[2])
                 st_lons.append( split_line[3])
                 st_shift.append(split_line[4])
-                st_corr.append(split_line[5])
+                st_corr.append( split_line[5])
             elif ARRAY == 2:
                 st_lats.append( split_line[1])
                 st_lons.append( split_line[2])
                 st_shift.append(split_line[3])
-                st_corr.append(split_line[4]) # but really std dev
+                st_corr.append( split_line[4]) # but really std dev
             elif ARRAY == 4:
-                st_lats.append( split_line[1])
-                st_lons.append( split_line[2])
-                st_shift.append(split_line[3])
-                st_corr.append(split_line[4]) # but really std dev
+                st_lats.append( split_line[2])
+                st_lons.append( split_line[3])
+                st_shift.append(split_line[4])
+                st_corr.append( split_line[5]) # but really std dev
             else:
                 exit('Failure: Asking for non-existent statics.')
 
     else: # no static terms, always true for NORSAR
-        if ARRAY == 0: # Hinet set
+        if   ARRAY == 0: # Hinet set
             sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_hinet.txt'
         elif ARRAY == 1: #         LASA set
             sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_LASA.txt'
@@ -181,7 +184,7 @@ def pro3singlet(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1,
             ref_lat = 38      # °N
             ref_lon = 104.5   # °E
         elif ARRAY == 4:
-            ref_lat = -19.90  # °N Warramunga
+            ref_lat = -19.89  # °N Warramunga
             ref_lon = 134.42  # °E
         elif ARRAY == 5:
             ref_lat =  62.49  # °N Yellowknife
@@ -272,7 +275,7 @@ def pro3singlet(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1,
     # print(f'ref_slow {ref_slow:.2f}')
 
     for tr in st: # traces one by one, find lat-lon
-        # print('station ' + tr.stats.station + ' relative start time ' + str(tr.stats.starttime  - t) + ' duration ' + str(len(tr.data)*tr.stats.delta))
+        print('station ' + tr.stats.station + ' trace start time relative to event time ' + str(tr.stats.starttime  - t) + ' duration ' + str(len(tr.data)*tr.stats.delta))
         if float(year_label) < 1970: # fix the damn 1969 -> 2069 bug in Gibbon's LASA data
             temp_t = str(tr.stats.starttime)
             temp_tt = '19' + temp_t[2:]
@@ -301,6 +304,7 @@ def pro3singlet(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1,
                 rejector = False  # flag in case model.get_travel_times fails
 
                 if ref_loc == False:  # check whether trace is in distance range from earthquake
+                    # if min_dist < dist and dist < max_dist and tr.stats.station[2] == 'B':
                     if min_dist < dist and dist < max_dist:
                         in_range = 1
                         tra_in_range += 1
@@ -398,7 +402,7 @@ def pro3singlet(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1,
     if do_filt == 1:
         print('Filter' + ' min ' + str(freq_min) + ' max ' + str(freq_max))
         print('data len ' + str(len(st_pickalign[0].data)) + ' # traces ' + str(len(st_pickalign)) + ' delta ' + str(st_pickalign[0].stats.delta))
-        st_pickalign.filter('bandpass', freqmin=freq_min, freqmax=freq_max, corners=4, zerophase=True)
+        st_pickalign.filter('bandpass', freqmin=freq_min, freqmax=freq_max, corners=4, zerophase=zerophase)
     st_pickalign.taper(taper_frac, max_length = max_taper_length)
 
 #%%  -- Cull by SNR threshold
@@ -492,8 +496,6 @@ def pro3singlet(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1,
         # list stations with distance to ID best traces for correlations
         # print('        Distance is ' + str(tr.stats.distance) + ' for station ' + tr.stats.station)
         dist_offset = tr.stats.distance
-
-
         ttt = np.arange(len(tr.data)) * tr.stats.delta + (tr.stats.starttime - t)
 
 #%%  -- Set time limits
@@ -509,6 +511,8 @@ def pro3singlet(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1,
                 plt.plot(ttt, (tr.data - np.median(tr.data))*plot_scale_fac /(tr.data.max() - tr.data.min()) + dist_offset, color = 'black')
             else:
                 print('Max ' + str(tr.data.max()) + ' equals min ' + str(tr.data.min()) + ', no trace, skip plotting')
+            if plot_sta_names:
+                plt.text(min_time_plot + 0.015 * (max_time_plot - min_time_plot), dist_offset + 0.003 * (max_dist - min_dist), tr.stats.station)
         else:
             nodata += 1
             print('Trace ' + tr.stats.station + ' has : ' + str(len(tr.data)) + ' time pts, skip plotting')
@@ -611,7 +615,7 @@ def pro3singlet(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1,
             time_vec1 = time_vec1 - time_vec1
         elif rel_time == 2 or rel_time == 4:
             time_vec1 = time_vec1 - atime_ref
-        plt.plot(time_vec1,dist_vec, color = 'blue', label = dphase)
+        plt.plot(time_vec1 + shift_tt, dist_vec, color = 'blue', label = dphase)
         plt.plot((Zstart_buff, Zstart_buff), (min_dist,max_dist), color = 'red', label = 'beam start')
         plt.plot((Zend_buff, Zend_buff), (min_dist,max_dist), color = 'red', label = 'beam end')
 
@@ -620,7 +624,7 @@ def pro3singlet(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1,
     plt.title(date_label + ' event #' + str(eq_num) + ' ' + dphase + ' freq ' + str(freq_min) + ' to ' + str(freq_max) + ' Hz')
     plt.legend(loc="upper left")
     os.chdir('/Users/vidale/Documents/Research/IC/Plots_hold')
-    plt.savefig('section_' + date_label + '_' + str(eq_num) + '_' + str(freq_min) + '-' + str(freq_max))
+    plt.savefig('section_' + date_label + '_' + str(eq_num) + '_' + str(int(freq_min)) + '-' + str(int(freq_max)))
     plt.show()
 
 

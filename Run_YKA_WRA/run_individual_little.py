@@ -6,7 +6,7 @@ def run_individual_little(eq_num = 401, start_buff = 980, end_buff = 1180,
     start_buff_stack =   -30, end_buff_stack =    40,
     start_beam_stack =     0, end_beam_stack =     0,
     beam_width = 0.04, beam_step = 0.005, beam_offset = 0.00, freq_min = 1, freq_max = 3, slow_delta = 0.0025,
-    min_dist = 0, max_dist = 180, dphase  = 'PKiKP', JST = False, R_slow_plot = 0, T_slow_plot = 0,
+    min_dist = 0, max_dist = 180, dphase  = 'PKiKP', JST = False, R_slow_plot = 0.012, T_slow_plot = 0,
     fig_index = 401, stat_corr = 1, apply_SNR = False):
 
     import os
@@ -102,7 +102,7 @@ def run_individual_little(eq_num = 401, start_buff = 980, end_buff = 1180,
     ZslowT_hi  =  beam_width
     slow_delta =  beam_step
     NS         =  True   # 0 plot slowness R-T, 1 plot slowness N-S
-    plot_scale_fac = 0.02
+    plot_scale_fac = 0.01
     log_plot = 0
 
     # stat_corr = 3
@@ -176,6 +176,6 @@ def run_individual_little(eq_num = 401, start_buff = 980, end_buff = 1180,
             ref_phase = dphase, start_buff = start_buff_stack, end_buff = end_buff_stack,
             zoom = True, ZslowR_lo = ZslowR_lo, ZslowR_hi = ZslowR_hi, ZslowT_lo = ZslowT_lo, ZslowT_hi = ZslowT_hi,
             Zstart_buff = start_beam_stack, Zend_buff = end_beam_stack,
-            two_slice_plots = True, wiggly_plots = False,
+            two_slice_plots = True, wiggly_plots = False, freq_min = freq_min, freq_max = freq_max,
             fig_index = fig_index + 20, snaptime = snaptime, snaps=snaps, ARRAY = ARRAY, NS = NS,
             ref_loc = ref_loc, ref_lat = ref_lat, ref_lon = ref_lon, R_slow_plot = R_slow_plot, T_slow_plot = T_slow_plot)

@@ -535,7 +535,7 @@ def pro7_singlet(eq_num, slow_delta = 0.0005, turn_off_black = 0,
             plt.xlabel('Transverse Slowness (s/km)')
             plt.ylabel('Radial Slowness (s/km)')
         # plt.title(f'{date_label} {ref_phase} {start_buff:.1f} to {end_buff:.1f} beam amp #{eq_num}')
-        plt.title(f'{ref_phase} {eq_num} {pred_Eslo:.4f} {pred_Nslo:.4f} {Tslow_max:.4f} {Rslow_max:.4f} {start_buff:.1f} {end_buff:.1f}s, {freq_min}- {freq_max}')
+        plt.title(f'{ref_phase} {eq_num} {pred_Eslo:.4f} {pred_Nslo:.4f} {Tslow_max:.4f} {Rslow_max:.4f} {start_buff:.1f} {end_buff:.1f}s {freq_min}-{freq_max} Hz')
         os.chdir('/Users/vidale/Documents/Research/IC/Plots_hold')
         # plt.savefig(date_label + '_' + str(start_buff) + '_' + str(end_buff) + '_beam.png')
         plt.savefig(f'beam_{eq_num:02}_{fig_index}_{ref_phase}_{start_buff:.0f}_{end_buff:.0f}s')
@@ -734,9 +734,9 @@ def pro7_singlet(eq_num, slow_delta = 0.0005, turn_off_black = 0,
         plt.ylabel('Amplitude')
 
         if PKiKP_beam:
-            plt.title(f'{date_label}  PKiKP stack in event {eq_num}  sum inside 0.01 s/° , {freq_min} - {freq_max}')
+            plt.title(f'{date_label}  PKiKP stack in event {eq_num}  sum inside 0.01 s/° , {freq_min}-{freq_max} Hz')
         else:
-            plt.title(f'{eq_num} PKiKP stack, sum within 0.019 s/° of prediction, {freq_min} - {freq_max}')
+            plt.title(f'{eq_num} PKiKP stack, sum within 0.01 s/° of prediction, {freq_min}-{freq_max} Hz')
         os.chdir('/Users/vidale/Documents/Research/IC/Plots_hold')
         if zoom == False:
             plt.savefig('env_' + date_label + '_' + str(eq_num) + '_' + str(start_buff) + '_' + str(end_buff) + '_' + str(fig_index))
