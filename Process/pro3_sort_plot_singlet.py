@@ -11,14 +11,29 @@ def pro3singlet(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1, shift_t
             dphase = 'P', dphase2 = '', dphase3 = '', dphase4 = '',
             start_buff      =   -10, end_buff   =    10,
             start_beam      =     0, end_beam   =     0,
-            Zstart_buff     =   -10, Zend_buff  =    10, zoom = 0,
+            Zstart_buff     =   -10, Zend_buff  =    10, zoom = False,
             precursor_shift = -1000, signal_dur = -1000,
             freq_min = 0.25, freq_max = 1, do_filt = 1, zerophase = True, plot_scale_fac = 1,
             min_dist = 0, max_dist = 180, plot_auto_dist = True, do_decimate = False, decimate_fac = 1,
             alt_statics = 0, statics_file = 'nothing', ARRAY = 0,
             ref_rad = 180, ref_loc = False, ref_lat = 0, ref_lon = 0,
             verbose = False, fig_index = 1, JST = False):
-# 0 is Hinet, 1 is LASA, 2 is NORSAR
+# 0 is Hinet, 1 is LASA, 2 is NORSAR, 3 is China, 4 is WRA, 5 is YKA, 6 is ILAR
+
+    if ARRAY == 0:
+        arrayname = 'HiNet '
+    elif ARRAY == 1:
+        arrayname = 'LASA '
+    elif ARRAY == 2:
+        arrayname = 'China '
+    elif ARRAY == 3:
+        arrayname = 'NORSAR '
+    elif ARRAY == 4:
+        arrayname = 'WRA '
+    elif ARRAY == 5:
+        arrayname = 'YKA '
+    elif ARRAY == 6:
+        arrayname = 'ILAR '
 
 #%% Import
 #%% -- Functions
@@ -88,6 +103,8 @@ def pro3singlet(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1, shift_t
             sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_statics_WR.txt'
         elif ARRAY == 5:
             sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_statics_YK.txt'
+        elif ARRAY == 6:
+            sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_statics_ILAR.txt'
         with open(sta_file, 'r') as file:
             lines = file.readlines()
         print('    ' + str(len(lines)) + ' station statics read from ' + sta_file)
@@ -114,7 +131,7 @@ def pro3singlet(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1, shift_t
                 st_lons.append( split_line[2])
                 st_shift.append(split_line[3])
                 st_corr.append( split_line[4]) # but really std dev
-            elif ARRAY == 4:
+            elif ARRAY == 4 or ARRAY == 5 or ARRAY == 6:
                 st_lats.append( split_line[2])
                 st_lons.append( split_line[3])
                 st_shift.append(split_line[4])
@@ -135,6 +152,8 @@ def pro3singlet(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1, shift_t
             sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_AU_WR.txt'
         elif ARRAY == 5: #         Yellowknife set
             sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_CN_YK.txt'
+        elif ARRAY == 6: #         ILAR set
+            sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_ILAR.txt'
         with open(sta_file, 'r') as file:
             lines = file.readlines()
         print('    ' + str(len(lines)) + ' stations read from ' + sta_file)
@@ -175,20 +194,23 @@ def pro3singlet(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1, shift_t
     #    ref_rad = 0.4    # ° radius (°) set by input or at top
     if ref_loc == False:  # use default array centers unless specified
         if ARRAY == 0:
-            ref_lat = 36  # °N, around middle of Japan
-            ref_lon = 139 # °E
-        elif ARRAY == 1:
-            ref_lat = 46.7      # °N keep only inner rings A-D if radius is 0.4°
-            ref_lon = -106.22   # °E
+            ref_lat =    36.00  # °N, HiNet, around middle of Japan
+            ref_lon =   139.00  # °E
+        elif ARRAY == 1:        #  LASA
+            ref_lat =    46.70  # °N keep only inner rings A-D if radius is 0.4°
+            ref_lon =  -106.22  # °E
         elif ARRAY == 2:
-            ref_lat = 38      # °N
-            ref_lon = 104.5   # °E
+            ref_lat =    38.00  # °N China
+            ref_lon =   104.50  # °E
         elif ARRAY == 4:
-            ref_lat = -19.89  # °N Warramunga
-            ref_lon = 134.42  # °E
+            ref_lat =   -19.89  # °N Warramunga
+            ref_lon =   134.42  # °E
         elif ARRAY == 5:
-            ref_lat =  62.49  # °N Yellowknife
-            ref_lon = -114.6  # °E
+            ref_lat =    62.49  # °N Yellowknife
+            ref_lon =  -114.60  # °E
+        elif ARRAY == 6:
+            ref_lat =    64.77  # °N ILAR
+            ref_lon =  -146.89  # °E
 
 #%% -- Test taper, needs adjustment?
 #   Is taper too long compared to noise estimation window?
@@ -216,13 +238,22 @@ def pro3singlet(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1, shift_t
     # fname     = '/Users/vidale/Documents/GitHub/LASA_data/HD' + date_label + '.mseed'
     if ARRAY == 1:
         mseed_name = year_short_label + month_label + day_label + '_' + hour_label + minute_label
-        fname     = '/Users/vidale/Documents/Research/IC/Mseed/L' + mseed_name + '.mseed'
-    elif ARRAY == 4 or ARRAY == 5:
-        mseed_name = year_label + month_label + day_label + '_' + hour_label + minute_label
-        fname     = '/Users/vidale/Documents/Research/IC/Mseed/' + mseed_name + '.mseed'
-    else:
+        fname     = '/Users/vidale/Documents/Research/IC/Mseed/LASA/L' + mseed_name + '.mseed'
+    elif ARRAY == 0:
         mseed_name = year_short_label + '-' +month_label + '-' + day_label
-        fname     = '/Users/vidale/Documents/Research/IC/Mseed/HD20' + mseed_name + '.mseed'
+        fname     = '/Users/vidale/Documents/Research/IC/Mseed/HiNet/HD20' + mseed_name + '.mseed'
+    elif ARRAY == 2:
+        mseed_name = year_short_label + '-' +month_label + '-' + day_label
+        fname     = '/Users/vidale/Documents/Research/IC/Mseed/China/HD20' + mseed_name + '.mseed'
+    elif ARRAY == 4: # WRA array
+        mseed_name = year_label + month_label + day_label + '_' + hour_label + minute_label
+        fname     = '/Users/vidale/Documents/Research/IC/Mseed/WRA/' + mseed_name + '.mseed'
+    elif ARRAY == 5: # YKA array
+        mseed_name = year_label + month_label + day_label + '_' + hour_label + minute_label
+        fname     = '/Users/vidale/Documents/Research/IC/Mseed/YKA/' + mseed_name + '.mseed'
+    elif ARRAY == 6: # ILAR array
+        mseed_name = year_label + month_label + day_label + '_' + hour_label + minute_label
+        fname     = '/Users/vidale/Documents/Research/IC/Mseed/ILAR/' + mseed_name + '.mseed'
 
     print('Opening data file: ' + fname)
     st=read(fname)
@@ -275,7 +306,7 @@ def pro3singlet(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1, shift_t
     # print(f'ref_slow {ref_slow:.2f}')
 
     for tr in st: # traces one by one, find lat-lon
-        print('station ' + tr.stats.station + ' trace start time relative to event time ' + str(tr.stats.starttime  - t) + ' duration ' + str(len(tr.data)*tr.stats.delta))
+        # print('station ' + tr.stats.station + ' trace start time relative to event time ' + str(tr.stats.starttime  - t) + ' duration ' + str(len(tr.data)*tr.stats.delta))
         if float(year_label) < 1970: # fix the damn 1969 -> 2069 bug in Gibbon's LASA data
             temp_t = str(tr.stats.starttime)
             temp_tt = '19' + temp_t[2:]
@@ -402,7 +433,7 @@ def pro3singlet(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1, shift_t
     if do_filt == 1:
         print('Filter' + ' min ' + str(freq_min) + ' max ' + str(freq_max))
         print('data len ' + str(len(st_pickalign[0].data)) + ' # traces ' + str(len(st_pickalign)) + ' delta ' + str(st_pickalign[0].stats.delta))
-        st_pickalign.filter('bandpass', freqmin=freq_min, freqmax=freq_max, corners=4, zerophase=zerophase)
+        st_pickalign.filter('bandpass', freqmin = freq_min, freqmax = freq_max, corners = 4, zerophase=zerophase)
     st_pickalign.taper(taper_frac, max_length = max_taper_length)
 
 #%%  -- Cull by SNR threshold
@@ -621,11 +652,17 @@ def pro3singlet(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1, shift_t
 
     plt.xlabel('Time (s)')
     plt.ylabel('Epicentral distance from event (°)')
-    plt.title(date_label + ' event #' + str(eq_num) + ' ' + dphase + ' freq ' + str(freq_min) + ' to ' + str(freq_max) + ' Hz')
+    plt.title(arrayname + ' ' + date_label + ' event #' + str(eq_num) + ' ' + dphase + ' freq ' + str(freq_min) + ' to ' + str(freq_max) + ' Hz')
     plt.legend(loc="upper left")
+
+    ax = plt.gca()
+    ax.get_yaxis().get_major_formatter().set_useOffset(False)
+
     os.chdir('/Users/vidale/Documents/Research/IC/Plots_hold')
+    file_name = 'section_' + date_label + '_' + str(eq_num) + '_' + str(int(freq_min)) + '-' + str(int(freq_max))
     plt.savefig('section_' + date_label + '_' + str(eq_num) + '_' + str(int(freq_min)) + '-' + str(int(freq_max)))
     plt.show()
+    print('presto ' + file_name)
 
 
 #%%  Save processed seismograms

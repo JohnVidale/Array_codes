@@ -20,6 +20,7 @@ def pro5stack2d(eq_num, slow_delta = 0.0005, slowR_lo = -0.1, slowR_hi = 0.1, sl
     from scipy.signal import hilbert
     import math
     import time
+    import statistics
 
     import sys # don't show any warnings
     import warnings
@@ -57,24 +58,29 @@ def pro5stack2d(eq_num, slow_delta = 0.0005, slowR_lo = -0.1, slowR_hi = 0.1, sl
         sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_AU_WR.txt'
     elif ARRAY == 5: #         Yellowknife set
         sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_CN_YK.txt'
+    elif ARRAY == 6: #         Yellowknife set
+        sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_ILAR.txt'
 
 #%% Set array reference location if not input
     if ref_loc == False:
         if ARRAY == 0: # Hinet set
-            ref_lat = 36.3
-            ref_lon = 138.5
+            ref_lat =   36.30
+            ref_lon =  138.50
         elif ARRAY == 1:         # LASA set
-            ref_lat = 46.69
+            ref_lat =   46.69
             ref_lon = -106.22
         elif ARRAY == 2: # China set and center
-            ref_lat = 38      # °N
-            ref_lon = 104.5   # °E
+            ref_lat =   38.00  # °N
+            ref_lon =  104.50  # °E
         elif ARRAY == 4:
-            ref_lat = -19.90  # °N Warramunga
-            ref_lon = 134.42  # °E
+            ref_lat =  -19.90  # °N Warramunga
+            ref_lon =  134.42  # °E
         elif ARRAY == 5:
-            ref_lat =  62.49  # °N Yellowknife
-            ref_lon = -114.6  # °E
+            ref_lat =   62.49  # °N Yellowknife
+            ref_lon = -114.60  # °E
+        elif ARRAY == 6:
+            ref_lat =   64.77  # °N ILAR
+            ref_lon = -146.89  # °E
     with open(sta_file, 'r') as file:
         lines = file.readlines()
     print(str(len(lines)) + ' stations read from ' + sta_file)
@@ -108,6 +114,11 @@ def pro5stack2d(eq_num, slow_delta = 0.0005, slowR_lo = -0.1, slowR_hi = 0.1, sl
     dt = st[0].stats.delta
     print('First trace has : ' + str(nt) + ' time pts, time sampling of '
           + str(dt) + ' and thus duration of ' + str((nt-1)*dt))
+
+    for tr in st: # check whether there are NANs in seismograms
+        for ii_nan in range(len(tr.data)):
+            if math.isnan(tr[ii_nan]):
+                print(colored('Found an NAN!  point ' + str(ii_nan) + ' ' + tr.stats.station, 'yellow'))
 
     #%% Make grid of slownesses
     slowR_n = int(round(1 + (slowR_hi - slowR_lo)/slow_delta))  # number of slownesses
@@ -196,6 +207,8 @@ def pro5stack2d(eq_num, slow_delta = 0.0005, slowR_lo = -0.1, slowR_hi = 0.1, sl
                         for it in range(stack_nt):  # check points one at a time
                             it_in = int(round(it + time_correction))
                             if it_in >= 0 and it_in < nt - 1: # does data lie within seismogram?
+                                if math.isnan(tr[it_in]):
+                                    print(colored('Found an NAN!', 'yellow'))
                                 stack[indx].data[it] += tr[it_in]
 
                     if stack_option == 1:  #  Wei's much faster method
@@ -249,6 +262,13 @@ def pro5stack2d(eq_num, slow_delta = 0.0005, slowR_lo = -0.1, slowR_hi = 0.1, sl
     if bad_trace == True:
         print(colored('There was a trace not long enough for stacking, check start and stop times', 'red'))
 
+    test = statistics.stdev(stack[0].data)  # check for NANs in stack, quit if bad
+    if math.isnan(test):
+        print('Stdev first row in stack is ' + str(test))
+        if math.isnan(test):
+            print(colored('Pre-envelope, stack has NANs', 'yellow'))
+        sys.exit(-1)
+
 #%% take envelope, decimate envelope
     stack_raw = stack.copy()
     for slowR_i in range(slowR_n):  # loop over radial slownesses
@@ -257,14 +277,22 @@ def pro5stack2d(eq_num, slow_delta = 0.0005, slowR_lo = -0.1, slowR_hi = 0.1, sl
             stack[indx].data = np.abs(hilbert(stack[indx].data))
             if decimate_fac != 0:
                 stack[indx].decimate(decimate_fac, no_filter=True)
+    print('Envelope time sampling is ' + str(stack[0].stats.delta))
 
 #%%  Save processed files
     fname = 'HD' + date_label + '_2dstack_env.mseed'
     stack.write(fname,format = 'MSEED')
+
+    test = statistics.stdev(stack[0].data)  # check for NANs in stack, quit if bad
+    if math.isnan(test):
+        print('Stdev first row in stack is ' + str(test))
+        if math.isnan(test):
+            print(colored('Post-envelope, stack has NANs', 'yellow'))
+        sys.exit(-1)
 
     fname = 'HD' + date_label + '_2dstack.mseed'
     stack_raw.write(fname,format = 'MSEED')
 
     elapsed_time_wc = time.time() - start_time_wc
     print(f'This job took   {elapsed_time_wc:.1f}   seconds')
-    os.system('say "Five"')
+    os.system('say "five done"')

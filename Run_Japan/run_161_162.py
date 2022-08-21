@@ -14,6 +14,8 @@ os.environ['PATH'] += os.pathsep + '/usr/local/bin'
 os.chdir('/Users/vidale/Documents/GitHub/Array_codes')
 
 #%% Import functions
+ev_directory = '/Users/vidale/Documents/GitHub/Array_codes/Process'
+os.chdir(ev_directory)
 from pro3_sort_plot_pair       import pro3pair
 from pro3_sort_plot_singlet    import pro3singlet
 from pro5_stack1d              import pro5stack1d
@@ -24,14 +26,14 @@ from pro7_pair_scan            import pro7_pair_scan
 from pro7_singlet              import pro7_singlet
 
 #%% Workflow selection
-do_3  = True  # pair of events
+do_3  = False  # pair of events
 do_5  = False
 do_6  = False
-do_7  = False
+do_7  = True
 # eq_file1 = 'event1.txt'  # pair
 # eq_file2 = 'event2.txt'
-eq_num1 = '179'  # pair
-eq_num2 = '180'
+eq_num1 = '161'  # pair
+eq_num2 = '162'
 
 do_3a = False # single event
 do_5a = False # stack
@@ -110,7 +112,7 @@ min_amp    = 0.0    # threshold amp to use in stack
 auto_slice      = False  # slices span wide range of R and T slownesses
 two_slice_plots = True  # makes R-T pair and snap through time span
 beam_sums       = True  # sums tdiff and amp over time
-wiggly_plots    = False  # shows wiggly plots
+wiggly_plots    = True  # shows wiggly plots
 
 # Pro7 auto-plot options
 nR_plots  = 2     # number of plots along the radial axis, makes (2 x nR_plots - 1) total

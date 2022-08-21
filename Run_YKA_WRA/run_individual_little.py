@@ -5,13 +5,16 @@ def run_individual_little(eq_num = 401, start_buff = 980, end_buff = 1180,
     precursor_shift  = -1000, signal_dur     = -1000,
     start_buff_stack =   -30, end_buff_stack =    40,
     start_beam_stack =     0, end_beam_stack =     0,
-    beam_width = 0.04, beam_step = 0.005, beam_offset = 0.00, freq_min = 1, freq_max = 3, slow_delta = 0.0025,
+    beam_width = 0.04, beam_step = 0.005, beam_offset = 0.00,
+    zerophase = True, freq_min = 1, freq_max = 3, slow_delta = 0.0025,
     min_dist = 0, max_dist = 180, dphase  = 'PKiKP', JST = False, R_slow_plot = 0.012, T_slow_plot = 0,
-    fig_index = 401, stat_corr = 1, apply_SNR = False):
+    fig_index = 401, stat_corr = 1, apply_SNR = False, beam_stack_rad = 0.01):
 
     import os
     #%% close plots
 
+    ev_directory = '/Users/vidale/Documents/GitHub/Array_codes/Process'
+    os.chdir(ev_directory)
     #%% Import functions
     # from pro2_dec                import pro2decimate
     from pro3_sort_plot_singlet  import pro3singlet
@@ -64,9 +67,12 @@ def run_individual_little(eq_num = 401, start_buff = 980, end_buff = 1180,
     # max_dist = 25
 
     # dphase  = 'PKiKP'
-    dphase2 = 'pPKiKP'
-    dphase3 = 'sPKiKP'
-    dphase4 = 'S'
+    # dphase2 = 'pPKiKP'
+    # dphase3 = 'sPKiKP'
+    # dphase4 = 'S'
+    dphase2 = 'pP'
+    dphase3 = 'sP'
+    dphase4 = 'PP'
 
     # decimate_fac = 5
     # decimate, in 100 sps, out 20 sps
@@ -101,7 +107,7 @@ def run_individual_little(eq_num = 401, start_buff = 980, end_buff = 1180,
     ZslowT_lo  = -beam_width
     ZslowT_hi  =  beam_width
     slow_delta =  beam_step
-    NS         =  True   # 0 plot slowness R-T, 1 plot slowness N-S
+    NS         =  False   # 0 plot slowness R-T, 1 plot slowness N-S
     plot_scale_fac = 0.01
     log_plot = 0
 
@@ -129,7 +135,7 @@ def run_individual_little(eq_num = 401, start_buff = 980, end_buff = 1180,
             precursor_shift = precursor_shift, signal_dur = signal_dur,
             plot_scale_fac = plot_scale_fac, fig_index = fig_index, apply_SNR = apply_SNR,
             dphase = dphase, dphase2 = dphase2, dphase3 = dphase3, dphase4 = dphase4,
-            freq_min = freq_min, freq_max = freq_max,
+            freq_min = freq_min, freq_max = freq_max, zerophase = zerophase,
             min_dist = min_dist, max_dist = max_dist,
             SNR_thres = SNR_thres, corr_threshold = corr_threshold,
             ref_loc = ref_loc, ref_rad = ref_rad, JST = JST, decimate_fac = dec_fac, )
@@ -166,10 +172,12 @@ def run_individual_little(eq_num = 401, start_buff = 980, end_buff = 1180,
             zoom = False, ZslowR_lo = ZslowR_lo, ZslowR_hi = ZslowR_hi, ZslowT_lo = ZslowT_lo, ZslowT_hi = ZslowT_hi,
             Zstart_buff = start_beam_stack, Zend_buff = end_beam_stack,
             two_slice_plots = True, wiggly_plots = False, freq_min = freq_min, freq_max = freq_max,
-            fig_index = fig_index + 10, snaptime = snaptime, snaps=snaps, ARRAY = ARRAY, NS = NS,
+            fig_index = fig_index + 10, snaptime = snaptime, snaps=snaps, ARRAY = ARRAY,
+            NS = NS, beam_stack_rad = beam_stack_rad,
             ref_loc = ref_loc, ref_lat = ref_lat, ref_lon = ref_lon, R_slow_plot = R_slow_plot, T_slow_plot = T_slow_plot)
 
 #%%  pro7plotstack --  snapshots of 2D stack results for individual events
+    print('beam_stack_rad is ' + str(beam_stack_rad))
     if do_7 == True:
         pro7_singlet(eq_num = eq_num,
             slowR_lo = slowR_lo, slowR_hi = slowR_hi, slowT_lo = slowT_lo, slowT_hi = slowT_hi, slow_delta = slow_delta,
@@ -177,5 +185,6 @@ def run_individual_little(eq_num = 401, start_buff = 980, end_buff = 1180,
             zoom = True, ZslowR_lo = ZslowR_lo, ZslowR_hi = ZslowR_hi, ZslowT_lo = ZslowT_lo, ZslowT_hi = ZslowT_hi,
             Zstart_buff = start_beam_stack, Zend_buff = end_beam_stack,
             two_slice_plots = True, wiggly_plots = False, freq_min = freq_min, freq_max = freq_max,
-            fig_index = fig_index + 20, snaptime = snaptime, snaps=snaps, ARRAY = ARRAY, NS = NS,
+            fig_index = fig_index + 20, snaptime = snaptime, snaps=snaps, ARRAY = ARRAY,
+            NS = NS, beam_stack_rad = beam_stack_rad,
             ref_loc = ref_loc, ref_lat = ref_lat, ref_lon = ref_lon, R_slow_plot = R_slow_plot, T_slow_plot = T_slow_plot)

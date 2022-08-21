@@ -19,6 +19,10 @@ def pro6_cc_pair(eq_num1, eq_num2, slow_delta = 0.0005,
     import os
     import time
     import sys
+    import statistics
+    import math
+    file_directory = '/Users/vidale/Documents/GitHub/Wei'
+    os.chdir(file_directory)
     from pro_proceed_function import cc_measure_tshift
     # from obspy import Trace
 
@@ -54,6 +58,16 @@ def pro6_cc_pair(eq_num1, eq_num2, slow_delta = 0.0005,
     st2 = Stream()
     st1 = read(fname1)
     st2 = read(fname2)
+
+    test1 = statistics.stdev(st1[0].data)  # check for NANs, quit if bad
+    test2 = statistics.stdev(st2[0].data)
+    if math.isnan(test1) or math.isnan(test2):
+        print('Stdev first row in st1 and st2 are ' + str(test1) + ' and ' + str(test2))
+        if math.isnan(test1):
+            print(colored('st1 has NANs', 'yellow'))
+        if math.isnan(test2):
+            print(colored('st2 has NANs', 'yellow'))
+        sys.exit(-1)
 
     tshift        = st1.copy()  # make array for time shift
     tshift_cc     = st1.copy()  # make array for new time shift
@@ -106,7 +120,7 @@ def pro6_cc_pair(eq_num1, eq_num2, slow_delta = 0.0005,
     for slow_i in range(total_slows):
 
         if slow_i % 100 == 0:
-            print('Measuring time shifts, ' + str(slow_i) + ' finished slownesses out of ' + str(total_slows))
+            print('Measuring time shifts, finished ' + str(slow_i) + ' of ' + str(total_slows) + ' slownesses')
 
         if len(st1[slow_i].data) == 0: # test for zero-length traces, indexing errors
             print('Slowness ' + str(slow_i) + ' trace has zero length, problem!')
@@ -116,7 +130,7 @@ def pro6_cc_pair(eq_num1, eq_num2, slow_delta = 0.0005,
 
         env1 = np.abs(seismogram1) # amplitude and amp ratio
         env2 = np.abs(seismogram2)
-        amp_ave[slow_i].data    = 0.5 * (env1 + env2)
+        amp_ave[slow_i].data = 0.5 * (env1 + env2)
 
         tr1 = st1[slow_i]
         tr2 = st2[slow_i]
@@ -166,4 +180,4 @@ def pro6_cc_pair(eq_num1, eq_num2, slow_delta = 0.0005,
 
     elapsed_time_wc = time.time() - start_time_wc
     print(f'This job took   {elapsed_time_wc:.1f}   seconds')
-    os.system('say "Done"')
+    os.system('say "six done"')
