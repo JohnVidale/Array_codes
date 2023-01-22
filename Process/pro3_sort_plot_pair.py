@@ -5,14 +5,14 @@
 # outputs selected traces, "*sel.mseed"
 # John Vidale 2/2019
 
-def pro3pair(eq_num1, eq_num2, repeater = '', stat_corr = 1, simple_taper = False, apply_SNR = False, SNR_thres = 1.7,
+def pro3pair(eq_num1, eq_num2, repeater = '0', stat_corr = 1, simple_taper = False, apply_SNR = False, SNR_thres = 1.7,
             phase1 = 'PKP', phase2 = 'PKiKP', phase3 = 'PKIKP', phase4 = 'pPKP',
             rel_time = 1, start_buff = -200, end_buff = 500, precursor_shift = 0, signal_dur = 0,
-            plot_scale_fac = 0.05, corr_threshold = 0, off_center_shift = 0,
-            zoom = False, Zstart_buff = 0, Zend_buff = 0, flip = False,
+            plot_scale_fac = 0.05, corr_threshold = 0, off_center_shift = 0, win_norm = False, wind_buff = 0,
+            zoom = False, Zstart_buff = 0, Zend_buff = 0, flip = False, trace_amp = 1,
             freq_min = 1, freq_max = 3, min_dist = 0, max_dist = 180, auto_dist = True, ARRAY = 0,
             ref_loc = False, ref_rad = 0.4, JST = False, fig_index = 100, do_interpolate = False,
-            max_taper_length = 5., no_plots = False, taper_frac = 0.05, temp_shift2 = 0, temp_shift_both = 0):
+            max_taper_length = 5., no_plots = False, taper_frac = 0.2, tshift = 0, shift_both = 0):
 
 
 #%% Import functions
@@ -261,13 +261,15 @@ def pro3pair(eq_num1, eq_num2, repeater = '', stat_corr = 1, simple_taper = Fals
     st1=read(fname1)
     st2=read(fname2)
     for tr in st1: # apply a shift to second event, and flip if desired
-        tr.stats.starttime = tr.stats.starttime -  temp_shift_both
+        tr.stats.starttime = tr.stats.starttime -  shift_both
         if flip:
             tr.data = tr.data * (-1.0)
     for tr in st2: # apply a shift to second event
         if flip:
             tr.data = tr.data * (-1.0)
-        tr.stats.starttime = tr.stats.starttime - (temp_shift_both + temp_shift2)
+        tr.stats.starttime = tr.stats.starttime - (shift_both + tshift)
+        # if ARRAY == 5 and eq_num2 > 746:  # kludge to minimize effect of YKA time shift in late 2013
+        #     tr.stats.starttime = tr.stats.starttime - 0.17
 
     if do_decimate:
         st1.decimate(dec_factor, no_filter=True)
@@ -461,6 +463,7 @@ def pro3pair(eq_num1, eq_num2, repeater = '', stat_corr = 1, simple_taper = Fals
         if JST == True and eq_num2 != '180': # if necessary, convert JST -> UTC, time in Greenwich 9 hours earlier than Japan
             tr.stats.starttime = tr.stats.starttime - 9*60*60
         if tr.stats.station in st_names:  # find station in station list
+            # print(' station name ' + tr.stats.station)
             ii = st_names.index(tr.stats.station)
             tra2_sta_found += 1
 
@@ -595,76 +598,185 @@ def pro3pair(eq_num1, eq_num2, repeater = '', stat_corr = 1, simple_taper = Fals
             print(st_pickalign1.__str__(extended=True))
             print(st_pickalign2.__str__(extended=True))
 
-#%%  Detrend, taper, filter
-    print('Taper fraction is ' + str(taper_frac) + ' bandpass is ' + str(freq_min) + ' to ' + str(freq_max))
+#%%  Detrend, taper, filter, optional window normalization
+    print('Taper fraction is ' + str(taper_frac) + ' Max taper length is ' + str(max_taper_length) + ' bandpass is ' + str(freq_min) + ' to ' + str(freq_max))
     st_pickalign1.detrend(type='simple')
     st_pickalign2.detrend(type='simple')
     st_pickalign1.taper(taper_frac, max_length = max_taper_length)
     st_pickalign2.taper(taper_frac, max_length = max_taper_length)
+    # zerophase filter
     # st_pickalign1.filter('bandpass', freqmin=freq_min, freqmax=freq_max, corners=4, zerophase=True)
     # st_pickalign2.filter('bandpass', freqmin=freq_min, freqmax=freq_max, corners=4, zerophase=True)
+    # causal filter
     st_pickalign1.filter('bandpass', freqmin=freq_min, freqmax=freq_max, corners=4, zerophase=False)
     st_pickalign2.filter('bandpass', freqmin=freq_min, freqmax=freq_max, corners=4, zerophase=False)
-    st_pickalign1.taper(taper_frac, max_length = max_taper_length)
-    st_pickalign2.taper(taper_frac, max_length = max_taper_length)
+    # st_pickalign1.taper(taper_frac, max_length = max_taper_length) # double tapering not really necessary
+    # st_pickalign2.taper(taper_frac, max_length = max_taper_length)
+
+    if win_norm == True:  # normalize in analysis window
+        s_t = t1 + start_buff + wind_buff
+        e_t = t1 + end_buff - wind_buff
+        for tr in st_pickalign1:
+            snippet = tr.copy()
+            snippet.trim( starttime = s_t, endtime = e_t)
+            smax = abs(snippet.max())
+            tr.data = tr.data/smax
+
+        s_t = t2 + start_buff + wind_buff
+        e_t = t2 + end_buff - wind_buff
+        for tr in st_pickalign2:
+            snippet = tr.copy()
+            snippet.trim( starttime = s_t, endtime = e_t)
+            smax = abs(snippet.max())
+            tr.data = tr.data/smax
 
 #%%  Check station is there for both events and impose SNR threshold
     st1good = Stream()
     st2good = Stream()
-    print(f'SNR parameters: start buffer {start_buff:.1f} end buffer {end_buff:.1f} pre_shift {precursor_shift:.1f} sig duration {signal_dur:.1f}')
+    if apply_SNR == True:
+        print(f'SNR parameters: start buffer {start_buff:.1f} end buffer {end_buff:.1f} pre_shift {precursor_shift:.1f} sig duration {signal_dur:.1f}')
     for tr1 in st_pickalign1:
-        if ARRAY == 5 and tr1.stats.station[2] == 'A':  # overcome renaming of YKA stations in late 2006
-            tr1.stats.station = tr1.stats.station[0:1] + tr1.stats.station[3:4]
+        # print(tr1.stats.station + ' ' + tr1.stats.station[0:2] + ' ' + tr1.stats.station[3:5])
+        if ARRAY == 5 and tr1.stats.station[2] == 'A':  # overcome renaming of YKA stations in late 2013
+            tr1.stats.station = tr1.stats.station[0:2] + tr1.stats.station[3:5]
+            # tr1.stats.station = tr1.stats.station[0:1] + tr1.stats.station[3:4]
+        # print(tr1.stats.station)
 
         for tr2 in st_pickalign2:
-            if ARRAY == 5 and tr2.stats.station[2] == 'A':  # overcome renaming of YKA stations in late 2006
+            if ARRAY == 5 and tr2.stats.station[2] == 'A':  # overcome renaming of YKA stations in late 2013
                 tr2.stats.station = tr2.stats.station[0:2] + tr2.stats.station[3:5]
 
-            if ((tr1.stats.network  == tr2.stats.network) &
+            if ((tr1.stats.network  == tr2.stats.network) and
                 (tr1.stats.station  == tr2.stats.station)): # if this is a match, then station is on both lists
                 if apply_SNR == False:
                     st_name = tr1.stats.station
-                    if eq_num1 == 612 or eq_num2 == 612: # weed out bad stations for repeaters
-                        if (st_name != 'IL13' and st_name != 'IL03' and st_name != 'IL08' and st_name != 'IL18'):
-                            st1good += tr1
-                            st2good += tr2
-                    elif eq_num1 == 618 or eq_num2 == 618: # just need to do this once, trace from other event must match
-                        if (st_name != 'IL01'):
-                            st1good += tr1
-                            st2good += tr2
-                    elif eq_num1 == 626 or eq_num2 == 626 or eq_num1 == 644 or eq_num2 == 644:
-                        if (st_name != 'YKR7'):
-                            st1good += tr1
-                            st2good += tr2
-                    elif eq_num1 == 628 or eq_num2 == 628:
-                        if (st_name != 'YKR5' and st_name != 'YKR6'):
-                            st1good += tr1
-                            st2good += tr2
-                    elif eq_num1 == 629 or eq_num2 == 629:
-                        if (st_name != 'YKR7' and st_name != 'YKR6' and st_name != 'YKB7'):
-                            st1good += tr1
-                            st2good += tr2
-                    elif eq_num1 == 635 or eq_num2 == 635:
-                        if (st_name != 'IL14' and st_name != 'IL15'):
-                            st1good += tr1
-                            st2good += tr2
-                    elif eq_num1 == 636 or eq_num2 == 636:
-                        if (st_name != 'YKB1' and st_name != 'YKB5'):
-                            st1good += tr1
-                            st2good += tr2
-                    elif eq_num1 == 637 or eq_num2 == 637:
-                        if (st_name != 'YKB2'):
-                            st1good += tr1
-                            st2good += tr2
-                    elif eq_num1 == 657 or eq_num2 == 659:
-                        if (st_name != 'YKB4' and st_name != 'YKB1'):
-                            st1good += tr1
-                            st2good += tr2
-                    elif eq_num1 == 624 or eq_num2 == 638 or eq_num1 == 652 or eq_num2 == 606:
-                        if (st_name != 'YKR1'):
-                            st1good += tr1
-                            st2good += tr2
-                    else:
+                    doit = True # weed out bad stations for repeaters
+                    if st_name == 'YKB0':
+                        doit = False
+                    if (eq_num1 == 701 or eq_num2 == 701) and st_name == 'YKB1':
+                        doit = False
+                    if (eq_num1 == 709 or eq_num2 == 709) and st_name == 'YKB1':
+                        doit = False
+                    if (eq_num1 == 705 or eq_num2 == 705) and st_name == 'YKR2':
+                        doit = False
+                    if ((eq_num1 == 716 or eq_num2 == 716) and
+                        (st_name == 'IL13' or st_name == 'IL03' or st_name == 'IL08' or st_name == 'IL18')):
+                        doit = False
+                    if (eq_num1 == 719 or eq_num2 == 719) and (st_name == 'YKR1'):
+                        doit = False
+                    if (eq_num1 == 720 or eq_num2 == 720) and (st_name == 'YKR1' or st_name == 'YKR3'):
+                        doit = False
+                    if (eq_num1 == 722 or eq_num2 == 722) and (st_name == 'YKR1' or st_name == 'YKR2'):
+                        doit = False
+                    if (eq_num1 == 723 or eq_num2 == 723) and st_name == 'IL01':
+                        doit = False
+                    if (eq_num1 == 724 or eq_num2 == 724) and st_name == 'YKB1':
+                        doit = False
+                    if (eq_num1 == 729 or eq_num2 == 729) and st_name == 'YKR2':
+                        doit = False
+                    if (eq_num1 == 730 or eq_num2 == 730) and (st_name == 'YKR1' or st_name == 'YKR2'):
+                        doit = False
+                    if (eq_num1 == 734 or eq_num2 == 734) and (st_name == 'YKR6' or st_name == 'YKR7'):
+                        doit = False
+                    if (eq_num1 == 736 or eq_num2 == 736) and st_name == 'YKR7':
+                        doit = False
+                    if (eq_num1 == 737 or eq_num2 == 737) and st_name == 'YKR7':
+                        doit = False
+                    if (eq_num1 == 740 or eq_num2 == 740) and (st_name == 'YKB1' or st_name == 'YKR2' or st_name == 'IL17' or
+                                                               st_name == 'IL16' or st_name == 'IL14' or st_name == 'IL13' or st_name == 'IL02'):
+                        doit = False
+                    if (eq_num1 == 741 or eq_num2 == 741) and (st_name == 'IL14' or st_name == 'IL15' or st_name == 'YKB1'):
+                        doit = False
+                    if (eq_num1 == 742 or eq_num2 == 742) and (st_name == 'YKB1' or st_name == 'YKR7'):
+                        doit = False
+                    if (eq_num1 == 743 or eq_num2 == 743) and st_name == 'YKB2':
+                        doit = False
+                    if (eq_num1 == 746 or eq_num2 == 746) and (st_name == 'YKB4' or st_name == 'YKR7'):
+                        doit = False
+                    if (eq_num1 == 747 or eq_num2 == 747) and st_name == 'YKR7':
+                        doit = False
+                    if (eq_num1 == 748 or eq_num2 == 748) and (st_name == 'YKR7' or st_name == 'YKR1'):
+                        doit = False
+                    if (eq_num1 == 749 or eq_num2 == 749) and st_name == 'YKR7':
+                        doit = False
+                    if (eq_num1 == 750 or eq_num2 == 750) and st_name == 'YKR7':
+                        doit = False
+                    if (eq_num1 == 751 or eq_num2 == 751) and (st_name == 'YKB2' or st_name == 'YKR8'):
+                        doit = False
+                    if (eq_num1 == 752 or eq_num2 == 752) and (st_name == 'YKR7'):
+                        doit = False
+                    if (eq_num1 == 753 or eq_num2 == 753) and (st_name == 'YKR7'):
+                        doit = False
+                    if (eq_num1 == 754 or eq_num2 == 754) and (st_name == 'YKR7'):
+                        doit = False
+                    if (eq_num1 == 756 or eq_num2 == 756) and (st_name == 'YKR7' or st_name == 'YKB4'):
+                        doit = False
+                    if (eq_num1 == 757 or eq_num2 == 757) and (st_name == 'YKR7' or st_name == 'YKR1'):
+                        doit = False
+                    if (eq_num1 == 758 or eq_num2 == 758) and (st_name == 'YKR7'):
+                        doit = False
+                    if (eq_num1 == 759 or eq_num2 == 759) and (st_name == 'YKB2'):
+                        doit = False
+                    if (eq_num1 == 800 or eq_num2 == 800) and (st_name == 'YKB9'):
+                        doit = False
+                    if (eq_num1 == 802 or eq_num2 == 802) and (st_name == 'YKR3' or st_name == 'YKR2' or st_name == 'YKR1' or st_name == 'YKB1'):
+                        doit = False
+                    if (eq_num1 == 808 or eq_num2 == 808) and (st_name == 'YKR9' or st_name == 'YKR5' or st_name == 'YKB2'):
+                        doit = False
+                    if (eq_num1 == 811 or eq_num2 == 811) and (st_name == 'YKR5' or st_name == 'YKR2'):
+                        doit = False
+                    if (eq_num1 == 812 or eq_num2 == 812) and (st_name == 'YKR3' or st_name == 'YKR7' or st_name == 'YKB1'):
+                        doit = False
+                    if (eq_num1 == 813 or eq_num2 == 813) and (st_name == 'IL18'):
+                        doit = False
+                    if (eq_num1 == 814 or eq_num2 == 814) and (st_name == 'YKB2' or st_name == 'YKR1' or st_name == 'YKR2'):
+                        doit = False
+                    if (eq_num1 == 816 or eq_num2 == 816) and (st_name == 'YKR3' or st_name == 'YKB1'):
+                        doit = False
+                    if (eq_num1 == 818 or eq_num2 == 818) and (st_name == 'YKB1'):
+                        doit = False
+                    if (eq_num1 == 819 or eq_num2 == 819) and (st_name == 'YKB1'):
+                        doit = False
+                    if (eq_num1 == 823 or eq_num2 == 823) and (st_name == 'YKB1'):
+                        doit = False
+                    if (eq_num1 == 824 or eq_num2 == 824) and (st_name == 'YKR5' or st_name == 'YKB2'):
+                        doit = False
+                    if (eq_num1 == 825 or eq_num2 == 825) and (st_name == 'YKB2' or st_name == 'YKR5' or st_name == 'YKR7'):
+                        doit = False
+                    if (eq_num1 == 826 or eq_num2 == 826) and (st_name == 'YKB2' or st_name == 'YKR7' or st_name == 'YKR1'):
+                        doit = False
+                    if (eq_num1 == 826 or eq_num2 == 826) and (st_name == 'YKB2' or st_name == 'YKR7' or st_name == 'YKR1'):
+                        doit = False
+                    if (eq_num1 == 828 or eq_num2 == 828) and (st_name == 'YKR1'):
+                        doit = False
+                    if (eq_num1 == 830 or eq_num2 == 830) and (st_name == 'YKR2' or st_name == 'YKR3' or st_name == 'YKR7'):
+                        doit = False
+                    if (eq_num1 == 831 or eq_num2 == 831) and (st_name == 'YKR7'):
+                        doit = False
+                    if (eq_num1 == 833 or eq_num2 == 833) and (st_name == 'YKR7'):
+                        doit = False
+                    if (eq_num1 == 837 or eq_num2 == 837) and (st_name == 'YKR1' or st_name == 'YKR2' or st_name == 'YKB3' or st_name == 'YKR7' or st_name == 'YKR3' or st_name == 'YKB1'):
+                        doit = False
+                    if (eq_num1 == 839 or eq_num2 == 839) and (st_name == 'YKB1'):
+                        doit = False
+                    if (eq_num1 == 840 or eq_num2 == 840) and (st_name == 'IL16' or st_name == 'IL17' or st_name == 'YKB6' or st_name == 'YKR1'
+                                                               or st_name == 'YKR9'or st_name == 'YKR7'):
+                        doit = False
+                    if (eq_num1 == 844 or eq_num2 == 844) and (st_name == 'YKR7'):
+                        doit = False
+                    if (eq_num1 == 845 or eq_num2 == 845) and (st_name == 'YKR7'):
+                        doit = False
+                    if (eq_num1 == 826 or eq_num2 == 826) and (st_name == 'YKB2' or st_name == 'YKR7' or st_name == 'YKR1'):
+                        doit = False
+                    if (eq_num1 == 847 or eq_num2 == 847) and (st_name == 'YKR8' or st_name == 'YKR7'):
+                        doit = False
+                    if (eq_num1 == 848 or eq_num2 == 848) and (st_name == 'YKB1' or st_name == 'YKR7'):
+                        doit = False
+                    if (eq_num1 == 849 or eq_num2 == 849) and (st_name == 'YKR2' or st_name == 'YKR1' or st_name == 'YKB8' or st_name == 'YKR7'):
+                        doit = False
+                    if (eq_num1 == 850 or eq_num2 == 850) and (st_name == 'YKR2' or st_name == 'YKR1'):
+                        doit = False
+                    if doit == True:
                         st1good += tr1
                         st2good += tr2
                 else:
@@ -704,7 +816,7 @@ def pro3pair(eq_num1, eq_num2, repeater = '', stat_corr = 1, simple_taper = Fals
     else:
         print('Match and above SNR threshold: ' + str(len(st1good)) + ' traces')
 
-    #%%  get station lat-lon, compute distance for plot
+    #%%  get station lat-lon, compute distance for plot, find plot time and distance limits
     min_dist_auto = 180
     max_dist_auto = 0
     min_time_plot =  1000000
@@ -755,20 +867,51 @@ def pro3pair(eq_num1, eq_num2, repeater = '', stat_corr = 1, simple_taper = Fals
     tr_cnt = 0
     for tr in st1good:
         ttt = np.arange(len(tr.data)) * tr.stats.delta + (tr.stats.starttime - t1)
-        plt.plot(ttt, (tr.data - np.median(tr.data))/(tr.data.max() - tr.data.min()) + tr_cnt, color = 'green')
+        if win_norm == True:
+            s_t = t1 + start_buff + wind_buff
+            e_t = t1 + end_buff - wind_buff
+            snippet = tr.copy()
+            snippet.trim( starttime = s_t, endtime = e_t)
+            smax = abs(snippet.max())
+        else:
+            smax = tr.data.max() - tr.data.min()
+        plt.plot(ttt, (tr.data - np.median(tr.data))*trace_amp/smax + tr_cnt, color = 'green')
+        # plt.plot(ttt, (tr.data - np.median(tr.data))*trace_amp/(tr.data.max() - tr.data.min()) + tr_cnt, color = 'green')
         tr_cnt = tr_cnt + 1
 
     tr_cnt = 0
     for tr in st2good:
         ttt = np.arange(len(tr.data)) * tr.stats.delta + (tr.stats.starttime - t2)
-        plt.plot(ttt, (tr.data - np.median(tr.data))/(tr.data.max() - tr.data.min()) + tr_cnt, color = 'red')
+        if win_norm == True:
+            s_t = t2 + start_buff + wind_buff
+            e_t = t2 + end_buff - wind_buff
+            snippet = tr.copy()
+            snippet.trim( starttime = s_t, endtime = e_t)
+            smax = abs(snippet.max())
+        else:
+            smax = tr.data.max() - tr.data.min()
+        plt.plot(ttt, (tr.data - np.median(tr.data))*trace_amp/smax + tr_cnt, color = 'red')
+        # plt.plot(ttt, (tr.data - np.median(tr.data))*trace_amp/(tr.data.max() - tr.data.min()) + tr_cnt, color = 'red')
         if plot_sta_names:
             plt.text(min_time_plot + 0.1 * (max_time_plot - min_time_plot), tr_cnt + 0.03, tr.stats.station, color = 'black')
         tr_cnt = tr_cnt + 1
 
-    plt.title(repeater + ' ' + phase1 + ' for ' + fname1[49:53] + '-' + fname1[55:57] + '-' + fname1[58:60] + ' vs ' + fname2[49:53] + '-' + fname2[55:57] + '-' + fname2[58:60] + ' for global array, ' + str(eq_num1) + '(g) and ' + str(eq_num2) + '(r), freqs ' + str(freq_min) + '-' + str(freq_max) + ' Hz', y = 1)
+    if ARRAY == 1:
+        plt.title(phase1 + ' for ' + fname1[43:53] + ' vs ' + fname2[43:53] + ' freqs ' + str(freq_min) + '-' + str(freq_max) + ' Hz')
+    elif ARRAY == 4 :
+        plt.title(phase1 + ' for ' + fname1[46:50] + '-' + fname1[50:52] + '-' + fname1[52:54] + ' vs ' + fname2[46:50] + '-' + fname2[50:52] + '-' + fname2[52:54] + ' for array WRA, ' + str(eq_num1) + ' and ' + str(eq_num2) + ' freqs ' + str(freq_min) + '-' + str(freq_max) + ' Hz')
+    elif ARRAY == 5:
+        plt.title(phase1 + ' for ' + fname1[46:50] + '-' + fname1[50:52] + '-' + fname1[52:54] + ' vs ' + fname2[46:50] + '-' + fname2[50:52] + '-' + fname2[52:54] + ' for array YKA, ' + str(eq_num1) + '(g) and ' + str(eq_num2) + '(r), freqs ' + str(freq_min) + '-' + str(freq_max) + ' Hz')
+    elif ARRAY == 6:
+        plt.title(phase1 + ' for ' + fname1[47:51] + '-' + fname1[51:53] + '-' + fname1[53:55] + ' vs ' + fname2[47:51] + '-' + fname2[51:53] + '-' + fname2[53:55] + ' for array ILAR, ' + str(eq_num1) + '(g) and ' + str(eq_num2) + '(r), freqs ' + str(freq_min) + '-' + str(freq_max) + ' Hz')
+    elif ARRAY == 7:
+        plt.title(repeater + ' ' + phase1 + ' for ' + fname1[49:53] + '-' + fname1[53:55] + '-' + fname1[55:57] + ' vs ' + fname2[49:53] + '-' + fname2[53:55] + '-' + fname2[55:57] + ' for global array, ' + str(eq_num1) + '(g) and ' + str(eq_num2) + '(r), freqs ' + str(freq_min) + '-' + str(freq_max) + ' Hz', y = 1)
+
     plt.show()
-    print('Finished spaced plot.')
+    if no_plots == False:
+        os.chdir('/Users/vidale/Documents/Research/IC/Plots_hold')
+        plt.savefig(repeater + '_Array_' + str(ARRAY) + '_traces')
+        plt.show()
 
     #%% plot traces
     # fig_index = 3
@@ -777,6 +920,9 @@ def pro3pair(eq_num1, eq_num2, repeater = '', stat_corr = 1, simple_taper = Fals
     plt.xlim(min_time_plot,max_time_plot)
 
     if auto_dist == True:
+        if(max_dist_auto == min_dist_auto):
+            min_dist_auto -= 1
+            max_dist_auto += 1
         dist_diff = max_dist_auto - min_dist_auto # add space at extremes
         plt.ylim(min_dist_auto - 0.1 * dist_diff, max_dist_auto + 0.2 * dist_diff)
     else:
@@ -795,7 +941,6 @@ def pro3pair(eq_num1, eq_num2, repeater = '', stat_corr = 1, simple_taper = Fals
             - tr.data.min()) + dist_offset, color = 'red')
         if plot_sta_names:
             plt.text(min_time_plot + 0.015 * (max_time_plot - min_time_plot), dist_offset + 0.003 * (max_dist_auto - min_dist_auto), tr.stats.station, color = 'black')
-    print('And made it to here.')
 
 #%% -- Traveltime curves
     if plot_tt:
@@ -908,22 +1053,22 @@ def pro3pair(eq_num1, eq_num2, repeater = '', stat_corr = 1, simple_taper = Fals
     if ARRAY == 1:
         plt.title(phase1 + ' for ' + fname1[43:53] + ' vs ' + fname2[43:53] + ' freqs ' + str(freq_min) + '-' + str(freq_max) + ' Hz')
     elif ARRAY == 4 :
-        plt.title(phase1 + ' for ' + fname1[46:50] + '-' + fname1[50:52] + '-' + fname1[52:54] + ' vs ' + fname2[46:50] + '-' + fname2[50:52] + '-' + fname2[52:54] + ' for array WRA, ' + str(eq_num1) + ' and ' + str(eq_num2) + ' freqs ' + str(freq_min) + '-' + str(freq_max) + ' Hz')
+        plt.title(phase1 + ' for ' + fname1[46:50] + '-' + fname1[50:52] + '-' + fname1[52:54] + ' vs ' + fname2[46:50] + '-' + fname2[50:52] + '-' + fname2[52:54] + ' for array WRA, ' + str(eq_num1) + '(g) and ' + str(eq_num2) + '(r) freqs ' + str(freq_min) + '-' + str(freq_max) + ' Hz')
     elif ARRAY == 5:
-        plt.title(phase1 + ' for ' + fname1[46:50] + '-' + fname1[50:52] + '-' + fname1[52:54] + ' vs ' + fname2[46:50] + '-' + fname2[50:52] + '-' + fname2[52:54] + ' for array YKA, ' + str(eq_num1) + ' and ' + str(eq_num2) + ' freqs ' + str(freq_min) + '-' + str(freq_max) + ' Hz')
+        plt.title(repeater + ' ' + phase1 + ' for ' + fname1[46:50] + '-' + fname1[50:52] + '-' + fname1[52:54] + ' vs ' + fname2[46:50] + '-' + fname2[50:52] + '-' + fname2[52:54] + ' for array YKA, ' + str(eq_num1) + '(g) and ' + str(eq_num2) + '(r) freqs ' + str(freq_min) + '-' + str(freq_max) + ' Hz')
     elif ARRAY == 6:
-        plt.title(phase1 + ' for ' + fname1[47:51] + '-' + fname1[51:53] + '-' + fname1[53:55] + ' vs ' + fname2[47:51] + '-' + fname2[51:53] + '-' + fname2[53:55] + ' for array ILAR, ' + str(eq_num1) + ' and ' + str(eq_num2) + ' freqs ' + str(freq_min) + '-' + str(freq_max) + ' Hz')
+        plt.title(repeater + ' ' + phase1 + ' for ' + fname1[47:51] + '-' + fname1[51:53] + '-' + fname1[53:55] + ' vs ' + fname2[47:51] + '-' + fname2[51:53] + '-' + fname2[53:55] + ' for array ILAR, ' + str(eq_num1) + '(g) and ' + str(eq_num2) + '(r) freqs ' + str(freq_min) + '-' + str(freq_max) + ' Hz')
     elif ARRAY == 7:
-        plt.title(repeater + ' ' + phase1 + ' for ' + fname1[49:53] + '-' + fname1[55:57] + '-' + fname1[58:60] + ' vs ' + fname2[49:53] + '-' + fname2[55:57] + '-' + fname2[58:60] + ' for global array, ' + str(eq_num1) + '(g) and ' + str(eq_num2) + '(r), freqs ' + str(freq_min) + '-' + str(freq_max) + ' Hz', y = 1)
+        plt.title(repeater + ' ' + phase1 + ' for ' + fname1[49:53] + '-' + fname1[53:55] + '-' + fname1[55:57] + ' vs ' + fname2[49:53] + '-' + fname2[53:55] + '-' + fname2[55:57] + ' for global array, ' + str(eq_num1) + '(g) and ' + str(eq_num2) + '(r), freqs ' + str(freq_min) + '-' + str(freq_max) + ' Hz', y = 1)
     else:
-        plt.title(phase1 + ' for ' + fname1[44:54] + ' vs ' + fname2[44:54] + ' freqs ' + str(freq_min) + '-' + str(freq_max) + ' Hz')
+        plt.title(phase1 + ' for ' + fname1[42:52] + ' vs ' + fname2[42:52] + ' freqs ' + str(freq_min) + '-' + str(freq_max) + ' Hz')
     ax = plt.gca()
     ax.get_yaxis().get_major_formatter().set_useOffset(False)
     # plt.gca().get_xaxis().get_major_formatter().set_useOffset(False)  # turn off conversion of y-axis to offset numbering
     # plt.rcParams['axes.formatter.useoffset'] = False #  these two commented commands worked for some but not all cases
     if no_plots == False:
         os.chdir('/Users/vidale/Documents/Research/IC/Plots_hold')
-        plt.savefig('Array_' + str(ARRAY) + '_' + str(eq_num1) + '_' + str(eq_num2) + '_' + str(int(freq_min)) + '-' + str(int(freq_max)))
+        plt.savefig(repeater + '_Array_' + str(ARRAY) + '_section')
         plt.show()
 
 #%%  Save processed files

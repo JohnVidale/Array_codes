@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # John Vidale 7/2020
 
-def run_individual_little(eq_num = 401, start_buff = 980, end_buff = 1180,
+def run_individual_little(eq_num = 401, ARRAY = 5, start_buff = 980, end_buff = 1180,
     precursor_shift  = -1000, signal_dur     = -1000,
     start_buff_stack =   -30, end_buff_stack =    40,
     start_beam_stack =     0, end_beam_stack =     0,
@@ -70,9 +70,9 @@ def run_individual_little(eq_num = 401, start_buff = 980, end_buff = 1180,
     # dphase2 = 'pPKiKP'
     # dphase3 = 'sPKiKP'
     # dphase4 = 'S'
-    dphase2 = 'pP'
-    dphase3 = 'sP'
-    dphase4 = 'PP'
+    dphase2 = 'PKP'
+    dphase3 = 'PKIKP'
+    dphase4 = 'pPKIKP'
 
     # decimate_fac = 5
     # decimate, in 100 sps, out 20 sps

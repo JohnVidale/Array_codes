@@ -13,12 +13,13 @@ start_time_wc = time.time()
 
 plt.close('all')
 
-eq_num = 412
+# eq_num = 412
+eq_num = 746
 shift_tt = 0
 
-run_individual_little(eq_num = eq_num, dphase = 'PKiKP', start_buff_stack = -50, end_buff_stack = 200, start_beam_stack = 10, end_beam_stack = 60, beam_width = 0.03, beam_step = 0.0025, freq_min = 1, freq_max = 3, fig_index = 100, stat_corr = 0)
-run_individual_little(eq_num = eq_num, dphase = 'PKiKP', start_buff_stack = -50, end_buff_stack = 200, start_beam_stack = 10, end_beam_stack = 60, beam_width = 0.03, beam_step = 0.0025, freq_min = 2, freq_max = 4, fig_index = 200, stat_corr = 0)
-run_individual_little(eq_num = eq_num, dphase = 'PKiKP', start_buff_stack = -50, end_buff_stack = 200, start_beam_stack = 10, end_beam_stack = 60, beam_width = 0.03, beam_step = 0.0025, freq_min = 3, freq_max = 5, fig_index = 300, stat_corr = 0)
+run_individual_little(eq_num = eq_num, dphase = 'PKiKP', start_buff_stack = -6, end_buff_stack = 2, start_beam_stack = -6, end_beam_stack = 2, beam_width = 0.03, beam_step = 0.0025, freq_min = 1, freq_max = 3, fig_index = 100, stat_corr = 0)
+# run_individual_little(eq_num = eq_num, dphase = 'PKiKP', start_buff_stack = -50, end_buff_stack = 200, start_beam_stack = 10, end_beam_stack = 60, beam_width = 0.03, beam_step = 0.0025, freq_min = 2, freq_max = 4, fig_index = 200, stat_corr = 0)
+# run_individual_little(eq_num = eq_num, dphase = 'PKiKP', start_buff_stack = -50, end_buff_stack = 200, start_beam_stack = 10, end_beam_stack = 60, beam_width = 0.03, beam_step = 0.0025, freq_min = 3, freq_max = 5, fig_index = 300, stat_corr = 0)
 # plt.close('all')
 
 # P run

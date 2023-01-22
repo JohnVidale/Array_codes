@@ -540,6 +540,11 @@ def pro3singlet(eq_num, stat_corr = 1, corr_threshold = 0, rel_time = 1, shift_t
                             win_max = max(abs(get_window_max.data))
                             tr.data = tr.data/(1.5*win_max)
                 plt.plot(ttt, (tr.data - np.median(tr.data))*plot_scale_fac /(tr.data.max() - tr.data.min()) + dist_offset, color = 'black')
+                # print(tr.stats.station[0:3]) # for YKA problem, dual sgrams plot
+                # if tr.stats.station[0:3] == 'YKA':
+                #     plt.plot(ttt, (tr.data - np.median(tr.data))*plot_scale_fac /(tr.data.max() - tr.data.min()) + dist_offset, color = 'black')
+                # else:
+                #     plt.plot(ttt, (tr.data - np.median(tr.data))*plot_scale_fac /(tr.data.max() - tr.data.min()) + dist_offset, color = 'green')
             else:
                 print('Max ' + str(tr.data.max()) + ' equals min ' + str(tr.data.min()) + ', no trace, skip plotting')
             if plot_sta_names:

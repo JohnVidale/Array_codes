@@ -4,7 +4,7 @@
 # window by signal quality
 # John Vidale 2/2019, overhauled 1/2021, reviewed 6/2021
 
-def pro7_pair_scan(eq_num1, eq_num2, repeater = '0', slow_delta = 0.0005, turn_off_black = 1,
+def pro7_pair_scan(eq_num1, eq_num2, slow_delta = 0.0005, turn_off_black = 1,
               slowR_lo = -0.1, slowR_hi = 0.1, slowT_lo = -0.1, slowT_hi = 0.1,
               start_buff = 50, end_buff = 50,fig_index = 401, do_T = False, do_R = False,
               ZslowR_lo = -0.1, ZslowR_hi = 0.1, ZslowT_lo = -0.1, ZslowT_hi = 0.1,
@@ -99,7 +99,7 @@ def pro7_pair_scan(eq_num1, eq_num2, repeater = '0', slow_delta = 0.0005, turn_o
     # date_label = '2018-04-02' # dates in filename
     date_label1  = split_line1[1][0:10]
     date_label2  = split_line2[1][0:10]
-    save_name = '/Users/vidale/Documents/Research/IC/Plots_hold/' + repeater + '_Array_' + str(ARRAY)
+    save_name = '/Users/vidale/Documents/Research/IC/Plots_hold/' + date_label1 + '_' + date_label2 + '_'
     ev_lat       = float(split_line1[2])
     ev_lon       = float(split_line1[3])
     ev_depth     = float(split_line1[4])
@@ -308,7 +308,7 @@ def pro7_pair_scan(eq_num1, eq_num2, repeater = '0', slow_delta = 0.0005, turn_o
 
         # normalize in zoom window
         questor = (ttt >= Zstart_buff) & (ttt < Zend_buff) # identify zoom window
-        ts_sel = beam_env_trace[questor]  #extract zoom window
+        ts_sel = beam_env_trace[questor]  #extract zoom wondow
         max_env = max(ts_sel)
         beam_env_trace.data = beam_env_trace.data/(max_env)
 
@@ -345,7 +345,7 @@ def pro7_pair_scan(eq_num1, eq_num2, repeater = '0', slow_delta = 0.0005, turn_o
         if IC_beam:
             plt.title(f'{date_label1} and {date_label2} IC stack in events {eq_num1} and {eq_num2} sum inside {beam_stack_rad} s/° , {freq_min}-{freq_max} Hz')
         else:
-            plt.title(f'{pair_name} {arrayname} {eq_num1} and {eq_num2} beam env stack, sum within {beam_stack_rad} s/° of prediction, {freq_min}-{freq_max} Hz')
+            plt.title(f'{eq_num1} and {eq_num2} beam env stack, sum within {beam_stack_rad} s/° of prediction, {freq_min}-{freq_max} Hz')
         os.chdir('/Users/vidale/Documents/Research/IC/Plots_hold')
         plt.savefig(save_name + '_envelope.png')
 
@@ -520,10 +520,10 @@ def pro7_pair_scan(eq_num1, eq_num2, repeater = '0', slow_delta = 0.0005, turn_o
                 plt.xlabel('Time (s)')
                 if NS:
                     plt.ylabel('North Slowness (s/km)')
-                    plt.title(f'{pair_name}  {arrayname}  Amp at {target_slow:.3f} s/km E slowness, {fname1[48:58]}  {fname1[59:69]}')
+                    plt.title(f'Amp at {target_slow:.3f} s/km E slowness, {fname1[48:58]}  {fname1[59:69]}')
                 else:
                     plt.ylabel('Radial Slowness (s/km)')
-                    plt.title(f'{pair_name}  {arrayname}  Amp at {target_slow:.3f} s/km T slowness, {fname1[48:58]}  {fname1[59:69]}')
+                    plt.title(f'Amp at {target_slow:.3f} s/km T slowness, {fname1[48:58]}  {fname1[59:69]}')
                 if no_plots == False:
                     plt.show()
                 fig_index += 1
@@ -599,10 +599,10 @@ def pro7_pair_scan(eq_num1, eq_num2, repeater = '0', slow_delta = 0.0005, turn_o
                 plt.xlabel('Time (s)')
                 if NS:
                     plt.ylabel('East Slowness (s/km)')
-                    plt.title(f'{pair_name}  {arrayname}  Amp at {target_slow:.3f} s/km N slowness, {fname1[48:58]}  {fname1[59:69]}')
+                    plt.title(f'Amp at {target_slow:.3f} s/km N slowness, {fname1[48:58]}  {fname1[59:69]}')
                 else:
                     plt.ylabel('Transverse Slowness (s/km)')
-                    plt.title(f'{pair_name}  {arrayname}  Amp at {target_slow:.3f} s/km R slowness, {fname1[48:58]}  {fname1[59:69]}')
+                    plt.title(f'Amp at {target_slow:.3f} s/km R slowness, {fname1[48:58]}  {fname1[59:69]}')
                 if no_plots == False:
                     plt.show()
                 fig_index += 1
@@ -686,11 +686,11 @@ def pro7_pair_scan(eq_num1, eq_num2, repeater = '0', slow_delta = 0.0005, turn_o
         plt.xlabel('Time (s)')
         if NS:
             plt.ylabel('N slowness (s/km)')
-            plt.title(pair_name + ' ' + arrayname + ' ' + ' Time lag at ' + str(T_slow_plot) + ' s/km E slowness, ' + date_label1 + ' ' + date_label2)
+            plt.title('Time lag at ' + str(T_slow_plot) + ' s/km E slowness, ' + date_label1 + ' ' + date_label2)
             plt.savefig(save_name + '_Ntdiff_hist.png')
         else:
             plt.ylabel('R slowness (s/km)')
-            plt.title(pair_name + ' ' + arrayname + ' ' + ' Time lag at ' + str(T_slow_plot) + ' s/km T slowness, ' + date_label1 + ' ' + date_label2)
+            plt.title('Time lag at ' + str(T_slow_plot) + ' s/km T slowness, ' + date_label1 + ' ' + date_label2)
             plt.savefig(save_name + '_Rtdiff_hist.png')
         if no_plots == False:
             plt.show()
@@ -735,11 +735,11 @@ def pro7_pair_scan(eq_num1, eq_num2, repeater = '0', slow_delta = 0.0005, turn_o
             plt.xlabel('Time (s)')
             if NS:
                 plt.ylabel('E slowness (s/km)')
-                plt.title(pair_name + ' ' + arrayname + ' ' + ' Time lag at ' + str(R_slow_plot) + ' s/km N slowness, ' + date_label1 + ' ' + date_label2)
+                plt.title('Time lag at ' + str(R_slow_plot) + ' s/km N slowness, ' + date_label1 + ' ' + date_label2)
                 plt.savefig(save_name + '_Etdiff_hist.png')
             else:
                 plt.ylabel('T slowness (s/km)')
-                plt.title(pair_name + ' ' + arrayname + ' ' + ' Time lag at ' + str(R_slow_plot) + ' s/km R slowness, ' + date_label1 + ' ' + date_label2)
+                plt.title('Time lag at ' + str(R_slow_plot) + ' s/km R slowness, ' + date_label1 + ' ' + date_label2)
                 plt.savefig(save_name + '_Ttdiff_hist.png')
             if no_plots == False:
                 plt.show()
@@ -786,11 +786,11 @@ def pro7_pair_scan(eq_num1, eq_num2, repeater = '0', slow_delta = 0.0005, turn_o
         plt.xlabel('Time (s)')
         if NS:
             plt.ylabel('N slowness (s/km)')
-            plt.title(pair_name + ' ' + arrayname + ' ' + ' Correlation at ' + str(T_slow_plot) + ' E slowness, ' + date_label1 + ' ' + date_label2)
+            plt.title('Correlation at ' + str(T_slow_plot) + ' E slowness, ' + date_label1 + ' ' + date_label2)
             plt.savefig(save_name + '_Ncc_hist.png')
         else:
             plt.ylabel('R slowness (s/km)')
-            plt.title(pair_name + ' ' + arrayname + ' ' + ' Correlation at ' + str(T_slow_plot) + ' T slowness, ' + date_label1 + ' ' + date_label2)
+            plt.title('Correlation at ' + str(T_slow_plot) + ' T slowness, ' + date_label1 + ' ' + date_label2)
             plt.savefig(save_name + '_Rcc_hist.png')
         if no_plots == False:
             plt.show()
@@ -834,11 +834,11 @@ def pro7_pair_scan(eq_num1, eq_num2, repeater = '0', slow_delta = 0.0005, turn_o
             plt.xlabel('Time (s)')
             if NS:
                 plt.ylabel('E slowness (s/km)')
-                plt.title(pair_name + ' ' + arrayname + ' ' + ' Correlation at ' + str(R_slow_plot) + ' N slowness, ' + date_label1 + ' ' + date_label2)
+                plt.title('Correlation at ' + str(R_slow_plot) + ' N slowness, ' + date_label1 + ' ' + date_label2)
                 plt.savefig(save_name + '_EtdiffSection.png')
             else:
                 plt.ylabel('T slowness (s/km)')
-                plt.title(pair_name + ' ' + arrayname + ' ' + ' Correlation at ' + str(R_slow_plot) + ' R slowness, ' + date_label1 + ' ' + date_label2)
+                plt.title('Correlation at ' + str(R_slow_plot) + ' R slowness, ' + date_label1 + ' ' + date_label2)
                 plt.savefig(save_name + '_TtdiffSection.png')
             if no_plots == False:
                 plt.show()
@@ -885,11 +885,11 @@ def pro7_pair_scan(eq_num1, eq_num2, repeater = '0', slow_delta = 0.0005, turn_o
         plt.xlabel('Time (s)')
         if NS:
             plt.ylabel('N slowness (s/km)')
-            plt.title(pair_name + ' ' + arrayname + ' ' + ' Amp at ' + str(T_slow_plot) + ' s/km E slowness, ' + date_label1 + ' ' + date_label2)
+            plt.title('Amp at ' + str(T_slow_plot) + ' s/km E slowness, ' + date_label1 + ' ' + date_label2)
             plt.savefig(save_name + '_Namp_hist.png')
         else:
             plt.ylabel('R slowness (s/km)')
-            plt.title(pair_name + ' ' + arrayname + ' ' + ' Amp at ' + str(T_slow_plot) + ' s/km T slowness, ' + date_label1 + ' ' + date_label2)
+            plt.title('Amp at ' + str(T_slow_plot) + ' s/km T slowness, ' + date_label1 + ' ' + date_label2)
             plt.savefig(save_name + '_Ramp_hist.png')
         if no_plots == False:
             plt.show()
@@ -933,11 +933,11 @@ def pro7_pair_scan(eq_num1, eq_num2, repeater = '0', slow_delta = 0.0005, turn_o
             plt.xlabel('Time (s)')
             if NS:
                 plt.ylabel('E slowness (s/km)')
-                plt.title(pair_name + ' ' + arrayname + ' ' + ' Amp at ' + str(R_slow_plot) + ' s/km N slowness, ' + date_label1 + ' ' + date_label2)
+                plt.title('Amp at ' + str(R_slow_plot) + ' s/km N slowness, ' + date_label1 + ' ' + date_label2)
                 plt.savefig(save_name + '_Eamp_hist.png')
             else:
                 plt.ylabel('T slowness (s/km)')
-                plt.title(pair_name + ' ' + arrayname + ' ' + ' Amp at ' + str(R_slow_plot) + ' s/km R slowness, ' + date_label1 + ' ' + date_label2)
+                plt.title('Amp at ' + str(R_slow_plot) + ' s/km R slowness, ' + date_label1 + ' ' + date_label2)
                 plt.savefig(save_name + '_Tamp_hist.png')
             if no_plots == False:
                 plt.show()
@@ -1182,11 +1182,11 @@ def pro7_pair_scan(eq_num1, eq_num2, repeater = '0', slow_delta = 0.0005, turn_o
 
             if NS:
                 plt.ylabel('E Slowness (s/km)')
-                plt.title(repeater + '_' + str(ARRAY) + '_' + date_label1 + '  ' + date_label2 + '  ' + ' seismograms ' + str(R_slow_plot) + ' N slowness, green is event1, red is event2')
+                plt.title(date_label1 + '  ' + date_label2 + '  ' + ' seismograms ' + str(R_slow_plot) + ' N slowness, green is event1, red is event2')
                 plt.savefig(save_name + str(start_buff) + '_' + str(end_buff) + '_E_pro_wig.png')
             else:
                 plt.ylabel('T Slowness (s/km)')
-                plt.title(repeater + '_'  + str(ARRAY) + '_' ++ date_label1 + '  ' + date_label2 + '  ' + ' seismograms ' + str(R_slow_plot) + ' R slowness, green is event1, red is event2')
+                plt.title(date_label1 + '  ' + date_label2 + '  ' + ' seismograms ' + str(R_slow_plot) + ' R slowness, green is event1, red is event2')
                 plt.savefig(save_name + str(start_buff) + '_' + str(end_buff) + '_T_pro_wig.png')
 
     #%% Beam sum plots
@@ -1250,7 +1250,7 @@ def pro7_pair_scan(eq_num1, eq_num2, repeater = '0', slow_delta = 0.0005, turn_o
         else:
             plt.ylabel('R Slowness (s/km)')
             plt.xlabel('T Slowness (s/km)')
-        plt.title(f'{pair_name} {arrayname} {date_label1} {date_label2} {start_buff:.0f} to {end_buff:.0f} time shift')
+        plt.title(f'{date_label1} {date_label2} {start_buff:.0f} to {end_buff:.0f} time shift')
         plt.savefig(save_name + '_Tbeam.png')
         if no_plots == False:
             plt.show()
@@ -1325,7 +1325,7 @@ def pro7_pair_scan(eq_num1, eq_num2, repeater = '0', slow_delta = 0.0005, turn_o
         else:
             plt.xlabel('T Slowness (s/km)')
             plt.ylabel('R Slowness (s/km)')
-        plt.title(f'{pair_name} {arrayname} {date_label1} {date_label2} {start_buff:.0f} to {end_buff:.0f} beam amp')
+        plt.title(f'{date_label1} {date_label2} {start_buff:.0f} to {end_buff:.0f} beam amp')
         plt.savefig(save_name + '_Abeam.png')
         if no_plots == False:
             plt.show()
@@ -1462,7 +1462,7 @@ def pro7_pair_scan(eq_num1, eq_num2, repeater = '0', slow_delta = 0.0005, turn_o
 
         plt.title(f'{pair_name}  {arrayname}  {phase1} {date_label1} {date_label2}  stack at predicted slowness \n in events {eq_num1} and {eq_num2}  Dist {ref_dist:.2f} Rslow  {Rslow_pred:.4f}  Tslow {Tslow_pred:.4f}')
         os.chdir('/Users/vidale/Documents/Research/IC/Plots_hold')
-        plt.savefig(save_name + '_' + 'pred_wig' + str(fig_index) + '.png')
+        plt.savefig(save_name + '_' + 'pred_wig.png')
 
 #  Save processed files
 #    fname = 'HD' + date_label + '_slice.mseed'
