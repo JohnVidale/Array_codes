@@ -72,7 +72,7 @@ def pro3pair(eq_num1, eq_num2, repeater = '0', stat_corr = 1, simple_taper = Fal
         elif ARRAY == 4:
             ref_lat =   -19.89  # °N Warramunga
             ref_lon =   134.42  # °E
-        elif ARRAY == 5:
+        elif ARRAY == 5 or ARRAY == 99:
             ref_lat =    62.49  # °N Yellowknife
             ref_lon =  -114.60  # °E
         elif ARRAY == 6:
@@ -141,7 +141,7 @@ def pro3pair(eq_num1, eq_num2, repeater = '0', stat_corr = 1, simple_taper = Fal
             sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_statics_LASA.txt'
         elif ARRAY == 2:
             sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_statics_ch.txt'
-        elif ARRAY == 5:
+        elif ARRAY == 5 or ARRAY == 99:
             sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_statics_YKA.txt'
         elif ARRAY == 6:
             sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_statics_ILAR.txt'
@@ -181,7 +181,7 @@ def pro3pair(eq_num1, eq_num2, repeater = '0', stat_corr = 1, simple_taper = Fal
             sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_NORSAR.txt'
         elif ARRAY == 4: #         Warramunga set
             sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_AU_WR.txt'
-        elif ARRAY == 5: #         Yellowknife set
+        elif ARRAY == 5 or ARRAY == 99: #         Yellowknife set
             sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_CN_YK.txt'
         elif ARRAY == 6: #         Yellowknife set
             sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_ILAR.txt'
@@ -257,6 +257,9 @@ def pro3pair(eq_num1, eq_num2, repeater = '0', stat_corr = 1, simple_taper = Fal
     elif ARRAY == 7:
         fname1     = '/Users/vidale/Documents/Research/IC/Mseed/Global/' + mseed_name1 + '.mseed'
         fname2     = '/Users/vidale/Documents/Research/IC/Mseed/Global/' + mseed_name2 + '.mseed'
+    elif ARRAY == 99: # compare two versions of files
+        fname1     = '/Users/vidale/Documents/Research/IC/Mseed/YKA/'  + mseed_name1 + '.mseed'
+        fname2     = '/Users/vidale/Documents/Research/IC/Mseed/YKA2/' + mseed_name2 + '.mseed'
 
     st1=read(fname1)
     st2=read(fname2)
@@ -653,83 +656,66 @@ def pro3pair(eq_num1, eq_num2, repeater = '0', stat_corr = 1, simple_taper = Fal
                     doit = True # weed out bad stations for repeaters
                     if st_name == 'YKB0':
                         doit = False
-                    if (eq_num1 == 701 or eq_num2 == 701) and st_name == 'YKB1':
+                    if (eq_num1 == 701 or eq_num2 == 701) and (st_name == 'YKB1'):
                         doit = False
-                    if (eq_num1 == 709 or eq_num2 == 709) and st_name == 'YKB1':
+                    if (eq_num1 == 702 or eq_num2 == 702) and (st_name == 'YKR1' or st_name == 'YKR2' or st_name == 'YKR3' or st_name == 'YKR4'):
                         doit = False
-                    if (eq_num1 == 705 or eq_num2 == 705) and st_name == 'YKR2':
+                    if (eq_num1 == 705 or eq_num2 == 705) and (st_name == 'YKR2'):
                         doit = False
-                    if ((eq_num1 == 716 or eq_num2 == 716) and
-                        (st_name == 'IL13' or st_name == 'IL03' or st_name == 'IL08' or st_name == 'IL18')):
+                    if (eq_num1 == 706 or eq_num2 == 706) and (st_name == 'YKB8'):
+                        doit = False
+                    if (eq_num1 == 707 or eq_num2 == 707) and (st_name == 'YKB4' or st_name == 'YKR8'):
+                        doit = False
+                    if (eq_num1 == 709 or eq_num2 == 709) and (st_name == 'YKB1'):
+                        doit = False
+                    if (eq_num1 == 711 or eq_num2 == 711) and (st_name == 'YKR2'):
+                        doit = False
+                    if (eq_num1 == 716 or eq_num2 == 716) and (st_name == 'IL13' or st_name == 'IL03' or st_name == 'IL08' or st_name == 'IL18'):
                         doit = False
                     if (eq_num1 == 719 or eq_num2 == 719) and (st_name == 'YKR1'):
                         doit = False
-                    if (eq_num1 == 720 or eq_num2 == 720) and (st_name == 'YKR1' or st_name == 'YKR3'):
+                    if (eq_num1 == 722 or eq_num2 == 722) and (st_name == 'YKR1' or st_name == 'YKR2' or st_name == 'YKR3'):
                         doit = False
-                    if (eq_num1 == 722 or eq_num2 == 722) and (st_name == 'YKR1' or st_name == 'YKR2'):
+                    if (eq_num1 == 723 or eq_num2 == 723) and (st_name == 'IL01'):
                         doit = False
-                    if (eq_num1 == 723 or eq_num2 == 723) and st_name == 'IL01':
+                    if (eq_num1 == 724 or eq_num2 == 724) and (st_name == 'YKB1' or st_name == 'YKR5'):
                         doit = False
-                    if (eq_num1 == 724 or eq_num2 == 724) and st_name == 'YKB1':
+                    if (eq_num1 == 734 or eq_num2 == 734) and (st_name == 'YKR6'):
                         doit = False
-                    if (eq_num1 == 729 or eq_num2 == 729) and st_name == 'YKR2':
+                    if (eq_num1 == 739 or eq_num2 == 739) and (st_name == 'YKR1' or st_name == 'YKR6' or st_name == 'YKB1' or st_name == 'YKR7'):
                         doit = False
-                    if (eq_num1 == 730 or eq_num2 == 730) and (st_name == 'YKR1' or st_name == 'YKR2'):
-                        doit = False
-                    if (eq_num1 == 734 or eq_num2 == 734) and (st_name == 'YKR6' or st_name == 'YKR7'):
-                        doit = False
-                    if (eq_num1 == 736 or eq_num2 == 736) and st_name == 'YKR7':
-                        doit = False
-                    if (eq_num1 == 737 or eq_num2 == 737) and st_name == 'YKR7':
-                        doit = False
-                    if (eq_num1 == 740 or eq_num2 == 740) and (st_name == 'YKB1' or st_name == 'YKR2' or st_name == 'IL17' or
-                                                               st_name == 'IL16' or st_name == 'IL14' or st_name == 'IL13' or st_name == 'IL02'):
+                    if (eq_num1 == 740 or eq_num2 == 740) and (st_name == 'YKB1' or st_name == 'YKB2' or st_name == 'YKR2' or st_name == 'YKR3'
+                                                            or st_name == 'IL17' or st_name == 'IL16' or st_name == 'IL14' or st_name == 'IL13'
+                                                            or st_name == 'IL02' or st_name == 'YKR1'):
                         doit = False
                     if (eq_num1 == 741 or eq_num2 == 741) and (st_name == 'IL14' or st_name == 'IL15' or st_name == 'YKB1'):
                         doit = False
-                    if (eq_num1 == 742 or eq_num2 == 742) and (st_name == 'YKB1' or st_name == 'YKR7'):
+                    if (eq_num1 == 742 or eq_num2 == 742) and (st_name == 'YKB1'):
                         doit = False
-                    if (eq_num1 == 743 or eq_num2 == 743) and st_name == 'YKB2':
+                    if (eq_num1 == 743 or eq_num2 == 743) and (st_name == 'YKB2'):
                         doit = False
-                    if (eq_num1 == 746 or eq_num2 == 746) and (st_name == 'YKB4' or st_name == 'YKR7'):
+                    if (eq_num1 == 746 or eq_num2 == 746) and (st_name == 'YKR7'):
                         doit = False
-                    if (eq_num1 == 747 or eq_num2 == 747) and st_name == 'YKR7':
+                    if (eq_num1 == 748 or eq_num2 == 748) and (st_name == 'YKB1'):
                         doit = False
-                    if (eq_num1 == 748 or eq_num2 == 748) and (st_name == 'YKR7' or st_name == 'YKR1'):
-                        doit = False
-                    if (eq_num1 == 749 or eq_num2 == 749) and st_name == 'YKR7':
-                        doit = False
-                    if (eq_num1 == 750 or eq_num2 == 750) and st_name == 'YKR7':
-                        doit = False
-                    if (eq_num1 == 751 or eq_num2 == 751) and (st_name == 'YKB2' or st_name == 'YKR8'):
-                        doit = False
-                    if (eq_num1 == 752 or eq_num2 == 752) and (st_name == 'YKR7'):
-                        doit = False
-                    if (eq_num1 == 753 or eq_num2 == 753) and (st_name == 'YKR7'):
-                        doit = False
-                    if (eq_num1 == 754 or eq_num2 == 754) and (st_name == 'YKR7'):
-                        doit = False
-                    if (eq_num1 == 756 or eq_num2 == 756) and (st_name == 'YKR7' or st_name == 'YKB4'):
-                        doit = False
-                    if (eq_num1 == 757 or eq_num2 == 757) and (st_name == 'YKR7' or st_name == 'YKR1'):
-                        doit = False
-                    if (eq_num1 == 758 or eq_num2 == 758) and (st_name == 'YKR7'):
+                    if (eq_num1 == 750 or eq_num2 == 750) and (st_name == 'YKR7'):
                         doit = False
                     if (eq_num1 == 759 or eq_num2 == 759) and (st_name == 'YKB2'):
                         doit = False
                     if (eq_num1 == 800 or eq_num2 == 800) and (st_name == 'YKB9'):
                         doit = False
-                    if (eq_num1 == 802 or eq_num2 == 802) and (st_name == 'YKR3' or st_name == 'YKR2' or st_name == 'YKR1' or st_name == 'YKB1'):
+                    if (eq_num1 == 802 or eq_num2 == 802) and (st_name == 'YKR3' or st_name == 'YKR2' or st_name == 'YKR1'
+                                                            or st_name == 'YKB1' or st_name == 'YKB7' or st_name == 'YKB2'):
                         doit = False
-                    if (eq_num1 == 808 or eq_num2 == 808) and (st_name == 'YKR9' or st_name == 'YKR5' or st_name == 'YKB2'):
+                    if (eq_num1 == 808 or eq_num2 == 808) and (st_name == 'YKR9'):
                         doit = False
                     if (eq_num1 == 811 or eq_num2 == 811) and (st_name == 'YKR5' or st_name == 'YKR2'):
                         doit = False
-                    if (eq_num1 == 812 or eq_num2 == 812) and (st_name == 'YKR3' or st_name == 'YKR7' or st_name == 'YKB1'):
+                    if (eq_num1 == 812 or eq_num2 == 812) and (st_name == 'YKB1' or st_name == 'YKB4' or st_name == 'YKR3'):
                         doit = False
                     if (eq_num1 == 813 or eq_num2 == 813) and (st_name == 'IL18'):
                         doit = False
-                    if (eq_num1 == 814 or eq_num2 == 814) and (st_name == 'YKB2' or st_name == 'YKR1' or st_name == 'YKR2'):
+                    if (eq_num1 == 814 or eq_num2 == 814) and (st_name == 'YKR1' or st_name == 'YKR2'):
                         doit = False
                     if (eq_num1 == 816 or eq_num2 == 816) and (st_name == 'YKR3' or st_name == 'YKB1'):
                         doit = False
@@ -741,40 +727,47 @@ def pro3pair(eq_num1, eq_num2, repeater = '0', stat_corr = 1, simple_taper = Fal
                         doit = False
                     if (eq_num1 == 824 or eq_num2 == 824) and (st_name == 'YKR5' or st_name == 'YKB2'):
                         doit = False
-                    if (eq_num1 == 825 or eq_num2 == 825) and (st_name == 'YKB2' or st_name == 'YKR5' or st_name == 'YKR7'):
+                    if (eq_num1 == 825 or eq_num2 == 825) and (st_name == 'YKB2'):
                         doit = False
-                    if (eq_num1 == 826 or eq_num2 == 826) and (st_name == 'YKB2' or st_name == 'YKR7' or st_name == 'YKR1'):
+                    if (eq_num1 == 826 or eq_num2 == 826) and (st_name == 'YKB2' or st_name == 'YKR1'):
                         doit = False
-                    if (eq_num1 == 826 or eq_num2 == 826) and (st_name == 'YKB2' or st_name == 'YKR7' or st_name == 'YKR1'):
+                    if (eq_num1 == 828 or eq_num2 == 828) and (st_name == 'YKR1' or st_name == 'YKB8'):
                         doit = False
-                    if (eq_num1 == 828 or eq_num2 == 828) and (st_name == 'YKR1'):
+                    if (eq_num1 == 829 or eq_num2 == 829) and (st_name == 'YKR7'):
                         doit = False
-                    if (eq_num1 == 830 or eq_num2 == 830) and (st_name == 'YKR2' or st_name == 'YKR3' or st_name == 'YKR7'):
+                    if (eq_num1 == 830 or eq_num2 == 830) and (st_name == 'YKR1' or st_name == 'YKR2' or st_name == 'YKR3' or st_name == 'YKR5'
+                                                            or st_name == 'YKR7'or st_name == 'YKB2'):
                         doit = False
-                    if (eq_num1 == 831 or eq_num2 == 831) and (st_name == 'YKR7'):
+                    if (eq_num1 == 831 or eq_num2 == 831) and (st_name == 'YKB1' or st_name == 'YKR3' or st_name == 'YKR5'):
                         doit = False
-                    if (eq_num1 == 833 or eq_num2 == 833) and (st_name == 'YKR7'):
+                    if (eq_num1 == 837 or eq_num2 == 837) and (st_name == 'YKR9'):
                         doit = False
-                    if (eq_num1 == 837 or eq_num2 == 837) and (st_name == 'YKR1' or st_name == 'YKR2' or st_name == 'YKB3' or st_name == 'YKR7' or st_name == 'YKR3' or st_name == 'YKB1'):
+                    if (eq_num1 == 840 or eq_num2 == 840) and (st_name == 'IL16' or st_name == 'IL17'):
                         doit = False
-                    if (eq_num1 == 839 or eq_num2 == 839) and (st_name == 'YKB1'):
+                    if (eq_num1 == 843 or eq_num2 == 843) and (st_name == 'YKR2' or st_name == 'YKB1' or st_name == 'YKB3'):
                         doit = False
-                    if (eq_num1 == 840 or eq_num2 == 840) and (st_name == 'IL16' or st_name == 'IL17' or st_name == 'YKB6' or st_name == 'YKR1'
-                                                               or st_name == 'YKR9'or st_name == 'YKR7'):
+                    if (eq_num1 == 846 or eq_num2 == 846) and (st_name == 'YKB2' or st_name == 'YKR1'):
                         doit = False
-                    if (eq_num1 == 844 or eq_num2 == 844) and (st_name == 'YKR7'):
+                    if (eq_num1 == 847 or eq_num2 == 847) and (st_name == 'YKB8'):
                         doit = False
-                    if (eq_num1 == 845 or eq_num2 == 845) and (st_name == 'YKR7'):
+                    if (eq_num1 == 848 or eq_num2 == 848) and (st_name == 'YKB1'):
                         doit = False
-                    if (eq_num1 == 826 or eq_num2 == 826) and (st_name == 'YKB2' or st_name == 'YKR7' or st_name == 'YKR1'):
+                    if (eq_num1 == 852 or eq_num2 == 852) and (st_name == 'YKR4'):
                         doit = False
-                    if (eq_num1 == 847 or eq_num2 == 847) and (st_name == 'YKR8' or st_name == 'YKR7'):
+                    if (eq_num1 == 853 or eq_num2 == 853) and (st_name == 'YKR4'):
                         doit = False
-                    if (eq_num1 == 848 or eq_num2 == 848) and (st_name == 'YKB1' or st_name == 'YKR7'):
+                    if (eq_num1 == 854 or eq_num2 == 854) and (st_name == 'YKR4'):
                         doit = False
-                    if (eq_num1 == 849 or eq_num2 == 849) and (st_name == 'YKR2' or st_name == 'YKR1' or st_name == 'YKB8' or st_name == 'YKR7'):
+                    if (eq_num1 == 857 or eq_num2 == 857) and (st_name == 'YKR4'):
                         doit = False
-                    if (eq_num1 == 850 or eq_num2 == 850) and (st_name == 'YKR2' or st_name == 'YKR1'):
+                    if (eq_num1 == 859 or eq_num2 == 859) and (st_name == 'IL08' or st_name == 'IL10' or st_name == 'YKR1'):
+                        doit = False
+                    if (eq_num1 == 860 or eq_num2 == 860) and (st_name == 'IL08' or st_name == 'IL14' or st_name == 'YKR4' or st_name == 'YKR1'):
+                        doit = False
+                    if (eq_num1 == 861 or eq_num2 == 861) and (st_name == 'IL08' or st_name == 'IL14' or st_name == 'YKR4'):
+                        doit = False
+                    if (eq_num1 == 862 or eq_num2 == 862) and (st_name == 'IL08' or st_name == 'IL14' or st_name == 'YKR4' or
+                                                               st_name == 'IL15' or st_name == 'IL16' or st_name == 'IL17'):
                         doit = False
                     if doit == True:
                         st1good += tr1
@@ -858,7 +851,7 @@ def pro3pair(eq_num1, eq_num2, repeater = '0', stat_corr = 1, simple_taper = Fal
 
     #%% plot traces evenly spaced
     # fig_index = 3
-    plt.figure(figsize=(10,10), num = fig_index)
+    plt.figure(figsize=(10,5), num = fig_index)
 
     plt.xlim(min_time_plot,max_time_plot)
 
@@ -900,7 +893,7 @@ def pro3pair(eq_num1, eq_num2, repeater = '0', stat_corr = 1, simple_taper = Fal
         plt.title(phase1 + ' for ' + fname1[43:53] + ' vs ' + fname2[43:53] + ' freqs ' + str(freq_min) + '-' + str(freq_max) + ' Hz')
     elif ARRAY == 4 :
         plt.title(phase1 + ' for ' + fname1[46:50] + '-' + fname1[50:52] + '-' + fname1[52:54] + ' vs ' + fname2[46:50] + '-' + fname2[50:52] + '-' + fname2[52:54] + ' for array WRA, ' + str(eq_num1) + ' and ' + str(eq_num2) + ' freqs ' + str(freq_min) + '-' + str(freq_max) + ' Hz')
-    elif ARRAY == 5:
+    elif ARRAY == 5 or ARRAY== 99:
         plt.title(phase1 + ' for ' + fname1[46:50] + '-' + fname1[50:52] + '-' + fname1[52:54] + ' vs ' + fname2[46:50] + '-' + fname2[50:52] + '-' + fname2[52:54] + ' for array YKA, ' + str(eq_num1) + '(g) and ' + str(eq_num2) + '(r), freqs ' + str(freq_min) + '-' + str(freq_max) + ' Hz')
     elif ARRAY == 6:
         plt.title(phase1 + ' for ' + fname1[47:51] + '-' + fname1[51:53] + '-' + fname1[53:55] + ' vs ' + fname2[47:51] + '-' + fname2[51:53] + '-' + fname2[53:55] + ' for array ILAR, ' + str(eq_num1) + '(g) and ' + str(eq_num2) + '(r), freqs ' + str(freq_min) + '-' + str(freq_max) + ' Hz')
@@ -915,7 +908,7 @@ def pro3pair(eq_num1, eq_num2, repeater = '0', stat_corr = 1, simple_taper = Fal
 
     #%% plot traces
     # fig_index = 3
-    plt.figure(figsize=(10,10), num = fig_index + 1)
+    plt.figure(figsize=(10,5), num = fig_index + 1)
 
     plt.xlim(min_time_plot,max_time_plot)
 
@@ -1054,7 +1047,7 @@ def pro3pair(eq_num1, eq_num2, repeater = '0', stat_corr = 1, simple_taper = Fal
         plt.title(phase1 + ' for ' + fname1[43:53] + ' vs ' + fname2[43:53] + ' freqs ' + str(freq_min) + '-' + str(freq_max) + ' Hz')
     elif ARRAY == 4 :
         plt.title(phase1 + ' for ' + fname1[46:50] + '-' + fname1[50:52] + '-' + fname1[52:54] + ' vs ' + fname2[46:50] + '-' + fname2[50:52] + '-' + fname2[52:54] + ' for array WRA, ' + str(eq_num1) + '(g) and ' + str(eq_num2) + '(r) freqs ' + str(freq_min) + '-' + str(freq_max) + ' Hz')
-    elif ARRAY == 5:
+    elif ARRAY == 5 or ARRAY== 99:
         plt.title(repeater + ' ' + phase1 + ' for ' + fname1[46:50] + '-' + fname1[50:52] + '-' + fname1[52:54] + ' vs ' + fname2[46:50] + '-' + fname2[50:52] + '-' + fname2[52:54] + ' for array YKA, ' + str(eq_num1) + '(g) and ' + str(eq_num2) + '(r) freqs ' + str(freq_min) + '-' + str(freq_max) + ' Hz')
     elif ARRAY == 6:
         plt.title(repeater + ' ' + phase1 + ' for ' + fname1[47:51] + '-' + fname1[51:53] + '-' + fname1[53:55] + ' vs ' + fname2[47:51] + '-' + fname2[51:53] + '-' + fname2[53:55] + ' for array ILAR, ' + str(eq_num1) + '(g) and ' + str(eq_num2) + '(r) freqs ' + str(freq_min) + '-' + str(freq_max) + ' Hz')
@@ -1072,10 +1065,16 @@ def pro3pair(eq_num1, eq_num2, repeater = '0', stat_corr = 1, simple_taper = Fal
         plt.show()
 
 #%%  Save processed files
-    fname1 = '/Users/vidale/Documents/Research/IC/Pro_Files/HD' + date_label1 + 'sel.mseed'
-    fname2 = '/Users/vidale/Documents/Research/IC/Pro_Files/HD' + date_label2 + 'sel.mseed'
-    st1good.write(fname1,format = 'MSEED')
-    st2good.write(fname2,format = 'MSEED')
+    cnt1 = len(st1good)
+    cnt2 = len(st2good)
+    print('Matches:  st1good' + str(cnt1) + ' st2good ' + str(cnt2))
+    if cnt1 == cnt2 and cnt1 != 0:
+        fname1 = '/Users/vidale/Documents/Research/IC/Pro_Files/HD' + date_label1 + 'sel.mseed'
+        fname2 = '/Users/vidale/Documents/Research/IC/Pro_Files/HD' + date_label2 + 'sel.mseed'
+        st1good.write(fname1,format = 'MSEED')
+        st2good.write(fname2,format = 'MSEED')
+    else:
+        print('No pairs found\n\n')
 
     elapsed_time_wc = time.time() - start_time_wc
     print(f'This job took   {elapsed_time_wc:.1f}   seconds')

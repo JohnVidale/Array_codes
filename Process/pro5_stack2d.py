@@ -56,7 +56,7 @@ def pro5stack2d(eq_num, slow_delta = 0.0005, slowR_lo = -0.1, slowR_hi = 0.1, sl
         sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_NORSAR.txt'
     elif ARRAY == 4: #         Warramunga set
         sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_AU_WR.txt'
-    elif ARRAY == 5: #         Yellowknife set
+    elif ARRAY == 5 or ARRAY == 99: #         Yellowknife set
         sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_CN_YK.txt'
     elif ARRAY == 6: #         Yellowknife set
         sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_ILAR.txt'
@@ -75,7 +75,7 @@ def pro5stack2d(eq_num, slow_delta = 0.0005, slowR_lo = -0.1, slowR_hi = 0.1, sl
         elif ARRAY == 4:
             ref_lat =  -19.90  # °N Warramunga
             ref_lon =  134.42  # °E
-        elif ARRAY == 5:
+        elif ARRAY == 5 or ARRAY == 99:
             ref_lat =   62.49  # °N Yellowknife
             ref_lon = -114.60  # °E
         elif ARRAY == 6:
