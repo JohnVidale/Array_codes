@@ -9,7 +9,9 @@ pro_directory = '/Users/vidale/Documents/GitHub/Array_codes/Run_YKA_WRA'
 os.chdir(pro_directory)
 from run_compare_ind      import run_compare_ind
 
-# run_compare_ind(repeater = 'P01')
+print('here')
+run_compare_ind(repeater = 'P01')
+print('here')
 # run_compare_ind(repeater = 'P02')
 # run_compare_ind(repeater = 'P03')
 # run_compare_ind(repeater = 'P04')
@@ -93,7 +95,7 @@ from run_compare_ind      import run_compare_ind
 # run_compare_ind(repeater = 'P87')
 # run_compare_ind(repeater = 'P88')
 # run_compare_ind(repeater = 'P89')
-run_compare_ind(repeater = 'P90')
+# run_compare_ind(repeater = 'P90')
 # run_compare_ind(repeater = 'P91')
 # run_compare_ind(repeater = 'P92')
 # run_compare_ind(repeater = 'P93')
