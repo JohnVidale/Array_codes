@@ -18,6 +18,10 @@ def run_compare_pair(repeater = '0', eq_num1 = 401, eq_num2 = 402, Zstart_buff =
     os.environ['PATH'] += os.pathsep + '/usr/local/bin'
     ev_directory = '/Users/vidale/Documents/GitHub/Array_codes/Process'
     os.chdir(ev_directory)
+    # Print the current working directory (CWD)
+    cwd = os.getcwd()
+    print("Run_compare_pair current working directory: ", cwd)
+
     #%% Import functions
     # from pro2_dec                import pro2decimate
     from pro3_sort_plot_pair     import pro3pair

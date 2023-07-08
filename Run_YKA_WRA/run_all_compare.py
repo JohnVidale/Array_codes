@@ -7,6 +7,11 @@
 import os
 pro_directory = '/Users/vidale/Documents/GitHub/Array_codes/Run_YKA_WRA'
 os.chdir(pro_directory)
+
+# Print the current working directory (CWD)
+cwd = os.getcwd()
+print("Run_all current working directory: ", cwd)
+
 from run_compare_ind      import run_compare_ind
 
 print('here')

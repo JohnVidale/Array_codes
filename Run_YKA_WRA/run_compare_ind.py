@@ -13,6 +13,10 @@ def run_compare_ind(repeater = 'NoName',do_global = False, do_YKA = False, do_IL
     #%% Import functions
     pro_directory = '/Users/vidale/Documents/GitHub/Array_codes/Run_YKA_WRA'
     os.chdir(pro_directory)
+    # Print the current working directory (CWD)
+    cwd = os.getcwd()
+    print("Run_compare current working directory: ", cwd)
+
     from run_compare_global     import run_compare_global
     from run_individual_df      import run_individual_df
     from run_compare_pair       import run_compare_pair
