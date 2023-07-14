@@ -336,15 +336,16 @@ def run_compare_ind(repeater = 'NoName',do_global = False, do_YKA = False, do_IL
         print(colored('No such event pair ' + repeater, 'yellow'))
         sys.exit(-1)
 
+#%% Parameters
     # freq_min = 0.6; freq_max = 3
     freq_min = 1; freq_max = 2
     # freq_min = 2; freq_max = 4
     do_ILAR_pre = do_ILAR
 
     # do_YKA      = False
-    do_ILAR     = False
-    do_ILAR_pre = False
-    do_global   = False
+    # do_ILAR     = False
+    # do_ILAR_pre = False
+    # do_global   = False
 
     if do_global:
         start_buff = -10 # analysis window start relative to phase arrival
@@ -361,9 +362,10 @@ def run_compare_ind(repeater = 'NoName',do_global = False, do_YKA = False, do_IL
     # slow_delta  = 0.004
     slow_delta  = 0.005
 
+#%% YKA PKIKP
     if do_YKA:
         Zstart_buff = -20 # analysis window start relative to phase arrival
-        wind_len    = 60 # analysis window length
+        wind_len    = 40 # analysis window length
         tshift = tshift + Y_shift
         plot_peak = 1
         run_compare_pair(repeater = repeater, eq_num1 = eq_num1, eq_num2 = eq_num2, dphase = 'PKIKP', shift_both = shift_both,
@@ -372,6 +374,7 @@ def run_compare_ind(repeater = 'NoName',do_global = False, do_YKA = False, do_IL
                 Zstart_buff = Zstart_buff, wind_len = wind_len, wind_buff = wind_buff,
                 tshift = tshift, fig_index = 200, do_interpolate =  True, pair_name = repeater, plot_peak = plot_peak)
 
+#%% ILAR PKP
     if do_ILAR:
         Zstart_buff = -20 # analysis window start relative to phase arrival
         wind_len    =  40 # analysis window length
@@ -382,6 +385,7 @@ def run_compare_ind(repeater = 'NoName',do_global = False, do_YKA = False, do_IL
                 tshift = tshift, fig_index = 300, do_interpolate =  True, pair_name = repeater, plot_peak = plot_peak)
         # os.system('mv *Array_6_pred_wig.png plot.png')
 
+#%% ILAR PKIKP
     win_norm =  True
     trace_norm = False
     if do_ILAR_pre:

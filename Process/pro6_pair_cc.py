@@ -9,22 +9,23 @@ def pro6_cc_pair(eq_num1, eq_num2, slow_delta = 0.0005,
               start_buff = 1040, end_buff = 1180,
               cc_twin = 2, cc_len = 0.5, cc_interp1d = 5, cc_delta = 0.1, cc_thres = 0.8):
 
+#%% Import functions
     # import obspy
     # from obspy import UTCDateTime
     from obspy import read
     from obspy import Stream
+    # from obspy import Trace
     from scipy.signal import hilbert
     import numpy as np
-    from termcolor import colored
     import os
     import time
     import sys
     import statistics
     import math
-    file_directory = '/Users/vidale/Documents/GitHub/Wei'
+    from termcolor import colored
+    file_directory = '/Users/vidale/Documents/GitHub/Array_codes/Process'
     os.chdir(file_directory)
-    from pro_proceed_function import cc_measure_tshift
-    # from obspy import Trace
+    from pro_proceed_john import cc_measure_tshift
 
 #%% Get info
     # get locations
@@ -151,11 +152,11 @@ def pro6_cc_pair(eq_num1, eq_num2, slow_delta = 0.0005,
             print(f'len(cc[0].data): {len(cc[0].data)}, len(cc_coef) {len(cc_coef)}')
             print(f'misfit == {misfit}, this is not going to work, fix to make cc_coef + zero_fill1 + zero_fill2 = data length')
             sys.exit()
-        cc_coef_full    = np.concatenate([np.zeros(zero_fill1),    cc_coef, np.zeros(zero_fill2)])
-        tshift_full = np.concatenate([np.zeros(zero_fill1), tshift_new, np.zeros(zero_fill2)])
+        cc_coef_full = np.concatenate([np.zeros(zero_fill1),    cc_coef, np.zeros(zero_fill2)])
+        tshift_full  = np.concatenate([np.zeros(zero_fill1), tshift_new, np.zeros(zero_fill2)])
 
-        tshift[slow_i].data = tshift_full  # tshift just gets  NaNs for plotting, full is file that is saved
-        cc[    slow_i].data =    cc_coef_full
+        tshift[slow_i].data =  tshift_full  # tshift just gets  NaNs for plotting, full is file that is saved
+        cc[    slow_i].data = cc_coef_full
 
     #%% Decimate amp files
     if dec_fac > 1:

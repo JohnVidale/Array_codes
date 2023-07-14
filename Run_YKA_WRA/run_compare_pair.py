@@ -7,10 +7,10 @@
 def run_compare_pair(repeater = '0', eq_num1 = 401, eq_num2 = 402, Zstart_buff =  0, wind_len    = 20, wind_buff = 30,
                      precursor_shift  = -1000, signal_dur     = -1000, ARRAY = 5, pair_name = '',
                      beam_width = 0.04, beam_offset = 0.00, slow_delta = 0.0025, flip = False, plot_peak = 1,
-                     zerophase = True, freq_min = 1, freq_max = 3, shift_both = 0, trace_amp = 1,
+                     freq_min = 1, freq_max = 3, shift_both = 0, trace_amp = 1,
                      min_dist = 0, max_dist = 180, dphase  = 'PKiKP', fig_index = 100, win_norm = False, trace_norm = True,
-                     JST = False, R_slow_plot = 0.017, T_slow_plot = 0, tshift = 0, wig_scale_fac = 0.5,
-                     stat_corr = 1, apply_SNR = False, beam_stack_rad = 0.01, do_interpolate = False):
+                     R_slow_plot = 0.017, T_slow_plot = 0, tshift = 0, wig_scale_fac = 0.5,
+                     stat_corr = 1, apply_SNR = False, do_interpolate = False):
 
     import os
     #%% load functions
@@ -25,14 +25,9 @@ def run_compare_pair(repeater = '0', eq_num1 = 401, eq_num2 = 402, Zstart_buff =
     #%% Import functions
     # from pro2_dec                import pro2decimate
     from pro3_sort_plot_pair     import pro3pair
-    from pro3_sort_plot_singlet  import pro3singlet
-    from pro4_get_shifts         import pro4_get_shifts
-    from pro5_stack1d            import pro5stack1d
     from pro5_stack2d            import pro5stack2d
-    from pro6_singlet            import pro6_singlet
     from pro6_pair_cc            import pro6_cc_pair
     from pro7_pair_scan          import pro7_pair_scan
-    from pro7_singlet            import pro7_singlet
     import matplotlib.pyplot as plt
     from termcolor import colored
 
@@ -48,12 +43,6 @@ def run_compare_pair(repeater = '0', eq_num1 = 401, eq_num2 = 402, Zstart_buff =
     # eq_file2 = 'event2.txt'
     # eq_num1 = '633'  # pair
     # eq_num2 = '649'
-
-    do_3a = False # single event
-    do_5a = False # stack
-    do_6a = False # treats single events, no time shifts calculated or plotted
-    do_7a = False
-    eq_num  = '161'  # singlet
 
     #%% Common parameters
     # ARRAY      = 6
@@ -111,11 +100,6 @@ def run_compare_pair(repeater = '0', eq_num1 = 401, eq_num2 = 402, Zstart_buff =
     ZslowT_hi   =  beam_width
 
     NS = False  # True for N-S co=ords, False for R-T
-
-    # Pro5 1D plot options
-    slowR_lo_1D   = -0.04
-    slowR_hi_1D   =  0.1
-    slow_delta_1D =  0.001
 
     # Pro6 options: mostly time shift measurement
     cc_twin      =  2      # time window for cross-correlation (s)

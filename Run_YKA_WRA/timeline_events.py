@@ -245,6 +245,10 @@ if do_YKA_change or do_ILAR_change or do_YKA_shift or do_ILAR_shift or do_ILAR_Y
                                 shift = shift_I[i]
                             elif cnt == 5:
                                 shift = shift_I_YS[i]
+                            else:
+                                shift = 0 # to avoid eval complaint
+                                print('cnt not 3, 4, nor 5')
+                                exit(-1)
                             if shift > (-1):
                                 if (index_num < 50) or do_both_sets:
                                     ii = pair_count - i
@@ -481,7 +485,12 @@ if do_YKA_change4 or do_ILAR_change4:
     cnt = 0
     while cnt < 2:
         cnt += 1
-        print(str(cnt) + '  ' + str(which_plots4[cnt-1]))
+        if cnt == 1:
+            print('YKA  ' + str(cnt) + '  ' + str(which_plots4[cnt-1]))
+        elif cnt == 2:
+            print('ILAR ' + str(cnt) + '  ' + str(which_plots4[cnt-1]))
+        else:
+            print('cnt should have been 1 or 2 ' + str(cnt) + '  ' + str(which_plots4[cnt-1]))
         if which_plots4[cnt-1] == True:
             fig_index = cnt + 12
             if cnt == 1 or combine == False:
