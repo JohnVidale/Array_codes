@@ -22,6 +22,8 @@ def run_compare_global(repeater = 'NoName', eq_num1 = 401, eq_num2 = 402, start_
 
     pro_directory = '/Users/vidale/Documents/GitHub/Array_codes/Process'
     os.chdir(pro_directory)
+    cwd = os.getcwd()
+    print("Run_compare_global current working directory: ", cwd)
     from pro3_sort_plot_pair import pro3pair
 
     import matplotlib.pyplot as plt
