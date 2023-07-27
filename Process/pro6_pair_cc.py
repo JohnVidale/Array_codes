@@ -4,7 +4,7 @@
 # Write out tdiff, ave_amp results
 # John Vidale 3/2019
 
-def pro6_cc_pair(eq_num1, eq_num2, slow_delta = 0.0005,
+def pro6_cc_pair(eq_num1, eq_num2, slow_delta = 0.0005, Spyder = True,
               slowR_lo = -0.1, slowR_hi = 0.1, slowT_lo = -0.1, slowT_hi = 0.1,
               start_buff = 1040, end_buff = 1180,
               cc_twin = 2, cc_len = 0.5, cc_interp1d = 5, cc_delta = 0.1, cc_thres = 0.8):

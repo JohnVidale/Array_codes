@@ -4,10 +4,12 @@
 # this program tapers, filters, selects range and SNR
 # plots against traveltime curves, either raw or reduced against traveltimes
 
+import sys
 import os
-pro_directory = '/Users/vidale/Documents/GitHub/Array_codes/Run_YKA_WRA'
-os.chdir(pro_directory)
-
+# pro_directory = '/Users/vidale/Documents/GitHub/Array_codes/Run_YKA_WRA'
+# os.chdir(pro_directory)
+sys.path.append('/Users/vidale/Documents/GitHub/Array_codes/Process')
+sys.path.append('/Users/vidale/Documents/GitHub/Array_codes/Run_YKA_WRA')
 # Print the current working directory (CWD)
 cwd = os.getcwd()
 print("Run_all current working directory: ", cwd)

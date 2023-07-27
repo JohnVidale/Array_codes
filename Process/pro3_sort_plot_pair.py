@@ -6,13 +6,13 @@
 # John Vidale 2/2019
 
 def pro3pair(eq_num1, eq_num2, repeater = '0', stat_corr = 1, simple_taper = False, apply_SNR = False, SNR_thres = 1.7,
-            phase1 = 'PKP', phase2 = 'PKiKP', phase3 = 'PKIKP', phase4 = 'pPKP',
+            phase1 = 'PKP', phase2 = 'PKiKP', phase3 = 'PKIKP', phase4 = 'pPKP', Spyder = True,
             rel_time = 1, start_buff = -200, end_buff = 500, precursor_shift = 0, signal_dur = 0,
             plot_scale_fac = 0.05, corr_threshold = 0, off_center_shift = 0, win_norm = False, wind_buff = 0,
             zoom = False, Zstart_buff = 0, Zend_buff = 0, flip = False, trace_amp = 1,
             freq_min = 1, freq_max = 3, min_dist = 0, max_dist = 180, auto_dist = True, ARRAY = 0,
             ref_loc = False, ref_rad = 0.4, JST = False, fig_index = 100, do_interpolate = False,
-            max_taper_length = 5., no_plots = False, taper_frac = 0.2, tshift = 0, shift_both = 0):
+            max_taper_length = 5., taper_frac = 0.2, tshift = 0, shift_both = 0):
 
 
 #%% Import functions
@@ -900,11 +900,9 @@ def pro3pair(eq_num1, eq_num2, repeater = '0', stat_corr = 1, simple_taper = Fal
     elif ARRAY == 7:
         plt.title(repeater + ' ' + phase1 + ' for ' + fname1[49:53] + '-' + fname1[53:55] + '-' + fname1[55:57] + ' vs ' + fname2[49:53] + '-' + fname2[53:55] + '-' + fname2[55:57] + ' for global array, ' + str(eq_num1) + '(g) and ' + str(eq_num2) + '(r), freqs ' + str(freq_min) + '-' + str(freq_max) + ' Hz', y = 1)
 
-    plt.show()
-    if no_plots == False:
-        os.chdir('/Users/vidale/Documents/Research/IC/Plots_hold')
-        plt.savefig(repeater + '_Array_' + str(ARRAY) + '_traces')
-        plt.show()
+    os.chdir('/Users/vidale/Documents/Research/IC/Plots_hold')
+    plt.savefig(repeater + '_Array_' + str(ARRAY) + '_traces')
+    if Spyder: plt.show()
 
     #%% plot traces
     # fig_index = 3
@@ -1059,10 +1057,9 @@ def pro3pair(eq_num1, eq_num2, repeater = '0', stat_corr = 1, simple_taper = Fal
     ax.get_yaxis().get_major_formatter().set_useOffset(False)
     # plt.gca().get_xaxis().get_major_formatter().set_useOffset(False)  # turn off conversion of y-axis to offset numbering
     # plt.rcParams['axes.formatter.useoffset'] = False #  these two commented commands worked for some but not all cases
-    if no_plots == False:
-        os.chdir('/Users/vidale/Documents/Research/IC/Plots_hold')
-        plt.savefig(repeater + '_Array_' + str(ARRAY) + '_section')
-        plt.show()
+    os.chdir('/Users/vidale/Documents/Research/IC/Plots_hold')
+    plt.savefig(repeater + '_Array_' + str(ARRAY) + '_section')
+    if Spyder: plt.show()
 
 #%%  Save processed files
     cnt1 = len(st1good)

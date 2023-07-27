@@ -182,4 +182,4 @@ def run_compare_pair(repeater = '0', eq_num1 = 401, eq_num2 = 402, Zstart_buff =
                     nR_plots  = nR_plots, nT_plots = nT_plots, slow_incr = slow_incr, NS = NS,
                     ARRAY = ARRAY, auto_slice = auto_slice, two_slice_plots = two_slice_plots, beam_sums = beam_sums,
                     wiggly_plots = wiggly_plots, log_plot = log_plot, log_plot_range = log_plot_range, plot_peak = plot_peak,
-                    tdiff_plots_too = tdiff_plots_too, start_beam = start_beam, end_beam = end_beam)
+                    tdiff_plots_too=tdiff_plots_too, start_beam=start_beam, end_beam=end_beam)
