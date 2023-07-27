@@ -36,7 +36,7 @@ lat          = np.zeros(pair_count)
 lon          = np.zeros(pair_count)
 
 #%% Parameters
-do_YKA_change     = False
+do_YKA_change     = True
 do_ILAR_change    = False
 
 do_YKA_shift      = False
@@ -44,8 +44,8 @@ do_ILAR_shift     = False
 do_ILAR_YS_shift  = False
 which_plots = (do_YKA_change, do_ILAR_change, do_YKA_shift, do_ILAR_shift, do_ILAR_YS_shift)
 do_both_sets = True   # include first initial and later data sets
-do_only_sim  = False  # include only most similar repetitions
-do_label = True
+do_only_sim  = True  # include only most similar repetitions
+do_label = False
 
 use_N             = True
 use_S             = True
@@ -64,8 +64,8 @@ do_ILAR_change3    = False
 blowup = True
 which_plots3 = (do_YKA_change3, do_ILAR_change3)
 
-do_YKA_change4     = True # matches and mismatchs by interval
-do_ILAR_change4    = True
+do_YKA_change4     = False # matches and mismatchs by interval
+do_ILAR_change4    = False
 combine = True
 if do_only_sim:
     time_blank = 5
@@ -73,8 +73,8 @@ else:
     time_blank = 0
 which_plots4 = (do_YKA_change4, do_ILAR_change4)
 
-do_YKA_change5     = True # start and stops compared to prediction
-do_ILAR_change5    = True # Miaki plot
+do_YKA_change5     = False # start and stops compared to prediction
+do_ILAR_change5    = False # Miaki plot
 which_plots5 = (do_YKA_change5, do_ILAR_change5)
 
 #%%  read in table
@@ -224,11 +224,11 @@ if do_YKA_change or do_ILAR_change or do_YKA_shift or do_ILAR_shift or do_ILAR_Y
                                     line_index = [ii,ii]
                                     if (index_num < 50) or do_both_sets:
                                         if change == 2:
-                                            plt.plot(x, line_index, c='r', alpha=1, markersize = 10, marker='.',linewidth=3.0)
+                                            plt.plot(x, line_index, c='lightgreen', alpha=1, markersize = 10, marker='.',linewidth=3.0)
                                         elif change == 1:
-                                            plt.plot(x, line_index, c='gold', alpha=1, markersize = 10, marker='.',linewidth=3.0)
+                                            plt.plot(x, line_index, c='deepskyblue', alpha=1, markersize = 10, marker='.',linewidth=3.0)
                                         elif change == 0:
-                                            plt.plot(x, line_index, c='g', alpha=1, markersize = 10, marker='.',linewidth=3.0)
+                                            plt.plot(x, line_index, c='crimson', alpha=1, markersize = 10, marker='.',linewidth=3.0)
                                         elif change == -1:
                                             plt.plot(x, line_index, c='0.8', alpha=1, markersize = 5, marker='.',linewidth=2.0)
                                         elif change == -2:
@@ -262,14 +262,14 @@ if do_YKA_change or do_ILAR_change or do_YKA_shift or do_ILAR_shift or do_ILAR_Y
                                         plt.plot(x, line_index, c='b', alpha=1, marker='.',linewidth=3.0)
                                     plt.text(date1[i] - 3, ii, pair_name[i] + ' ' + str(shift))
 
-            plt.xlabel('Year', fontsize=20)
-            plt.ylabel('South to North', fontsize=20)
-            if cnt ==1:
-                plt.title('YKA waveform variation over the years', fontsize=25)
-            elif cnt ==2:
-                plt.title('ILAR waveform variation over the years', fontsize=25)
-            elif cnt ==3:
-                plt.title('YKA ddt over the years', fontsize=25)
+            plt.xlabel('Date', fontsize=20)
+            plt.ylabel('Repeating pairs arranged South to North', fontsize=20)
+            # if cnt ==1:
+            #     plt.title('YKA waveform variation over the years', fontsize=25)
+            # elif cnt ==2:
+            #     plt.title('ILAR waveform variation over the years', fontsize=25)
+            # elif cnt ==3:
+            #     plt.title('YKA ddt over the years', fontsize=25)
             plt.legend([])
 plt.show()
 
@@ -496,9 +496,9 @@ if do_YKA_change4 or do_ILAR_change4:
             if cnt == 1 or combine == False:
                 plt.figure(fig_index, figsize=(12,12))
                 # stupidity to get legend right
-                plt.plot(2020, 2021, c=   'g', alpha=1, marker='.',linewidth=2.0, markersize = '18', label = "no change")
-                plt.plot(2020, 2021, c='gold', alpha=1, marker='.',linewidth=1.5, markersize = '12', label = "moderate change")
-                plt.plot(2020, 2021, c=   'r', alpha=1, marker='.',linewidth=1.5, markersize = '12', label = "strong change")
+                plt.plot(2020, 2021, c = 'crimson',  alpha=1, marker='.',linewidth=2.0, markersize = '18', label = "no change")
+                plt.plot(2020, 2021, c = 'lightgreen',  alpha=1, marker='.',linewidth=1.5, markersize = '12', label = "moderate change")
+                plt.plot(2020, 2021, c = 'deepskyblue', alpha=1, marker='.',linewidth=1.5, markersize = '12', label = "strong change")
 
             if cnt == 1 or combine:
                 if do_only_sim:
@@ -531,11 +531,12 @@ if do_YKA_change4 or do_ILAR_change4:
                         xy1 = [date1[i],date2[i]]
                         xy2 = [date_diff,date_diff]
                         if change == 0:
-                            plt.plot(xy1, xy2, c='g', alpha=1, marker='.',linewidth=2.0, markersize = '18', label = "no change")
+                            plt.plot(xy1, xy2, c='crimson', alpha=1, marker='.',linewidth=2.0, markersize = '18', label = "no change")
                         if change == 1:
-                            plt.plot(xy1, xy2, c='gold', alpha=1, marker='.',linewidth=1.5, markersize = '12', label = "moderate change")
+                            plt.plot(xy1, xy2, c='lightgreen', alpha=1, marker='.',linewidth=1.5, markersize = '12', label = "moderate change")
                         if change == 2:
-                            plt.plot(xy1, xy2, c='r', alpha=1, marker='.',linewidth=1.5, markersize = '12', label = "strong change")
+                            plt.plot(xy1, xy2, c='deepskyblue', alpha=1, marker='.',
+                                     linewidth=1.5, markersize='12', label="strong change")
                         # r1 = (random.random() - 0.5)/200  # jitter to enable recognition of identical points
                         # r2 = (random.random() - 0.5)/200
                         if do_label:
@@ -544,11 +545,11 @@ if do_YKA_change4 or do_ILAR_change4:
                                 plt.text(date2[i],date_diff, pair_name[i])
 
             if cnt == 1 and combine:
-                plt.xlabel('Year', fontsize=20)
-                plt.ylabel('Time between repeaters (years)', fontsize=20)
+                plt.xlabel('Date (years))', fontsize=20)
+                plt.ylabel('Interval between repeaters (years)', fontsize=20)
                 ax = plt.gca()
                 # ax.tick_params(right=True, labelright=True, top=True, labeltop=True)
-                plt.title('Both arrays - same vs changing waveforms', fontsize=25)
+                # plt.title('Both arrays - same vs changing waveforms', fontsize=25)
                 rect = patches.Rectangle([1990,0], 34, time_blank, linewidth=time_blank/2.0, edgecolor='w', facecolor= 'lightgray')
                 ax.add_patch(rect)
             elif combine == False:
@@ -574,7 +575,7 @@ if do_YKA_change4 or do_ILAR_change4:
                 plt.legend(['similar', 'somewhat similar', 'different'],loc = 'lower right', fontsize = 20)
             else:
                 plt.legend(['similar', 'somewhat similar', 'different'],loc = 'upper right', fontsize = 20)
-plt.show()
+# plt.show()
 #%% plot color temporal misfit vs years of separation
 if do_YKA_change5 or do_ILAR_change5:
     print('Combine ' + str(combine))
@@ -587,9 +588,10 @@ if do_YKA_change5 or do_ILAR_change5:
             if cnt == 1 or combine == False:
                 plt.figure(fig_index, figsize=(12,12))
                 # stupidity to get legend right
-                plt.scatter(2020, 2021, c='g'   , s=400, alpha=1, marker='.', label = "no change")
-                plt.scatter(2020, 2021, c='gold', s=400, alpha=1, marker='.', label = "moderate change")
-                plt.scatter(2020, 2021, c='r'   , s=400, alpha=1, marker='.', label = "strong change")
+                plt.scatter(2020, 2021, c='crimson'   , s=400, alpha=1, marker='.', label = "no change")
+                plt.scatter(2020, 2021, c='lightgreen', s=400, alpha=1, marker='.', label = "moderate change")
+                plt.scatter(2020, 2021, c='deepskyblue', s=400,
+                            alpha=1, marker='.', label="strong change")
 
             plt.xlim(0, 15)
             plt.ylim(time_blank, 31)
@@ -615,21 +617,21 @@ if do_YKA_change5 or do_ILAR_change5:
                         if combine and cnt == 2:
                             date_diff += 0.3
                         if change == 0:
-                            plt.scatter((t1_diff + t2_diff)/2, date_diff, c='g'   , s=300, alpha=1, marker='.')
+                            plt.scatter((t1_diff + t2_diff)/2, date_diff, c='crimson'   , s=300, alpha=1, marker='.')
                         if change == 1:
-                            plt.scatter((t1_diff + t2_diff)/2, date_diff, c='gold', s=300, alpha=1, marker='.')
+                            plt.scatter((t1_diff + t2_diff)/2, date_diff, c='lightgreen', s=300, alpha=1, marker='.')
                         if change == 2:
-                            plt.scatter((t1_diff + t2_diff)/2, date_diff, c='r'   , s=300, alpha=1, marker='.')
+                            plt.scatter((t1_diff + t2_diff)/2, date_diff, c='deepskyblue'   , s=300, alpha=1, marker='.')
                         if do_label:
                             if (change == 0 or change == 1 or change == 2) and cnt == 1:
                                 plt.text(t1_diff, date_diff, pair_name[i])
 
             if cnt == 1 and combine:
-                plt.xlabel('Average year offset from predicted lines', fontsize=20)
-                plt.ylabel('Time between repeaters (years)', fontsize=20)
+                plt.xlabel('Average deviation from model (years)', fontsize=20)
+                plt.ylabel('Interval between repeaters (years)', fontsize=20)
                 ax = plt.gca()
                 # ax.tick_params(right=True, labelright=True, top=True, labeltop=True)
-                plt.title('Both arrays - same vs changing waveforms', fontsize=25)
+                # plt.title('Model misfit vs time separation', fontsize=25)
                 rect = patches.Rectangle([1990,0], 34, time_blank, linewidth=time_blank/2.0, edgecolor='w', facecolor= 'lightgray')
                 ax.add_patch(rect)
             elif combine == False:
@@ -644,5 +646,5 @@ if do_YKA_change5 or do_ILAR_change5:
             ax.tick_params(axis='both', labelsize=18)
             plt.grid()
             plt.rc('grid', linestyle="-", color='black')
-            plt.legend(['similar', 'somewhat similar', 'different'],loc = 'upper right', fontsize = 20)
+            plt.legend(['similar waveform', 'somewhat similar', 'different'],loc = 'upper right', fontsize = 20)
 plt.show()
