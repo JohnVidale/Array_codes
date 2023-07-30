@@ -6,6 +6,7 @@
 
 import sys
 import os
+import matplotlib.pyplot as plt
 # pro_directory = '/Users/vidale/Documents/GitHub/Array_codes/Run_YKA_WRA'
 # os.chdir(pro_directory)
 sys.path.append('/Users/vidale/Documents/GitHub/Array_codes/Process')
@@ -168,3 +169,4 @@ run_compare_ind(repeater = 'P29')
 
 # Sumatra, IV2 is too close
 # run_compare_ind(repeater = 'P45')
+plt.show()

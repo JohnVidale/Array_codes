@@ -5,7 +5,7 @@
 # John Vidale 2/2019, overhauled 1/2021, reviewed 6/2021
 
 def pro7_pair_scan(eq_num1, eq_num2, repeater = '0', slow_delta = 0.0005, turn_off_black = 1,
-              slowR_lo = -0.1, slowR_hi = 0.1, slowT_lo = -0.1, slowT_hi = 0.1, Spyder = True,
+              slowR_lo = -0.1, slowR_hi = 0.1, slowT_lo = -0.1, slowT_hi = 0.1,
               start_buff = 50, end_buff = 50,fig_index = 401, do_T = False, do_R = False,
               ZslowR_lo = -0.1, ZslowR_hi = 0.1, ZslowT_lo = -0.1, ZslowT_hi = 0.1,
               Zstart_buff = 50, Zend_buff = 50, zoom = False, tdiff_clip = 1,
@@ -493,7 +493,6 @@ def pro7_pair_scan(eq_num1, eq_num2, repeater = '0', slow_delta = 0.0005, turn_o
                     plt.xlabel('Time (s)')
                     plt.ylabel('Radial slowness (s/km)')
                     plt.title(f'Tdiff at {target_slow:.3f} s/km T slowness, {fname1[48:58]}  {fname1[59:69]}  min amp {min_amp:.1f}  cc_thres {cc_thres:.2f}')
-                    if Spyder: plt.show()
                     fig_index += 1
 
                 #%% -- -- plot R amp
@@ -523,7 +522,6 @@ def pro7_pair_scan(eq_num1, eq_num2, repeater = '0', slow_delta = 0.0005, turn_o
                 else:
                     plt.ylabel('Radial Slowness (s/km)')
                     plt.title(f'{pair_name}  {arrayname}  Amp at {target_slow:.3f} s/km T slowness, {fname1[48:58]}  {fname1[59:69]}')
-                if Spyder: plt.show()
                 fig_index += 1
 
         #%% -- T slices
@@ -570,7 +568,6 @@ def pro7_pair_scan(eq_num1, eq_num2, repeater = '0', slow_delta = 0.0005, turn_o
                     plt.xlabel('Time (s)')
                     plt.ylabel('Transverse slowness (s/km)')
                     plt.title(f'{phase1} Tdiff at {target_slow:.3f} s/km R slowness, {fname1[48:58]}  {fname1[59:69]}  min amp {min_amp:.1f}  cc_thres {cc_thres:.2f}')
-                    if Spyder: plt.show()
                     fig_index += 1
 
                 #%% -- -- plot T amp
@@ -600,7 +597,6 @@ def pro7_pair_scan(eq_num1, eq_num2, repeater = '0', slow_delta = 0.0005, turn_o
                 else:
                     plt.ylabel('Transverse Slowness (s/km)')
                     plt.title(f'{pair_name}  {arrayname}  Amp at {target_slow:.3f} s/km R slowness, {fname1[48:58]}  {fname1[59:69]}')
-                if Spyder: plt.show()
                 fig_index += 1
 
     #%% 2-slices-plus-snaps option
@@ -688,8 +684,6 @@ def pro7_pair_scan(eq_num1, eq_num2, repeater = '0', slow_delta = 0.0005, turn_o
             plt.ylabel('R slowness (s/km)')
             plt.title(pair_name + ' ' + arrayname + ' ' + ' Time lag at ' + str(T_slow_plot) + ' s/km T slowness, ' + date_label1 + ' ' + date_label2)
             plt.savefig(save_name + '_Rtdiff_hist.png')
-        if Spyder: plt.show()
-
         fig_index += 1
 
         #%% -- -- -- T/E plot
@@ -736,8 +730,6 @@ def pro7_pair_scan(eq_num1, eq_num2, repeater = '0', slow_delta = 0.0005, turn_o
                 plt.ylabel('T slowness (s/km)')
                 plt.title(pair_name + ' ' + arrayname + ' ' + ' Time lag at ' + str(R_slow_plot) + ' s/km R slowness, ' + date_label1 + ' ' + date_label2)
                 plt.savefig(save_name + '_Ttdiff_hist.png')
-            if Spyder: plt.show()
-
             fig_index += 1
 
         #%% -- -- Correlation plots
@@ -786,8 +778,6 @@ def pro7_pair_scan(eq_num1, eq_num2, repeater = '0', slow_delta = 0.0005, turn_o
             plt.ylabel('R slowness (s/km)')
             plt.title(pair_name + ' ' + arrayname + ' ' + ' Correlation at ' + str(T_slow_plot) + ' T slowness, ' + date_label1 + ' ' + date_label2)
             plt.savefig(save_name + '_Rcc_hist.png')
-        if Spyder: plt.show()
-
         fig_index += 1
 
         #%% -- -- -- T/E plot
@@ -833,8 +823,6 @@ def pro7_pair_scan(eq_num1, eq_num2, repeater = '0', slow_delta = 0.0005, turn_o
                 plt.ylabel('T slowness (s/km)')
                 plt.title(pair_name + ' ' + arrayname + ' ' + ' Correlation at ' + str(R_slow_plot) + ' R slowness, ' + date_label1 + ' ' + date_label2)
                 plt.savefig(save_name + '_TtdiffSection.png')
-            if Spyder: plt.show()
-
             fig_index += 1
 
         #%% -- -- Amp plots
@@ -883,7 +871,6 @@ def pro7_pair_scan(eq_num1, eq_num2, repeater = '0', slow_delta = 0.0005, turn_o
             plt.ylabel('R slowness (s/km)')
             plt.title(pair_name + ' ' + arrayname + ' ' + ' Amp at ' + str(T_slow_plot) + ' s/km T slowness, ' + date_label1 + ' ' + date_label2)
             plt.savefig(save_name + '_Ramp_hist.png')
-        if Spyder: plt.show()
 
         fig_index += 1
 
@@ -930,7 +917,6 @@ def pro7_pair_scan(eq_num1, eq_num2, repeater = '0', slow_delta = 0.0005, turn_o
                 plt.ylabel('T slowness (s/km)')
                 plt.title(pair_name + ' ' + arrayname + ' ' + ' Amp at ' + str(R_slow_plot) + ' s/km R slowness, ' + date_label1 + ' ' + date_label2)
                 plt.savefig(save_name + '_Tamp_hist.png')
-            if Spyder: plt.show()
 
             fig_index += 1
 
@@ -983,7 +969,6 @@ def pro7_pair_scan(eq_num1, eq_num2, repeater = '0', slow_delta = 0.0005, turn_o
                     plt.xlabel('T Slowness (s/km)')
                     plt.ylabel('R Slowness (s/km)')
                 plt.savefig(save_name + str(snap_start) + '_' + str(snap_end) + '_Tbeam.png')
-                if Spyder: plt.show()
 
             for snap_num in range(snaps):
                 snap_start = start_buff + snaptime + (snap_num  ) * snap_depth
@@ -1025,7 +1010,6 @@ def pro7_pair_scan(eq_num1, eq_num2, repeater = '0', slow_delta = 0.0005, turn_o
                     plt.xlabel('T Slowness (s/km)')
                     plt.ylabel('R Slowness (s/km)')
                 plt.savefig(save_name + str(snap_start) + '_' + str(snap_end) + '_Abeam.png')
-                if Spyder: plt.show()
 
     #%% Wiggly plots
     if wiggly_plots or pred_wiggles or max_wiggly_plot:
@@ -1240,7 +1224,6 @@ def pro7_pair_scan(eq_num1, eq_num2, repeater = '0', slow_delta = 0.0005, turn_o
             plt.xlabel('T Slowness (s/km)')
         plt.title(f'{pair_name} {arrayname} {date_label1} {date_label2} {start_buff:.0f} to {end_buff:.0f} time shift')
         plt.savefig(save_name + '_Tbeam.png')
-        if Spyder: plt.show()
 
     #%% -- R-T amplitude averaged over time window
         fig_index += 1
@@ -1314,7 +1297,7 @@ def pro7_pair_scan(eq_num1, eq_num2, repeater = '0', slow_delta = 0.0005, turn_o
             plt.ylabel('R Slowness (s/km)')
         plt.title(f'{pair_name} {arrayname} {date_label1} {date_label2} {start_buff:.0f} to {end_buff:.0f} beam amp')
         plt.savefig(save_name + '_Abeam.png')
-        if Spyder: plt.show()
+
     #%% Wiggly plot at max amplitude
     if max_wiggly_plot and zoom:
         #%% -- Select stack at max amp

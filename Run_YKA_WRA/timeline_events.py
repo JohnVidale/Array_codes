@@ -36,7 +36,7 @@ lat          = np.zeros(pair_count)
 lon          = np.zeros(pair_count)
 
 #%% Parameters
-do_YKA_change     = True
+do_YKA_change     = False
 do_ILAR_change    = False
 
 do_YKA_shift      = False
@@ -44,7 +44,7 @@ do_ILAR_shift     = False
 do_ILAR_YS_shift  = False
 which_plots = (do_YKA_change, do_ILAR_change, do_YKA_shift, do_ILAR_shift, do_ILAR_YS_shift)
 do_both_sets = True   # include first initial and later data sets
-do_only_sim  = True  # include only most similar repetitions
+do_only_sim  = False  # include only most similar repetitions
 do_label = False
 
 use_N             = True
@@ -64,8 +64,8 @@ do_ILAR_change3    = False
 blowup = True
 which_plots3 = (do_YKA_change3, do_ILAR_change3)
 
-do_YKA_change4     = False # matches and mismatchs by interval
-do_ILAR_change4    = False
+do_YKA_change4     = True # matches and mismatchs by interval
+do_ILAR_change4 = True
 combine = True
 if do_only_sim:
     time_blank = 5

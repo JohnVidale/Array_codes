@@ -6,7 +6,7 @@
 # John Vidale 2/2019
 
 def pro3pair(eq_num1, eq_num2, repeater = '0', stat_corr = 1, simple_taper = False, apply_SNR = False, SNR_thres = 1.7,
-            phase1 = 'PKP', phase2 = 'PKiKP', phase3 = 'PKIKP', phase4 = 'pPKP', Spyder = True,
+            phase1 = 'PKP', phase2 = 'PKiKP', phase3 = 'PKIKP', phase4 = 'pPKP',
             rel_time = 1, start_buff = -200, end_buff = 500, precursor_shift = 0, signal_dur = 0,
             plot_scale_fac = 0.05, corr_threshold = 0, off_center_shift = 0, win_norm = False, wind_buff = 0,
             zoom = False, Zstart_buff = 0, Zend_buff = 0, flip = False, trace_amp = 1,
@@ -902,7 +902,6 @@ def pro3pair(eq_num1, eq_num2, repeater = '0', stat_corr = 1, simple_taper = Fal
 
     os.chdir('/Users/vidale/Documents/Research/IC/Plots_hold')
     plt.savefig(repeater + '_Array_' + str(ARRAY) + '_traces')
-    if Spyder: plt.show()
 
     #%% plot traces
     # fig_index = 3
@@ -1059,7 +1058,6 @@ def pro3pair(eq_num1, eq_num2, repeater = '0', stat_corr = 1, simple_taper = Fal
     # plt.rcParams['axes.formatter.useoffset'] = False #  these two commented commands worked for some but not all cases
     os.chdir('/Users/vidale/Documents/Research/IC/Plots_hold')
     plt.savefig(repeater + '_Array_' + str(ARRAY) + '_section')
-    if Spyder: plt.show()
 
 #%%  Save processed files
     cnt1 = len(st1good)
