@@ -5,7 +5,6 @@ Created on May 10th, 2023
 Makes a timeline of DF waveform and ddt changes for ILAR & YKA
 @author: vidale
 """
-#%%
 import numpy as np
 import random
 import matplotlib.pyplot as plt
@@ -69,6 +68,10 @@ which_plots3 = (do_YKA_change3, do_ILAR_change3)
 do_YKA_change4     = False # matches and mismatchs by interval
 do_ILAR_change4    = False
 combine4 = True
+if do_only_sim:
+    time_blank = 5
+else:
+    time_blank = 0
 which_plots4 = (do_YKA_change4, do_ILAR_change4)
 
 do_YKA_change5     = False # start and stops compared to prediction
@@ -529,7 +532,7 @@ if do_YKA_change4 or do_ILAR_change4:
                     change = change_Y[i]
                 elif cnt == 2:
                     change = change_I[i]
-                if ((similarity[i] == 1) or (do_only_sim == False)) and ((index_num < 50) or do_both_sets):
+                if ((similarity[i] == 1) or (do_only_sim == False)) and ((index_num < 50) or do_both_sets) and date_diff > time_blank:
                 # if ((similarity[i] == 1) or (do_only_sim == False)) and ((index_num < 50) or do_both_sets):
                     if (use_N and lat[i] > NSsplit) or (use_S and lat[i] <= NSsplit):
                         marker_type = '.'
@@ -559,6 +562,10 @@ if do_YKA_change4 or do_ILAR_change4:
                 plt.xlabel('Date (years)', fontsize=20)
                 plt.ylabel('Interval between repeaters (years)', fontsize=20)
                 ax = plt.gca()
+                # ax.tick_params(right=True, labelright=True, top=True, labeltop=True)
+                # plt.title('Both arrays - same vs changing waveforms', fontsize=25)
+                rect = patches.Rectangle([1990,0], 34, time_blank, linewidth=time_blank/2.0, edgecolor='w', facecolor= 'lightgray')
+                ax.add_patch(rect)
             elif combine4 == False:
                 plt.xlabel('Year', fontsize=20)
                 plt.ylabel('1st -> 2nd event in pair', fontsize=20)
@@ -601,7 +608,7 @@ if do_YKA_change5 or do_ILAR_change5:
                             alpha=1, marker='.', label="strong change")
 
             plt.xlim(0, 15)
-            plt.ylim(0, 31)
+            plt.ylim(time_blank, 31)
 
             for i in pair_index:
                 date_diff = date2[i] - date1[i]
@@ -614,7 +621,7 @@ if do_YKA_change5 or do_ILAR_change5:
                     change = change_Y[i]
                 elif cnt == 2:
                     change = change_I[i]
-                if ((similarity[i] == 1) or (do_only_sim == False)) and ((index_num < 50) or do_both_sets):
+                if ((similarity[i] == 1) or (do_only_sim == False)) and ((index_num < 50) or do_both_sets) and date_diff > time_blank:
                 # if ((similarity[i] == 1) or (do_only_sim == False)) and ((index_num < 50) or do_both_sets):
                     if (use_N and lat[i] > NSsplit) or (use_S and lat[i] <= NSsplit):
                         t1_pred = 2008.5 - date_diff*(8/28)
@@ -637,6 +644,10 @@ if do_YKA_change5 or do_ILAR_change5:
                 plt.xlabel('Average deviation from model (years)', fontsize=20)
                 plt.ylabel('Interval between repeaters (years)', fontsize=20)
                 ax = plt.gca()
+                # ax.tick_params(right=True, labelright=True, top=True, labeltop=True)
+                # plt.title('Model misfit vs time separation', fontsize=25)
+                rect = patches.Rectangle([1990,0], 34, time_blank, linewidth=time_blank/2.0, edgecolor='w', facecolor= 'lightgray')
+                ax.add_patch(rect)
             elif combine5 == False:
                 plt.xlabel('Year', fontsize=20)
                 plt.ylabel('1st -> 2nd event in pair', fontsize=20)
@@ -650,163 +661,6 @@ if do_YKA_change5 or do_ILAR_change5:
             plt.grid()
             plt.rc('grid', linestyle="-", color='black')
             plt.legend(['similar waveform', 'somewhat similar', 'different'],loc = 'upper right', fontsize = 20)
-#%% color and plot temporal connections against years of separation
-if do_YKA_change6 or do_ILAR_change6:
-    cnt = 0
-    while cnt < 2:
-        cnt += 1
-        if cnt == 1:
-            print('YKA  ' + str(cnt) + '  ' + str(which_plots6[cnt-1]))
-        elif cnt == 2:
-            print('ILAR ' + str(cnt) + '  ' + str(which_plots6[cnt-1]))
-        else:
-            print('cnt should have been 1 or 2 ' +
-                  str(cnt) + '  ' + str(which_plots6[cnt-1]))
-        if which_plots6[cnt-1] == True:
-            fig_index = cnt + 13
-            if cnt == 1 or combine6 == False:
-                if zoomer:
-                    plt.figure(fig_index, figsize=(19*0.6, 12*0.6))
-                else:
-                    plt.figure(fig_index, figsize=(12, 12))
-                # stupidity to get legend right
-                if zoomer:
-                    plt.plot(2010, c='crimson', marker='.',
-                             markersize='18', label="no change")
-                    plt.plot(2010, c='lightgreen', marker='.',
-                             markersize='12', label="moderate change")
-                    plt.plot(2010, c='deepskyblue', marker='.',
-                             markersize='12', label="strong change")
-                else:
-                    plt.plot(1995, c='crimson', marker='.',
-                             markersize='18', label="no change")
-                    plt.plot(1995, c='lightgreen', marker='.',
-                             markersize='12', label="moderate change")
-                    plt.plot(1995, c='deepskyblue', marker='.',
-                             markersize='12', label="strong change")
-
-            if zoomer:
-                minx = 2005
-                maxx = 2024
-                miny = 2000
-                maxy = 2012
-            else:
-                minx = 1990
-                maxx = 2024
-                miny = 1990
-                maxy = 2024
-            plt.xlim(minx, maxx)
-            plt.ylim(miny, maxy)
-
-            for i in pair_index:
-                if pair_name[i][0] == 'P':
-                    pair_str = pair_name[i][1:3]
-                else:
-                    pair_str = pair_name[i][0:3]
-                index_num = int(pair_str)
-                if cnt == 1:
-                    change = change_Y[i]
-                elif cnt == 2:
-                    change = change_I[i]
-                if ((similarity[i] == 1) or (do_only_sim == False)) and ((index_num < 50) or do_both_sets):
-                    if ((similarity[i] == 1) or (do_only_sim == False)) and ((index_num < 50) or do_both_sets):
-                        if (use_N and lat[i] > NSsplit) or (use_S and lat[i] <= NSsplit) or cnt == 2:
-                            marker_type = '.'
-                            if combine6 and cnt == 2:
-                                if zoomer:
-                                    date1[i] += 0.2
-                                    date2[i] -= 0.2
-                                else:
-                                    date1[i] += 0.4
-                                    date2[i] -= 0.4
-                                marker_type = '*'
-                            if change == 0:
-                                plt.plot(date2[i], date1[i], c='crimson', alpha=1, marker=marker_type,
-                                         linewidth=2.0, markersize='18', label="no change")
-                            if change == 1:
-                                plt.plot(date2[i], date1[i], c='lightgreen', alpha=1, marker=marker_type,
-                                         linewidth=1.5, markersize='12', label="moderate change")
-                            if change == 2:
-                                plt.plot(date2[i], date1[i], c='deepskyblue', alpha=1, marker=marker_type,
-                                         linewidth=1.5, markersize='12', label="strong change")
-                            if do_label:
-                                if change >= 0:
-                                    if date1[i] > miny and date1[i] < maxy and date2[i] > minx and date2[i] < maxx:
-                                        plt.text(
-                                            date2[i], date1[i], pair_name[i])
-
-            if cnt == 1 and combine6:
-                plt.xlabel('Date of 2nd event (years)', fontsize=20)
-                plt.ylabel('Date of 1st event (years)', fontsize=20)
-                ax = plt.gca()
-            elif combine6 == False:
-                ax = plt.gca()
-                ax.tick_params(right=True, labelright=True,
-                               top=True, labeltop=True)
-                if cnt == 1:
-                    plt.title('YKA dates vs time spans', fontsize=25)
-                elif cnt == 2:
-                    plt.title('ILAR dates vs time spans', fontsize=25)
-            # diagonal line
-            if zoomer:
-                xy1 = [2005, 2012]
-                xy2 = [2005, 2012]
-                plt.plot(xy1, xy2, c='purple', alpha=1, marker='.',
-                         linewidth=2.0, markersize='12')
-                xy1 = [2010, 2022]
-                xy2 = [2000, 2012]
-                plt.plot(xy1, xy2, c='purple', alpha=1, marker='.',
-                         linewidth=2.0, markersize='12')
-                rect = patches.Rectangle(
-                    [2004, 2004], 15, 10, linewidth=2.0, edgecolor='orange', facecolor='none')
-                ax.add_patch(rect)
-                plt.figtext(0.20, 0.52, 'little change?',
-                            c='orange', fontsize=20)
-                plt.figtext(0.15, 0.64, 'dt = 0 years',
-                            c='purple', fontsize=18)
-                plt.figtext(0.15, 0.12, 'dt = 10 years',
-                            c='purple', fontsize=18)
-                plt.figtext(0.56, 0.12, 'slope = 1', fontsize=20)
-                plt.figtext(0.74, 0.22, 'slope = 2.5', fontsize=20)
-                xy1 = [2008.5, 2024]
-                xy2 = [2008.5, 2002.5]
-                plt.plot(xy1, xy2, 'k--', alpha=1, marker='.',
-                         linewidth=2.0, markersize='12')
-                xy1 = [2010, 2020]
-                xy2 = [2010, 2000]
-                plt.plot(xy1, xy2, 'k--', alpha=1, marker='.',
-                         linewidth=1.0, markersize='12')
-                plt.xticks(range(2005, 2024, 5))
-            else:
-                rect = patches.Rectangle(
-                    [2004, 2004], 15, 15, linewidth=2.0, edgecolor='orange', facecolor='none')
-                ax.add_patch(rect)
-                rect = patches.Rectangle(
-                    [2005, 2000], 19, 12, linewidth=2.0, edgecolor='gray', facecolor='none')
-                ax.add_patch(rect)
-                xy1 = [1990, 2024]
-                xy2 = [1990, 2024]
-                plt.plot(xy1, xy2, c='purple', alpha=1, marker='.',
-                         linewidth=2.0, markersize='12')
-                xy1 = [2000, 2024]
-                xy2 = [1990, 2014]
-                plt.plot(xy1, xy2, c='purple', alpha=1, marker='.',
-                         linewidth=2.0, markersize='12')
-                plt.figtext(0.18, 0.35, 'dt = 0 years',
-                            c='purple', fontsize=20)
-                plt.figtext(0.20, 0.12, 'dt = 10 years',
-                            c='purple', fontsize=20)
-                plt.figtext(0.50, 0.70, 'little change?',
-                            c='orange', fontsize=20)
-                plt.figtext(0.50, 0.55, 'inset', fontsize=20)
-                # plt.figtext(1995, 2000,'dt = 0 years', fontsize=20)  # inscrutable "transform" option for plot co-ords
-                # plt.figtext(1995, 1992,'dt = 10 years', fontsize=20)
-            ax = plt.gca()
-            ax.tick_params(axis='both', labelsize=18)
-            plt.grid()
-            plt.rc('grid', linestyle="-", color='black')
-            plt.legend(['similar', 'somewhat similar', 'different'],
-                       loc='upper left', fontsize=20)
 
 #%% color and plot temporal connections against years of separation
 if do_ILAR_change7:
@@ -825,12 +679,15 @@ if do_ILAR_change7:
     plt.ylim(miny, maxy)
 
     for i in pair_index:
+        # date_diff = date2[i] - date1[i]
         if pair_name[i][0] == 'P':
             pair_str = pair_name[i][1:3]
         else:
             pair_str = pair_name[i][0:3]
         same_dur = int_of_sim[i]
         marker_type = '.'
+        xy1 = [date1[i], date2[i]]
+        xy2 = [date_diff, date_diff]
         if same_dur == -2:
             plt.plot(date2[i], date1[i], c='lightgray', alpha=1, marker=marker_type,linewidth=1.5, markersize='12', label="moderate change")
         if same_dur == -1:

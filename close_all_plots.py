@@ -1,4 +1,7 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
+#%%
 import matplotlib.pyplot as plt
 #%% close plots
 plt.close('all')
+
+# %%
