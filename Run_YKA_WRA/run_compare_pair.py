@@ -127,13 +127,13 @@ def run_compare_pair(repeater = '0', eq_num1 = 401, eq_num2 = 402, Zstart_buff =
     # Pro7 two_slice and snap options
     R_slow_plot    =    0.019
     T_slow_plot    =    0.000
-    snaptime       =    0  # relative to start_buff
+    snaptime       =    2  # relative to start_buff
     snaps          =    0
-    snap_depth     =   20  # time window over which snap is integrated (s)
+    snap_depth     =    2  # time window over which snap is integrated (s)
 
     # Pro 7 more plotting options
-    do_T = True       # present T plots
-    do_R = True       # present R plots
+    do_T = False       # present T plots
+    do_R = False       # present R plots
     tdiff_plots_too = False  # only applies to auto_slice - to speed plots of only amplitude
     log_plot      = False
     # tdiff_clip   =  0.15
