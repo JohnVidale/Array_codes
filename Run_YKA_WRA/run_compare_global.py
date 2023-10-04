@@ -4,10 +4,9 @@
 # this program tapers, filters, selects range and SNR
 # plots against traveltime curves, either raw or reduced against traveltimes
 
-def run_compare_global(repeater = 'NoName', eq_num1 = 401, eq_num2 = 402, start_buff =  0, wind_len    = 20,
+def run_compare_global(repeater = 'NoName', start_buff =  0, wind_len    = 20,
                      precursor_shift  = -1000, signal_dur = -1000, ARRAY = 5,
-                     freq_min = 1, freq_max = 2, shift_both = 0, tshift = 0,
-                     min_dist = 0, max_dist = 180,
+                     freq_min = 1, freq_max = 2, min_dist = 0, max_dist = 180,
                      apply_SNR = False):
 
     import os
@@ -27,9 +26,23 @@ def run_compare_global(repeater = 'NoName', eq_num1 = 401, eq_num2 = 402, start_
     from pro3_sort_plot_pair import pro3pair
 
     import matplotlib.pyplot as plt
+    import pandas as pd
     from termcolor import colored
 
-    # plt.close('all')
+    def search_df(df, column, value, partial_match=True):
+        df = df.astype({column:'string'})
+        if partial_match:
+            return df.loc[df[column].str.contains(value, na=False)]
+        else:
+            return df.loc[df[column] == value]
+
+    # look up pair of earthquakes
+    df = pd.read_excel('/Users/vidale/Documents/GitHub/Array_codes/Files/ICevents.full.xlsx', sheet_name='pairs')
+    lines0 = search_df(df,'label',repeater,partial_match=True)
+
+    eq_num1 = lines0.index1.iloc[0]
+    eq_num2 = lines0.index2.iloc[0]
+
     print(colored('Running global events ' + str(eq_num1) + ' and ' + str(eq_num2), 'green'))
     #%% Workflow selection
     get_small_1st  = False # get waveform data from tight arrays for 1st event
@@ -71,12 +84,12 @@ def run_compare_global(repeater = 'NoName', eq_num1 = 401, eq_num2 = 402, start_
 
     #%% Cull seismic section for common stations
     if make_plots == True:
-        pro3pair(ARRAY = ARRAY, repeater = repeater, eq_num1 = eq_num1, eq_num2 = eq_num2, stat_corr = 0,
+        pro3pair(ARRAY = ARRAY, repeater = repeater, stat_corr = 0,
                     rel_time = 3, start_buff = start_buff, end_buff = end_buff,
                     freq_min = freq_min, freq_max = freq_max, do_interpolate = False,
                     apply_SNR = apply_SNR, SNR_thres = SNR_thres,
                     precursor_shift = precursor_shift, signal_dur = signal_dur, fig_index = 3,
                     max_taper_length = 5, simple_taper = True,
-                    plot_scale_fac = plot_scale_fac, tshift = tshift, shift_both = shift_both,
-                    phase1 = phase1, phase2 = phase2, phase3 = phase3, phase4 = phase4,
+                    plot_scale_fac = plot_scale_fac, phase1 = phase1, phase2 = phase2, phase3 = phase3, phase4 = phase4,
                     min_dist = min_dist, max_dist = max_dist, auto_dist = auto_dist, ref_loc = False)
+                    

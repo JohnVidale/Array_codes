@@ -11,7 +11,7 @@ def pro7_pair_scan(eq_num1, eq_num2, repeater = '0', slow_delta = 0.0005, turn_o
               Zstart_buff = 50, Zend_buff = 50, zoom = False, tdiff_clip = 1,
               phase1 = 'PKiKP', phase2 = 'no', phase3 = 'no', phase4 = 'no',
               cc_thres = 0.8, min_amp = 0.2, cc_twin = 1, cc_len = 1,
-              R_slow_plot = 0.06, T_slow_plot = 0.0,
+              R_slow_plot = 0.06, T_slow_plot = 0.0, no_plots = False,
               snaptime = 8, snaps = 10, snap_depth = 0, freq_min = 0, freq_max = 0,
               nR_plots  = 3, nT_plots = 3, slow_incr = 0.01, NS = False,
               ARRAY = 0, auto_slice = True, two_slice_plots = False, beam_sums = True,
@@ -33,8 +33,9 @@ def pro7_pair_scan(eq_num1, eq_num2, repeater = '0', slow_delta = 0.0005, turn_o
     from obspy import Stream
     from termcolor import colored
     from obspy.geodetics import gps2dist_azimuth
+    import pandas as pd
     model = TauPyModel(model='ak135')
-
+    no_plots = True
     print(colored('Running pro7_pair_scan', 'cyan'))
     tdiff_clip = cc_twin * cc_len
     phasePKP_single = False
@@ -73,7 +74,7 @@ def pro7_pair_scan(eq_num1, eq_num2, repeater = '0', slow_delta = 0.0005, turn_o
 
     IC_beam = False
     beam_stack_rad = 0.01
-    folder_name = '/Users/vidale/Documents/Research/IC/'
+    folder_name = '/Users/ruoyan/Documents/Research/IC/'
 
     if zoom == True:
         if Zstart_buff  < start_buff:
@@ -86,23 +87,34 @@ def pro7_pair_scan(eq_num1, eq_num2, repeater = '0', slow_delta = 0.0005, turn_o
             exit()
 
     #%% Input parameters and computed files
-    fname1 = '/Users/vidale/Documents/Research/IC/EvLocs/event' + str(eq_num1) + '.txt'
-    fname2 = '/Users/vidale/Documents/Research/IC/EvLocs/event' + str(eq_num2) + '.txt'
-    file1 = open(fname1, 'r')
-    file2 = open(fname2, 'r')
-    lines1=file1.readlines()
-    lines2=file2.readlines()
-    split_line1  = lines1[0].split()
-    split_line2  = lines2[0].split()
-    t1           = UTCDateTime(split_line1[1])
+    fname1 = '/Users/ruoyan/Documents/Research/IC/EvLocs/event' + str(eq_num1) + '.txt'
+    fname2 = '/Users/ruoyan/Documents/Research/IC/EvLocs/event' + str(eq_num2) + '.txt'
+    
+    def search_df(df, column, value, partial_match=True):
+        df = df.astype({column:'string'})
+        if partial_match:
+            return df.loc[df[column].str.contains(value, na=False)]
+        else:
+            return df.loc[df[column] == value]
+    df = pd.read_excel('/Users/ruoyan/Documents/Research/IC/EvLocs/ICevents.full.xlsx', 
+                         sheet_name='events_loc_pure')
+    lines1 = search_df(df,'INDEX',str(eq_num1),partial_match=True)
+    lines2 = search_df(df,'INDEX',str(eq_num2),partial_match=True)
+    # lines1=file1.readlines()
+    # lines2=file2.readlines()
+    # split_line1  = lines1[0].split()
+    # split_line2  = lines2[0].split()
+    time1 = lines1.TIME1.iloc[0]
+    time2 = lines2.TIME1.iloc[0]
+    t1           = UTCDateTime(time1)
     # t2 = UTCDateTime(split_line2[1])  # not needed
     # date_label = '2018-04-02' # dates in filename
-    date_label1  = split_line1[1][0:10]
-    date_label2  = split_line2[1][0:10]
-    save_name = '/Users/vidale/Documents/Research/IC/Plots_hold/' + repeater + '_Array_' + str(ARRAY)
-    ev_lat       = float(split_line1[2])
-    ev_lon       = float(split_line1[3])
-    ev_depth     = float(split_line1[4])
+    date_label1  = time1[0:10]
+    date_label2  = time2[0:10]
+    save_name = '/Users/ruoyan/Documents/Research/IC/Plots_hold/' + repeater + '_Array_' + str(ARRAY)
+    ev_lat       = float(lines1.LAT1)
+    ev_lon       = float(lines1.LON1)
+    ev_depth     = float(lines1.DEP1)
 
     if ARRAY == 0:
         ref_lat =   36.30  # °N, around middle of Japan
@@ -237,7 +249,7 @@ def pro7_pair_scan(eq_num1, eq_num2, repeater = '0', slow_delta = 0.0005, turn_o
             pred_NsloPKP2 = event_pred_sloPKP2
             pred_EsloPKP2 = 0
 
-    name_str = '/Users/vidale/Documents/Research/IC/Pro_files/HD' + date_label1 + '_' + date_label2 + '_'
+    name_str = '/Users/ruoyan/Documents/Research/IC/Pro_files/HD' + date_label1 + '_' + date_label2 + '_'
     fname1  = name_str + 'tshift.mseed'
     fname2  = name_str + 'amp_ave.mseed'
     fname3  = name_str + 'cc.mseed'
@@ -346,7 +358,7 @@ def pro7_pair_scan(eq_num1, eq_num2, repeater = '0', slow_delta = 0.0005, turn_o
             plt.title(f'{date_label1} and {date_label2} IC stack in events {eq_num1} and {eq_num2} sum inside {beam_stack_rad} s/° , {freq_min}-{freq_max} Hz')
         else:
             plt.title(f'{pair_name} {arrayname} {eq_num1} and {eq_num2} beam env stack, sum within {beam_stack_rad} s/° of prediction, {freq_min}-{freq_max} Hz')
-        os.chdir('/Users/vidale/Documents/Research/IC/Plots_hold')
+        os.chdir('/Users/ruoyan/Documents/Research/IC/Plots_hold')
         plt.savefig(save_name + '_envelope.png')
 
     #%% Select subset if Zoomed
@@ -493,6 +505,8 @@ def pro7_pair_scan(eq_num1, eq_num2, repeater = '0', slow_delta = 0.0005, turn_o
                     plt.xlabel('Time (s)')
                     plt.ylabel('Radial slowness (s/km)')
                     plt.title(f'Tdiff at {target_slow:.3f} s/km T slowness, {fname1[48:58]}  {fname1[59:69]}  min amp {min_amp:.1f}  cc_thres {cc_thres:.2f}')
+                    if no_plots == False:
+                        plt.show()
                     fig_index += 1
 
                 #%% -- -- plot R amp
@@ -505,9 +519,9 @@ def pro7_pair_scan(eq_num1, eq_num2, repeater = '0', slow_delta = 0.0005, turn_o
                 y, x = np.meshgrid(stack_Rslows,ttt)
                 fig, ax = plt.subplots(1, figsize=(10,3))
                 if log_plot == True:
-                    c = ax.pcolormesh(x, y, np.transpose(stack_arrayR_Amp - global_max), cmap=plt.cm.gist_rainbow_r, vmin= - log_plot_range, vmax=0)
+                    c = ax.pcolormesh(x, y, np.transpose(stack_arrayR_Amp - global_max), cmap=plt.cm.turbo, vmin= - log_plot_range, vmax=0)
                 else:
-                    c = ax.pcolormesh(x, y, np.transpose(stack_arrayR_Amp), cmap=plt.cm.gist_rainbow_r, vmin= 0, vmax=global_max)
+                    c = ax.pcolormesh(x, y, np.transpose(stack_arrayR_Amp), cmap=plt.cm.turbo, vmin= 0, vmax=global_max)
                 fig.subplots_adjust(bottom=0.2)
                 ax.axis([x.min(), x.max(), y.min(), y.max()])
                 if log_plot == True:
@@ -522,6 +536,8 @@ def pro7_pair_scan(eq_num1, eq_num2, repeater = '0', slow_delta = 0.0005, turn_o
                 else:
                     plt.ylabel('Radial Slowness (s/km)')
                     plt.title(f'{pair_name}  {arrayname}  Amp at {target_slow:.3f} s/km T slowness, {fname1[48:58]}  {fname1[59:69]}')
+                if no_plots == False:
+                    plt.show()
                 fig_index += 1
 
         #%% -- T slices
@@ -568,6 +584,8 @@ def pro7_pair_scan(eq_num1, eq_num2, repeater = '0', slow_delta = 0.0005, turn_o
                     plt.xlabel('Time (s)')
                     plt.ylabel('Transverse slowness (s/km)')
                     plt.title(f'{phase1} Tdiff at {target_slow:.3f} s/km R slowness, {fname1[48:58]}  {fname1[59:69]}  min amp {min_amp:.1f}  cc_thres {cc_thres:.2f}')
+                    if no_plots == False:
+                        plt.show()
                     fig_index += 1
 
                 #%% -- -- plot T amp
@@ -580,9 +598,9 @@ def pro7_pair_scan(eq_num1, eq_num2, repeater = '0', slow_delta = 0.0005, turn_o
                 y, x = np.meshgrid(stack_Tslows,ttt)
                 fig, ax = plt.subplots(1, figsize=(10,3))
                 if log_plot == True:
-                    c = ax.pcolormesh(x, y, np.transpose(stack_arrayT_Amp - global_max), cmap=plt.cm.gist_rainbow_r, vmin= - log_plot_range, vmax=0)
+                    c = ax.pcolormesh(x, y, np.transpose(stack_arrayT_Amp - global_max), cmap=plt.cm.turbo, vmin= - log_plot_range, vmax=0)
                 else:
-                    c = ax.pcolormesh(x, y, np.transpose(stack_arrayT_Amp), cmap=plt.cm.gist_rainbow_r, vmin= 0, vmax=global_max)
+                    c = ax.pcolormesh(x, y, np.transpose(stack_arrayT_Amp), cmap=plt.cm.turbo, vmin= 0, vmax=global_max)
                 fig.subplots_adjust(bottom=0.2)
                 ax.axis([x.min(), x.max(), y.min(), y.max()])
                 if log_plot == True:
@@ -597,6 +615,8 @@ def pro7_pair_scan(eq_num1, eq_num2, repeater = '0', slow_delta = 0.0005, turn_o
                 else:
                     plt.ylabel('Transverse Slowness (s/km)')
                     plt.title(f'{pair_name}  {arrayname}  Amp at {target_slow:.3f} s/km R slowness, {fname1[48:58]}  {fname1[59:69]}')
+                if no_plots == False:
+                    plt.show()
                 fig_index += 1
 
     #%% 2-slices-plus-snaps option
@@ -684,6 +704,9 @@ def pro7_pair_scan(eq_num1, eq_num2, repeater = '0', slow_delta = 0.0005, turn_o
             plt.ylabel('R slowness (s/km)')
             plt.title(pair_name + ' ' + arrayname + ' ' + ' Time lag at ' + str(T_slow_plot) + ' s/km T slowness, ' + date_label1 + ' ' + date_label2)
             plt.savefig(save_name + '_Rtdiff_hist.png')
+        if no_plots == False:
+            plt.show()
+
         fig_index += 1
 
         #%% -- -- -- T/E plot
@@ -730,6 +753,9 @@ def pro7_pair_scan(eq_num1, eq_num2, repeater = '0', slow_delta = 0.0005, turn_o
                 plt.ylabel('T slowness (s/km)')
                 plt.title(pair_name + ' ' + arrayname + ' ' + ' Time lag at ' + str(R_slow_plot) + ' s/km R slowness, ' + date_label1 + ' ' + date_label2)
                 plt.savefig(save_name + '_Ttdiff_hist.png')
+            if no_plots == False:
+                plt.show()
+
             fig_index += 1
 
         #%% -- -- Correlation plots
@@ -778,6 +804,9 @@ def pro7_pair_scan(eq_num1, eq_num2, repeater = '0', slow_delta = 0.0005, turn_o
             plt.ylabel('R slowness (s/km)')
             plt.title(pair_name + ' ' + arrayname + ' ' + ' Correlation at ' + str(T_slow_plot) + ' T slowness, ' + date_label1 + ' ' + date_label2)
             plt.savefig(save_name + '_Rcc_hist.png')
+        if no_plots == False:
+            plt.show()
+
         fig_index += 1
 
         #%% -- -- -- T/E plot
@@ -823,6 +852,9 @@ def pro7_pair_scan(eq_num1, eq_num2, repeater = '0', slow_delta = 0.0005, turn_o
                 plt.ylabel('T slowness (s/km)')
                 plt.title(pair_name + ' ' + arrayname + ' ' + ' Correlation at ' + str(R_slow_plot) + ' R slowness, ' + date_label1 + ' ' + date_label2)
                 plt.savefig(save_name + '_TtdiffSection.png')
+            if no_plots == False:
+                plt.show()
+
             fig_index += 1
 
         #%% -- -- Amp plots
@@ -839,7 +871,7 @@ def pro7_pair_scan(eq_num1, eq_num2, repeater = '0', slow_delta = 0.0005, turn_o
         print(f'len(x) is {len(x)} and len(y) is {len(y)}')
         print(f'len(stack_Rslows) is {len(stack_Rslows)} and len(ttt) is {len(ttt)}')
         print(f'slowR_n is {slowR_n} and stack_nt is {stack_nt}')
-        c = ax.pcolormesh(x, y, np.transpose(stack_array), cmap=plt.cm.gist_rainbow_r, vmin=0)
+        c = ax.pcolormesh(x, y, np.transpose(stack_array), cmap=plt.cm.turbo, vmin=0)
         fig.colorbar(c, ax=ax, label='linear amplitude')
         fig.subplots_adjust(bottom=0.2)
         ax.axis([x.min(), x.max(), y.min(), y.max()])
@@ -871,6 +903,8 @@ def pro7_pair_scan(eq_num1, eq_num2, repeater = '0', slow_delta = 0.0005, turn_o
             plt.ylabel('R slowness (s/km)')
             plt.title(pair_name + ' ' + arrayname + ' ' + ' Amp at ' + str(T_slow_plot) + ' s/km T slowness, ' + date_label1 + ' ' + date_label2)
             plt.savefig(save_name + '_Ramp_hist.png')
+        if no_plots == False:
+            plt.show()
 
         fig_index += 1
 
@@ -886,7 +920,7 @@ def pro7_pair_scan(eq_num1, eq_num2, repeater = '0', slow_delta = 0.0005, turn_o
             y, x = np.meshgrid(stack_Tslows,ttt)
             fig, ax = plt.subplots(1, figsize=(10,3))
             fig.subplots_adjust(bottom=0.2)
-            c = ax.pcolormesh(x, y, np.transpose(stack_array), cmap=plt.cm.gist_rainbow_r, vmin=0)
+            c = ax.pcolormesh(x, y, np.transpose(stack_array), cmap=plt.cm.turbo, vmin=0)
             fig.colorbar(c, ax=ax, label='linear amplitude')
             ax.axis([x.min(), x.max(), y.min(), y.max()])
 
@@ -917,6 +951,8 @@ def pro7_pair_scan(eq_num1, eq_num2, repeater = '0', slow_delta = 0.0005, turn_o
                 plt.ylabel('T slowness (s/km)')
                 plt.title(pair_name + ' ' + arrayname + ' ' + ' Amp at ' + str(R_slow_plot) + ' s/km R slowness, ' + date_label1 + ' ' + date_label2)
                 plt.savefig(save_name + '_Tamp_hist.png')
+            if no_plots == False:
+                plt.show()
 
             fig_index += 1
 
@@ -969,6 +1005,8 @@ def pro7_pair_scan(eq_num1, eq_num2, repeater = '0', slow_delta = 0.0005, turn_o
                     plt.xlabel('T Slowness (s/km)')
                     plt.ylabel('R Slowness (s/km)')
                 plt.savefig(save_name + str(snap_start) + '_' + str(snap_end) + '_Tbeam.png')
+                if no_plots == False:
+                    plt.show()
 
             for snap_num in range(snaps):
                 snap_start = start_buff + snaptime + (snap_num  ) * snap_depth
@@ -984,12 +1022,18 @@ def pro7_pair_scan(eq_num1, eq_num2, repeater = '0', slow_delta = 0.0005, turn_o
 
                 y1, x1 = np.meshgrid(stack_Rslows,stack_Tslows)
                 fig, ax = plt.subplots(1, figsize=(7,0.8*7))
-                c = ax.pcolormesh(x1, y1, np.transpose(stack_slice), cmap=plt.cm.gist_rainbow_r)
+                c = ax.pcolormesh(x1, y1, np.transpose(stack_slice), cmap=plt.cm.turbo)
                 ax.axis([x1.min(), x1.max(), y1.min(), y1.max()])
                 if log_plot == True:
                     fig.colorbar(c, ax=ax, label = 'log amp')
                 else:
                     fig.colorbar(c, ax=ax, label = 'linear amp')
+                
+                maxindex = np.unravel_index(stack_slice.argmax(), stack_slice.shape)
+                maxT = stack_Tslows[maxindex[1]]
+                maxR = stack_Rslows[maxindex[0]]
+                #c = ax.scatter(x1[maxindex[1],maxindex[0]],y1[maxindex[1],maxindex[0]], color='blue')
+                c = ax.scatter(maxT,maxR)
                 c = ax.scatter(        0,         0, color='black' , s=50,  alpha=0.75)
                 c = ax.scatter(pred_Eslo , pred_Nslo , color='black' , s=50, alpha=0.75)
                 if phase2 != 'no':
@@ -1002,7 +1046,8 @@ def pro7_pair_scan(eq_num1, eq_num2, repeater = '0', slow_delta = 0.0005, turn_o
                 ax.add_artist(circle1)  # inner core limit
                 circle2 = plt.Circle((0, 0), 0.040, color='black', fill=False)
                 ax.add_artist(circle2)  # outer core limit
-                plt.title(f'Amp {snap_start:.0f} to {snap_end:.0f}s  {date_label1} {date_label2}  events {eq_num1}&{eq_num2}')
+                plt.title(f'Amp {snap_start:.0f} to {snap_end:.0f}s  {date_label1} {date_label2}  events {eq_num1}&{eq_num2}\n \
+                T{maxT:.3f} R{maxR:.3f} IdiffT{maxT-pred_Eslo2:.4f} IdiffR{maxR-pred_Nslo2:.4f} idiffT{maxT-pred_Eslo:.4f} idiffR{maxR-pred_Nslo:.4f}    ')
                 if NS:
                     plt.xlabel('E Slowness (s/km)')
                     plt.ylabel('N Slowness (s/km)')
@@ -1010,6 +1055,8 @@ def pro7_pair_scan(eq_num1, eq_num2, repeater = '0', slow_delta = 0.0005, turn_o
                     plt.xlabel('T Slowness (s/km)')
                     plt.ylabel('R Slowness (s/km)')
                 plt.savefig(save_name + str(snap_start) + '_' + str(snap_end) + '_Abeam.png')
+                if no_plots == False:
+                    plt.show()
 
     #%% Wiggly plots
     if wiggly_plots or pred_wiggles or max_wiggly_plot:
@@ -1017,7 +1064,7 @@ def pro7_pair_scan(eq_num1, eq_num2, repeater = '0', slow_delta = 0.0005, turn_o
         #%% -- read wiggle beams
         # Get saved event info, also used to name files
         # date_label = '2018-04-02' # date for filename
-        goto = '/Users/vidale/Documents/Research/IC/Pro_files'
+        goto = '/Users/ruoyan/Documents/Research/IC/Pro_files'
         os.chdir(goto)
         fname1 = 'HD' + date_label1 + '_2dstack.mseed'
         fname2 = 'HD' + date_label2 + '_2dstack.mseed'
@@ -1224,6 +1271,8 @@ def pro7_pair_scan(eq_num1, eq_num2, repeater = '0', slow_delta = 0.0005, turn_o
             plt.xlabel('T Slowness (s/km)')
         plt.title(f'{pair_name} {arrayname} {date_label1} {date_label2} {start_buff:.0f} to {end_buff:.0f} time shift')
         plt.savefig(save_name + '_Tbeam.png')
+        if no_plots == False:
+            plt.show()
 
     #%% -- R-T amplitude averaged over time window
         fig_index += 1
@@ -1255,9 +1304,9 @@ def pro7_pair_scan(eq_num1, eq_num2, repeater = '0', slow_delta = 0.0005, turn_o
         if log_plot == True:
             if (smax - smin) < log_plot_range:  # use full color scale even if range is less than specified
                 log_plot_range = smax - smin
-            c = ax.pcolormesh(x1, y1, np.transpose(stack_slice - smax), cmap=plt.cm.gist_rainbow_r, vmin= - log_plot_range, vmax=0)
+            c = ax.pcolormesh(x1, y1, np.transpose(stack_slice - smax), cmap=plt.cm.turbo, vmin= - log_plot_range, vmax=0)
         else:
-            c = ax.pcolormesh(x1, y1, np.transpose(stack_slice/smax), cmap=plt.cm.gist_rainbow_r, vmin = 0)
+            c = ax.pcolormesh(x1, y1, np.transpose(stack_slice/smax), cmap=plt.cm.turbo, vmin = 0)
         if log_plot == True:
             fig.colorbar(c, ax=ax, label='log amplitude')
         else:
@@ -1297,7 +1346,8 @@ def pro7_pair_scan(eq_num1, eq_num2, repeater = '0', slow_delta = 0.0005, turn_o
             plt.ylabel('R Slowness (s/km)')
         plt.title(f'{pair_name} {arrayname} {date_label1} {date_label2} {start_buff:.0f} to {end_buff:.0f} beam amp')
         plt.savefig(save_name + '_Abeam.png')
-
+        if no_plots == False:
+            plt.show()
     #%% Wiggly plot at max amplitude
     if max_wiggly_plot and zoom:
         #%% -- Select stack at max amp
@@ -1430,7 +1480,7 @@ def pro7_pair_scan(eq_num1, eq_num2, repeater = '0', slow_delta = 0.0005, turn_o
         plt.ylabel('Amplitude')
 
         plt.title(f'{pair_name}  {arrayname}  {phase1} {date_label1} {date_label2}  stack at predicted slowness \n in events {eq_num1} and {eq_num2}  Dist {ref_dist:.2f} Rslow  {Rslow_pred:.4f}  Tslow {Tslow_pred:.4f}')
-        os.chdir('/Users/vidale/Documents/Research/IC/Plots_hold')
+        os.chdir('/Users/ruoyan/Documents/Research/IC/Plots_hold')
         plt.savefig(save_name + '_' + 'pred_wig' + str(fig_index) + '.png')
 
 #  Save processed files
@@ -1451,3 +1501,4 @@ def pro7_pair_scan(eq_num1, eq_num2, repeater = '0', slow_delta = 0.0005, turn_o
     elapsed_time_wc = time.time() - start_time_wc
     print(f'Pro7 took {elapsed_time_wc:.1f} seconds')
     os.system('say "seven done"')
+    #plt.show()

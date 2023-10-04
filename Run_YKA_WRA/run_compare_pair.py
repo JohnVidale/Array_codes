@@ -4,12 +4,12 @@
 # this program tapers, filters, selects range and SNR
 # plots against traveltime curves, either raw or reduced against traveltimes
 
-def run_compare_pair(repeater = '0', eq_num1 = 401, eq_num2 = 402, Zstart_buff =  0, wind_len    = 20, wind_buff = 30,
+def run_compare_pair(repeater = '0', Zstart_buff =  0, wind_len    = 20, wind_buff = 30,
                      precursor_shift  = -1000, signal_dur     = -1000, ARRAY = 5, pair_name = '',
                      beam_width = 0.04, beam_offset = 0.00, slow_delta = 0.0025, flip = False, plot_peak = 1,
-                     freq_min = 1, freq_max = 3, shift_both = 0, trace_amp = 1,
+                     freq_min = 1, freq_max = 3, trace_amp = 1,
                      min_dist = 0, max_dist = 180, dphase  = 'PKiKP', fig_index = 100, win_norm = False, trace_norm = True,
-                     R_slow_plot = 0.017, T_slow_plot = 0, tshift = 0, wig_scale_fac = 0.5,
+                     R_slow_plot = 0.017, T_slow_plot = 0, wig_scale_fac = 0.5,
                      stat_corr = 1, apply_SNR = False, do_interpolate = False):
 
     import os
@@ -28,8 +28,23 @@ def run_compare_pair(repeater = '0', eq_num1 = 401, eq_num2 = 402, Zstart_buff =
     from pro5_stack2d            import pro5stack2d
     from pro6_pair_cc            import pro6_cc_pair
     from pro7_pair_scan          import pro7_pair_scan
+    import pandas as pd
     import matplotlib.pyplot as plt
     from termcolor import colored
+
+    def search_df(df, column, value, partial_match=True):
+        df = df.astype({column:'string'})
+        if partial_match:
+            return df.loc[df[column].str.contains(value, na=False)]
+        else:
+            return df.loc[df[column] == value]
+
+    # look up pair of earthquakes
+    df = pd.read_excel('/Users/vidale/Documents/GitHub/Array_codes/Files/ICevents.full.xlsx', sheet_name='pairs')
+    lines0 = search_df(df,'label',repeater,partial_match=True)
+
+    eq_num1 = lines0.index1.iloc[0]
+    eq_num2 = lines0.index2.iloc[0]
 
     # plt.close('all')
     print(colored('Running events ' + str(eq_num1) + ' and ' + str(eq_num2) + ' phase ' +  dphase + ' for ARRAY ' + str(ARRAY), 'green'))
@@ -146,14 +161,14 @@ def run_compare_pair(repeater = '0', eq_num1 = 401, eq_num2 = 402, Zstart_buff =
     #%% Comparing events
     #%% -- Cull seismic section for common stations
     if do_3 == True:
-        pro3pair(repeater = repeater, ARRAY = ARRAY, eq_num1 = eq_num1, eq_num2 = eq_num2, apply_SNR = apply_SNR,
+        pro3pair(repeater = repeater, ARRAY = ARRAY, apply_SNR = apply_SNR,
                     rel_time = rel_time, start_buff = start_buff, end_buff = end_buff, win_norm = win_norm, wind_buff = wind_buff,
                     freq_min = freq_min, freq_max = freq_max, do_interpolate = do_interpolate,
                     zoom = zoom, Zstart_buff = Zstart_buff, Zend_buff = Zend_buff, flip = flip,
-                    SNR_thres = SNR_thres, corr_threshold = corr_threshold, shift_both = shift_both,
+                    SNR_thres = SNR_thres, corr_threshold = corr_threshold,
                     precursor_shift = precursor_shift, signal_dur = signal_dur, fig_index = fig_index,
                     max_taper_length = max_taper_length, simple_taper = simple_taper, trace_amp = trace_amp,
-                    plot_scale_fac = plot_scale_fac, stat_corr = stat_corr, tshift = tshift,
+                    plot_scale_fac = plot_scale_fac, stat_corr = stat_corr,
                     phase1 = phase1, phase2 = phase2, phase3 = phase3, phase4 = phase4,
                     min_dist = min_dist, max_dist = max_dist, auto_dist = auto_dist, ref_loc = 0)
 
@@ -169,7 +184,7 @@ def run_compare_pair(repeater = '0', eq_num1 = 401, eq_num2 = 402, Zstart_buff =
 
     #%% -- Make a variety of plots
     if do_7 == True:
-        pro7_pair_scan(repeater = repeater, eq_num1 = eq_num1, eq_num2 = eq_num2, wig_scale_fac = wig_scale_fac, pair_name = pair_name,
+        pro7_pair_scan(repeater = repeater, wig_scale_fac = wig_scale_fac, pair_name = pair_name,
                     tdiff_scale_fac = tdiff_scale_fac, slowR_lo = slowR_lo, slowR_hi = slowR_hi,
                     slowT_lo = slowT_lo, slowT_hi = slowT_hi, slow_delta = slow_delta, fig_index = fig_index + 50,
                     zoom = zoom, ZslowR_lo = ZslowR_lo, ZslowR_hi = ZslowR_hi, ZslowT_lo = ZslowT_lo,
