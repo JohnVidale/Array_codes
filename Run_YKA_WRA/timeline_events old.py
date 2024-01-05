@@ -42,7 +42,7 @@ lon          = np.zeros(pair_count)
 do_YKA_change     = False
 do_ILAR_change    = False
 
-do_YKA_shift      = False
+do_YKA_shift      = True
 do_ILAR_shift     = False
 do_ILAR_YS_shift  = False
 which_plots = (do_YKA_change, do_ILAR_change, do_YKA_shift, do_ILAR_shift, do_ILAR_YS_shift)
@@ -79,9 +79,9 @@ do_ILAR_change5    = False # Miaki plot
 combine5 = True
 which_plots5 = (do_YKA_change5, do_ILAR_change5)
 
-do_YKA_change6  = True  # matches and mismatchs by interval
-do_ILAR_change6 = True
-combine6 = True
+do_YKA_change6  = False  # matches and mismatchs by interval
+do_ILAR_change6 = False
+combine6 = False
 which_plots6 = (do_YKA_change6, do_ILAR_change6)
 
 do_ILAR_change7 = False
@@ -90,12 +90,12 @@ do_YKA_change7  = False
 do_ILAR_change8 = False
 do_YKA_change8  = False
 
-do_YKA_change9  = True  # matches and mismatchs by interval
-do_ILAR_change9 = True
+do_YKA_change9  = False  # matches and mismatchs by interval
+do_ILAR_change9 = False
 combine9 = True
 which_plots9 = (do_YKA_change9, do_ILAR_change9)
 
-do_cons_change10 = True
+do_cons_change10 = False
 
 #%%  read in table
 for i in pair_index:

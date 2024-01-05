@@ -40,7 +40,7 @@ def pro7_pair_scan(repeater = '0', slow_delta = 0.0005, turn_off_black = 1,
     tdiff_clip = cc_twin * cc_len
     phasePKP_single = False
     phasePKP_double = False
-    label_plot = False
+    label_plot = True
     # if phase1 == 'PKP':
         # print(colored('code not configured to handle double PKP entries as phase1', 'yellow'))
         # sys.exit(-1)

@@ -698,7 +698,7 @@ def pro3pair(repeater = '0', stat_corr = 1, simple_taper = False, apply_SNR = Fa
                         doit = False
                     if (eq_num1 == 722 or eq_num2 == 722) and (st_name == 'YKR1' or st_name == 'YKR2' or st_name == 'YKR3'):
                         doit = False
-                    if (eq_num1 == 723 or eq_num2 == 723) and (st_name == 'IL01'):
+                    if (eq_num1 == 723 or eq_num2 == 723) and (st_name == 'IL01' or st_name == 'YKR1' or st_name == 'YKR3'):
                         doit = False
                     if (eq_num1 == 724 or eq_num2 == 724) and (st_name == 'YKB1' or st_name == 'YKR5'):
                         doit = False
@@ -715,6 +715,8 @@ def pro3pair(repeater = '0', stat_corr = 1, simple_taper = False, apply_SNR = Fa
                     if (eq_num1 == 742 or eq_num2 == 742) and (st_name == 'YKB1'):
                         doit = False
                     if (eq_num1 == 743 or eq_num2 == 743) and (st_name == 'YKB2'):
+                        doit = False
+                    if (eq_num1 == 745 or eq_num2 == 745) and (st_name == 'YKR2'):
                         doit = False
                     if (eq_num1 == 746 or eq_num2 == 746) and (st_name == 'YKR7'):
                         doit = False

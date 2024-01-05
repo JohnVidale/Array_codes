@@ -27,7 +27,7 @@ from run_compare_ind      import run_compare_ind
 # run_compare_ind(repeater = 'P08')
 # run_compare_ind(repeater = 'P09')
 # run_compare_ind(repeater = 'P10')
-run_compare_ind(repeater = 'P11')
+# run_compare_ind(repeater = 'P11')
 # run_compare_ind(repeater = 'P12')
 # run_compare_ind(repeater = 'P13')
 # run_compare_ind(repeater = 'P14')
@@ -151,7 +151,7 @@ run_compare_ind(repeater = 'P11')
 # run_compare_ind(repeater = 'P137')
 # run_compare_ind(repeater = 'P138')
 # run_compare_ind(repeater = 'P139')
-# run_compare_ind(repeater = 'P140') # nothing
+run_compare_ind(repeater = 'P140') # nothing
 # run_compare_ind(repeater = 'P141')
 # run_compare_ind(repeater = 'P142')
 # run_compare_ind(repeater = 'P143')
