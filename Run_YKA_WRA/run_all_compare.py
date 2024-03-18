@@ -79,7 +79,7 @@ from run_compare_ind      import run_compare_ind
 # run_compare_ind(repeater = 'P65')
 # run_compare_ind(repeater = 'P66')
 # run_compare_ind(repeater = 'P67')
-# run_compare_ind(repeater = 'P68')
+run_compare_ind(repeater = 'P68')
 # run_compare_ind(repeater = 'P69')
 # run_compare_ind(repeater = 'P70')
 # run_compare_ind(repeater = 'P71')
@@ -111,7 +111,6 @@ from run_compare_ind      import run_compare_ind
 # run_compare_ind(repeater = 'P97')
 # run_compare_ind(repeater = 'P98')
 # run_compare_ind(repeater = 'P99')
-# run_compare_ind(repeater = 'P100')
 # run_compare_ind(repeater = 'P101')
 # run_compare_ind(repeater = 'P102')
 # run_compare_ind(repeater = 'P103')
@@ -151,7 +150,7 @@ from run_compare_ind      import run_compare_ind
 # run_compare_ind(repeater = 'P137')
 # run_compare_ind(repeater = 'P138')
 # run_compare_ind(repeater = 'P139')
-run_compare_ind(repeater = 'P140') # nothing
+# run_compare_ind(repeater = 'P140') # nothing
 # run_compare_ind(repeater = 'P141')
 # run_compare_ind(repeater = 'P142')
 # run_compare_ind(repeater = 'P143')
@@ -164,6 +163,42 @@ run_compare_ind(repeater = 'P140') # nothing
 # run_compare_ind(repeater = 'P150')
 # run_compare_ind(repeater = 'P151')
 # run_compare_ind(repeater = 'P152')
+
+# run_compare_ind(repeater = 'P200') # 863 similar, not identical
+# run_compare_ind(repeater = 'P201') # 863 similar, not identical
+# run_compare_ind(repeater = 'P222') # 869
+# run_compare_ind(repeater = 'P223') # 870
+# run_compare_ind(repeater = 'P231') # 873
+# run_compare_ind(repeater = 'P232') # 874
+# run_compare_ind(repeater = 'P266') # 888
+# run_compare_ind(repeater = 'P302') # 889 good
+# run_compare_ind(repeater = 'P303') # 889 good
+# run_compare_ind(repeater = 'P316') # 904 good
+# run_compare_ind(repeater = 'P318') # 904
+# run_compare_ind(repeater = 'P319') # 904
+# run_compare_ind(repeater = 'P321') # 905 good
+# run_compare_ind(repeater = 'P322') # 905 good
+# run_compare_ind(repeater = 'P324') # 906
+# run_compare_ind(repeater = 'P325') # 906
+# run_compare_ind(repeater = 'P329') # 907
+# run_compare_ind(repeater = 'P331') # 908
+# run_compare_ind(repeater = 'P332') # 908
+# run_compare_ind(repeater = 'P333') # 899
+# run_compare_ind(repeater = 'P334') # 899
+# run_compare_ind(repeater = 'P335') # 899
+# run_compare_ind(repeater = 'P336') # 899 & 908
+# run_compare_ind(repeater = 'P337') # 904
+# run_compare_ind(repeater = 'P338') # 904
+# run_compare_ind(repeater = 'P339') # 905
+# run_compare_ind(repeater = 'P340') # 906
+
+# run_compare_ind(repeater = 'P350')
+# run_compare_ind(repeater = 'P351')
+# run_compare_ind(repeater = 'P352')
+# run_compare_ind(repeater = 'P353')
+# run_compare_ind(repeater = 'P354')
+# run_compare_ind(repeater = 'P355')
+# run_compare_ind(repeater = 'P356')
 
 # run_compare_ind(repeater = 'COMP')
 

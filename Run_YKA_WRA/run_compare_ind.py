@@ -37,7 +37,7 @@ def run_compare_ind(repeater = 'NoName',do_global = False, do_YKA = False, do_IL
             return df.loc[df[column] == value]
 
     # look up pair of earthquakes and time shifts in pairs
-    df = pd.read_excel('/Users/vidale/Documents/GitHub/Array_codes/Files/ICevents.full.xlsx', sheet_name='pairs')
+    df = pd.read_excel('/Users/vidale/Documents/GitHub/Array_codes/Files/ICevents_full.xlsx', sheet_name='pairs')
     lines0       = search_df(df,'label'      ,repeater,partial_match=True)
     eq_num1      = lines0.index1.iloc[0]
     eq_num2      = lines0.index2.iloc[0]
@@ -63,12 +63,14 @@ def run_compare_ind(repeater = 'NoName',do_global = False, do_YKA = False, do_IL
     # Skip some arrays?
     # do_YKA      = False
     # do_ILAR     = False
-    do_ILAR_pre = False
-    do_global   = False
+    # do_ILAR_pre = False
+    # do_global   = False
+
+    print(colored('do_global ' + str(do_global) + ' and do_ILAR ' + str(do_ILAR), 'green'))
 
     if do_global:
         start_buff = -10 # analysis window start relative to phase arrival
-        wind_len    = 50 # analysis window length
+        wind_len    = 30 # analysis window length
         run_compare_global(repeater = repeater, freq_min = freq_min, freq_max = freq_max, ARRAY = 7,
                 start_buff = start_buff, wind_len = wind_len)
 
@@ -81,9 +83,9 @@ def run_compare_ind(repeater = 'NoName',do_global = False, do_YKA = False, do_IL
 
 #%% YKA PKIKP
     if do_YKA:
-        Zstart_buff = -5 # analysis window start relative to phase arrival
-        wind_len    = 70 # analysis window length
-        plot_peak = 1
+        Zstart_buff = -10 # analysis window start relative to phase arrival
+        wind_len    =  30 # analysis window length
+        plot_peak = 1.0
         run_compare_pair(repeater = repeater, dphase = 'PKIKP',
                 beam_width = beam_width, slow_delta = slow_delta, beam_offset = beam_offset,
                 freq_min = freq_min, freq_max = freq_max, stat_corr = 0, ARRAY = 5,
@@ -103,8 +105,9 @@ def run_compare_ind(repeater = 'NoName',do_global = False, do_YKA = False, do_IL
 
 #%% ILAR PKP
     if do_ILAR:
-        Zstart_buff =  -5 # analysis window start relative to phase arrival
-        wind_len    =  70 # analysis window length
+        Zstart_buff = -10 # analysis window start relative to phase arrival
+        wind_len    =  30 # analysis window length
+        plot_peak = 1.0
         run_compare_pair(repeater = repeater, dphase = 'PKIKP',
                 beam_width = beam_width, slow_delta = slow_delta, beam_offset = beam_offset,
                 freq_min = freq_min, freq_max = freq_max, stat_corr = 0, ARRAY = 6,
@@ -115,9 +118,9 @@ def run_compare_ind(repeater = 'NoName',do_global = False, do_YKA = False, do_IL
     win_norm =  True
     trace_norm = False
     if do_ILAR_pre:
-        Zstart_buff = -20 # analysis window start relative to phase arrival
-        wind_len    =  40 # analysis window length
-        plot_peak = 0.1
+        Zstart_buff = -15 # analysis window start relative to phase arrival
+        wind_len    =  16 # analysis window length
+        plot_peak = 0.04
         run_compare_pair(repeater = repeater, dphase = 'PKIKP',
                 beam_width = beam_width, slow_delta = slow_delta, beam_offset = beam_offset, win_norm = win_norm,trace_norm = trace_norm,
                 freq_min = freq_min, freq_max = freq_max, stat_corr = 0, ARRAY = 6, trace_amp = 0.5,

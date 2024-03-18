@@ -37,7 +37,7 @@ def run_compare_global(repeater = 'NoName', start_buff =  0, wind_len    = 20,
             return df.loc[df[column] == value]
 
     # look up pair of earthquakes
-    df = pd.read_excel('/Users/vidale/Documents/GitHub/Array_codes/Files/ICevents.full.xlsx', sheet_name='pairs')
+    df = pd.read_excel('/Users/vidale/Documents/GitHub/Array_codes/Files/ICevents_full.xlsx', sheet_name='pairs')
     lines0 = search_df(df,'label',repeater,partial_match=True)
 
     eq_num1 = lines0.index1.iloc[0]

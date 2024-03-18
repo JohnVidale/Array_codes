@@ -40,7 +40,7 @@ def run_compare_pair(repeater = '0', Zstart_buff =  0, wind_len    = 20, wind_bu
             return df.loc[df[column] == value]
 
     # look up pair of earthquakes
-    df = pd.read_excel('/Users/vidale/Documents/GitHub/Array_codes/Files/ICevents.full.xlsx', sheet_name='pairs')
+    df = pd.read_excel('/Users/vidale/Documents/GitHub/Array_codes/Files/ICevents_full.xlsx', sheet_name='pairs')
     lines0 = search_df(df,'label',repeater,partial_match=True)
 
     eq_num1 = lines0.index1.iloc[0]
@@ -49,6 +49,11 @@ def run_compare_pair(repeater = '0', Zstart_buff =  0, wind_len    = 20, wind_bu
     # plt.close('all')
     print(colored('Running events ' + str(eq_num1) + ' and ' + str(eq_num2) + ' phase ' +  dphase + ' for ARRAY ' + str(ARRAY), 'green'))
     #%% Workflow selection
+    do_3  = False  # start all off
+    do_5  = False
+    do_6  = False
+    do_7  = False
+
     do_3  = True  # pair of events
     do_5  = True
     do_6  = True
@@ -130,8 +135,8 @@ def run_compare_pair(repeater = '0', Zstart_buff =  0, wind_len    = 20, wind_bu
 
     # Pro 7 auto_slice == True options
     auto_slice      = False  # slices span wide range of R and T slownesses
-    two_slice_plots = True  # makes R-T pair and snap through time span
-    beam_sums       = True  # sums tdiff and amp over time
+    two_slice_plots = False  # makes R-T pair and snap through time span
+    beam_sums       = False  # sums tdiff and amp over time
     wiggly_plots    = False  # shows wiggly plots
 
     # Pro7 auto-plot options
@@ -180,7 +185,7 @@ def run_compare_pair(repeater = '0', Zstart_buff =  0, wind_len    = 20, wind_bu
 
     # %% -- Compare pair of 2D stack results to find shift, amp, amp ratio, uses cc rather than instant phase
     if do_6 == True:
-        pro6_cc_pair(eq_num1 = eq_num1, eq_num2 = eq_num2, slowR_lo = slowR_lo, slowR_hi = slowR_hi, slowT_lo = slowT_lo, slowT_hi = slowT_hi, slow_delta = slow_delta,start_buff = start_buff, end_buff = end_buff, cc_twin = cc_twin, cc_len = cc_len, cc_interp1d = cc_interp1d, cc_delta = cc_delta, cc_thres = cc_thres)
+        pro6_cc_pair(repeater = repeater, eq_num1 = eq_num1, eq_num2 = eq_num2, slowR_lo = slowR_lo, slowR_hi = slowR_hi, slowT_lo = slowT_lo, slowT_hi = slowT_hi, slow_delta = slow_delta,start_buff = start_buff, end_buff = end_buff, cc_twin = cc_twin, cc_len = cc_len, cc_interp1d = cc_interp1d, cc_delta = cc_delta, cc_thres = cc_thres)
 
     #%% -- Make a variety of plots
     if do_7 == True:
