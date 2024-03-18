@@ -56,6 +56,8 @@ def pro3pair(repeater = '0', stat_corr = 1, simple_taper = False, apply_SNR = Fa
     do_decimate = False   # 0 if no decimation desired
     dec_factor = 10
     plot_sta_names = True
+    dist_plot = False     # plot seismograms according to distance
+    blowup_PKIKP = False
     # if ref_loc ==true,  use ref_rad        to filter station distance
     # if ref_loc ==false, use earthquake loc to filter station distance
     #    ref_rad = 0.4    # ° radius (°) set by input or at top
@@ -79,6 +81,7 @@ def pro3pair(repeater = '0', stat_corr = 1, simple_taper = False, apply_SNR = Fa
         elif ARRAY == 6:
             ref_lat =    64.77  # °N ILAR
             ref_lon =  -146.89  # °E
+        # ARRAY == 7 is global station set
 
     if rel_time == 0: # SNR requirement not implemented for unaligned traces
         SNR_thres = 0
@@ -93,7 +96,7 @@ def pro3pair(repeater = '0', stat_corr = 1, simple_taper = False, apply_SNR = Fa
             return df.loc[df[column] == value]
 
     # look up pair of earthquakes and time shifts in pairs
-    df = pd.read_excel('/Users/vidale/Documents/GitHub/Array_codes/Files/ICevents.full.xlsx', sheet_name='pairs')
+    df = pd.read_excel('/Users/vidale/Documents/GitHub/Array_codes/Files/ICevents_full.xlsx', sheet_name='pairs')
     lines0       = search_df(df,'label'      ,repeater,partial_match=True)
     eq_num1      = lines0.index1.iloc[0]
     eq_num2      = lines0.index2.iloc[0]
@@ -108,7 +111,7 @@ def pro3pair(repeater = '0', stat_corr = 1, simple_taper = False, apply_SNR = Fa
 
 
     # read origin times for that pair in events
-    df = pd.read_excel('/Users/vidale/Documents/GitHub/Array_codes/Files/ICevents.full.xlsx', sheet_name='events')
+    df = pd.read_excel('/Users/vidale/Documents/GitHub/Array_codes/Files/ICevents_full.xlsx', sheet_name='events')
     lines1 = search_df(df,'INDEX',str(eq_num1),partial_match=True)
     lines2 = search_df(df,'INDEX',str(eq_num2),partial_match=True)
 
@@ -124,6 +127,7 @@ def pro3pair(repeater = '0', stat_corr = 1, simple_taper = False, apply_SNR = Fa
     year_label1  = time1[0:4]
     year_label2  = time2[0:4]
     year_short_label1  = time1[2:4]
+
     year_short_label2  = time2[2:4]
     month_label1   = time1[5:7]
     month_label2   = time2[5:7]
@@ -142,7 +146,8 @@ def pro3pair(repeater = '0', stat_corr = 1, simple_taper = False, apply_SNR = Fa
     ev_lon2      = float(lines2.LON)
     ev_depth1    = float(lines1.DEP)
     ev_depth2    = float(lines2.DEP)
-
+    if abs(ev_depth1 - ev_depth2) > 0.001:  # depths come from 2nd sheet of parameters, should be equal
+        print(colored('depth 1 ' + str(ev_depth1) + ' does not equal depth2 ' + str(ev_depth2), 'red'))
     print('1st event: date_label ' + date_label1 + ' time ' + str(t1) + ' lat '
        + str(ev_lat1) + ' lon ' + str( ev_lon1) + ' depth ' + str(ev_depth1))
     print('2nd event: date_label ' + date_label2 + ' time ' + str(t2) + ' lat '
@@ -205,9 +210,9 @@ def pro3pair(repeater = '0', stat_corr = 1, simple_taper = False, apply_SNR = Fa
             sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_AU_WR.txt'
         elif ARRAY == 5 or ARRAY == 99: #         Yellowknife set
             sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_CN_YK.txt'
-        elif ARRAY == 6: #         Yellowknife set
+        elif ARRAY == 6: #         ILAR set
             sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_ILAR.txt'
-        elif ARRAY == 7: #         Yellowknife set
+        elif ARRAY == 7: #         Global set
             sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_global.txt'
         with open(sta_file, 'r') as file:
             lines = file.readlines()
@@ -776,22 +781,57 @@ def pro3pair(repeater = '0', stat_corr = 1, simple_taper = False, apply_SNR = Fa
                         doit = False
                     if (eq_num1 == 848 or eq_num2 == 848) and (st_name == 'YKB1'):
                         doit = False
-                    if (eq_num1 == 852 or eq_num2 == 852) and (st_name == 'YKR4'):
-                        doit = False
-                    if (eq_num1 == 853 or eq_num2 == 853) and (st_name == 'YKR4'):
-                        doit = False
-                    if (eq_num1 == 854 or eq_num2 == 854) and (st_name == 'YKR4'):
-                        doit = False
-                    if (eq_num1 == 857 or eq_num2 == 857) and (st_name == 'YKR4'):
+                    if ((eq_num1 >= 852 and eq_num1 <= 883) or (eq_num2 >= 852 and eq_num2 <= 883)) and (st_name == 'YKR4' or st_name == 'IL14'):
                         doit = False
                     if (eq_num1 == 859 or eq_num2 == 859) and (st_name == 'IL08' or st_name == 'IL10' or st_name == 'YKR1'):
                         doit = False
-                    if (eq_num1 == 860 or eq_num2 == 860) and (st_name == 'IL08' or st_name == 'IL14' or st_name == 'YKR4' or st_name == 'YKR1'):
+                    if (eq_num1 == 860 or eq_num2 == 860) and (st_name == 'IL08' or st_name == 'YKR1'):
                         doit = False
-                    if (eq_num1 == 861 or eq_num2 == 861) and (st_name == 'IL08' or st_name == 'IL14' or st_name == 'YKR4'):
+                    if (eq_num1 == 861 or eq_num2 == 861) and (st_name == 'IL08'):
                         doit = False
-                    if (eq_num1 == 862 or eq_num2 == 862) and (st_name == 'IL08' or st_name == 'IL14' or st_name == 'YKR4' or
-                                                               st_name == 'IL15' or st_name == 'IL16' or st_name == 'IL17'):
+                    if (eq_num1 == 862 or eq_num2 == 862) and (st_name == 'IL08' or st_name == 'IL15' or st_name == 'IL16' or st_name == 'IL17'):
+                        doit = False
+                    if (eq_num1 == 880 or eq_num2 == 880) and (st_name == 'YKR1'):
+                        doit = False
+                    if (eq_num1 == 884 or eq_num2 == 884) and (st_name == 'IL08'):
+                        doit = False
+                    if ((eq_num1 >= 884 and eq_num1 <= 888) or (eq_num2 >= 884 and eq_num2 <= 888)) and (st_name == 'IL14'):
+                        doit = False
+                    if (eq_num1 == 885 or eq_num2 == 885) and (st_name == 'IL16'):
+                        doit = False
+                    if (eq_num1 == 892 or eq_num2 == 892) and (st_name == 'IL14'):
+                        doit = False
+                    if (eq_num1 == 894 or eq_num2 == 894) and (st_name == 'YKR2' or st_name == 'YKR1'):
+                        doit = False
+                    if (eq_num1 == 895 or eq_num2 == 895) and (st_name == 'YKR2' or st_name == 'YKR1' or st_name == 'IL14'):
+                        doit = False
+                    if (eq_num1 == 896 or eq_num2 == 896) and (st_name == 'IL14'):
+                        doit = False
+                    if (eq_num1 == 897 or eq_num2 == 897) and (st_name == 'YKR1' or st_name == 'IL14'):
+                        doit = False
+                    if (eq_num1 == 898 or eq_num2 == 898) and (st_name == 'YKB1' or st_name == 'YKB4' or st_name == 'YKR1' or st_name == 'YKR2' or st_name == 'IL14'):
+                        doit = False
+                    if (eq_num1 == 899 or eq_num2 == 899) and (st_name == 'YKR1' or st_name == 'YKR2' or st_name == 'IL07' or st_name == 'IL14' or st_name == 'IL08' or st_name == 'IL15'):
+                        doit = False
+                    if (eq_num1 == 900 or eq_num2 == 900) and (st_name == 'YKR1' or st_name == 'YKR2' or st_name == 'YKB2'):
+                        doit = False
+                    if (eq_num1 == 901 or eq_num2 == 901) and (st_name == 'IL14'):
+                        doit = False
+                    if (eq_num1 == 902 or eq_num2 == 902) and (st_name == 'IL14'):
+                        doit = False
+                    if (eq_num1 == 903 or eq_num2 == 903) and (st_name == 'IL01' or st_name == 'IL13' or st_name == 'IL14' or st_name == 'IL15' or st_name == 'IL16' or st_name == 'IL17'):
+                        doit = False
+                    if (eq_num1 == 904 or eq_num2 == 904) and (st_name == 'IL08' or st_name == 'IL14'):
+                        doit = False
+                    if (eq_num1 == 905 or eq_num2 == 905) and (st_name == 'IL08' or st_name == 'IL14'):
+                        doit = False
+                    if (eq_num1 == 906 or eq_num2 == 906) and (st_name == 'YKR1' or st_name == 'IL08' or st_name == 'IL14'):
+                        doit = False
+                    if (eq_num1 == 907 or eq_num2 == 907) and (st_name == 'IL08' or st_name == 'IL14'):
+                        doit = False
+                    if (eq_num1 == 908 or eq_num2 == 908) and (st_name == 'IL08' or st_name == 'IL14'):
+                        doit = False
+                    if (eq_num1 == 909 or eq_num2 == 909) and (st_name == 'IL08' or st_name == 'IL14'):
                         doit = False
                     if doit == True:
                         st1good += tr1
@@ -889,7 +929,10 @@ def pro3pair(repeater = '0', stat_corr = 1, simple_taper = False, apply_SNR = Fa
             e_t = t1 + end_buff - wind_buff
             snippet = tr.copy()
             snippet.trim( starttime = s_t, endtime = e_t)
-            smax = abs(snippet.max())
+            if blowup_PKIKP:
+                smax = abs(snippet.max())/20. # blow up PKIKP 20X
+            else:
+                smax = abs(snippet.max())
         else:
             smax = tr.data.max() - tr.data.min()
         plt.plot(ttt, (tr.data - np.median(tr.data))*trace_amp/smax + tr_cnt, color = 'green')
@@ -904,7 +947,10 @@ def pro3pair(repeater = '0', stat_corr = 1, simple_taper = False, apply_SNR = Fa
             e_t = t2 + end_buff - wind_buff
             snippet = tr.copy()
             snippet.trim( starttime = s_t, endtime = e_t)
-            smax = abs(snippet.max())
+            if blowup_PKIKP:
+                smax = abs(snippet.max())/20. # blow up PKIKP 20X
+            else:
+                smax = abs(snippet.max())
         else:
             smax = tr.data.max() - tr.data.min()
         plt.plot(ttt, (tr.data - np.median(tr.data))*trace_amp/smax + tr_cnt, color = 'red')
@@ -918,170 +964,171 @@ def pro3pair(repeater = '0', stat_corr = 1, simple_taper = False, apply_SNR = Fa
     elif ARRAY == 4 :
         plt.title(phase1 + ' for ' + fname1[46:50] + '-' + fname1[50:52] + '-' + fname1[52:54] + ' vs ' + fname2[46:50] + '-' + fname2[50:52] + '-' + fname2[52:54] + ' for array WRA, ' + str(eq_num1) + ' and ' + str(eq_num2) + ' freqs ' + str(freq_min) + '-' + str(freq_max) + ' Hz')
     elif ARRAY == 5 or ARRAY== 99:
-        plt.title(phase1 + ' for ' + fname1[46:50] + '-' + fname1[50:52] + '-' + fname1[52:54] + ' vs ' + fname2[46:50] + '-' + fname2[50:52] + '-' + fname2[52:54] + ' for array YKA, ' + str(eq_num1) + '(g) and ' + str(eq_num2) + '(r), freqs ' + str(freq_min) + '-' + str(freq_max) + ' Hz')
+        plt.title(repeater + ' ' + phase1 + ' for ' + fname1[46:50] + '-' + fname1[50:52] + '-' + fname1[52:54] + ' vs ' + fname2[46:50] + '-' + fname2[50:52] + '-' + fname2[52:54] + ' for array YKA, ' + str(eq_num1) + '(g) and ' + str(eq_num2) + '(r), freqs ' + str(freq_min) + '-' + str(freq_max) + ' Hz')
     elif ARRAY == 6:
-        plt.title(phase1 + ' for ' + fname1[47:51] + '-' + fname1[51:53] + '-' + fname1[53:55] + ' vs ' + fname2[47:51] + '-' + fname2[51:53] + '-' + fname2[53:55] + ' for array ILAR, ' + str(eq_num1) + '(g) and ' + str(eq_num2) + '(r), freqs ' + str(freq_min) + '-' + str(freq_max) + ' Hz')
+        plt.title(repeater + ' ' + phase1 + ' for ' + fname1[47:51] + '-' + fname1[51:53] + '-' + fname1[53:55] + ' vs ' + fname2[47:51] + '-' + fname2[51:53] + '-' + fname2[53:55] + ' for array ILAR, ' + str(eq_num1) + '(g) and ' + str(eq_num2) + '(r), freqs ' + str(freq_min) + '-' + str(freq_max) + ' Hz')
     elif ARRAY == 7:
         plt.title(repeater + ' ' + phase1 + ' for ' + fname1[49:53] + '-' + fname1[53:55] + '-' + fname1[55:57] + ' vs ' + fname2[49:53] + '-' + fname2[53:55] + '-' + fname2[55:57] + ' for global array, ' + str(eq_num1) + '(g) and ' + str(eq_num2) + '(r), freqs ' + str(freq_min) + '-' + str(freq_max) + ' Hz', y = 1)
 
     os.chdir('/Users/vidale/Documents/Research/IC/Plots_hold')
     plt.savefig(repeater + '_Array_' + str(ARRAY) + '_traces')
 
-    #%% plot traces
-    # fig_index = 3
-    plt.figure(figsize=(10,5), num = fig_index + 1)
+    #%% plot traces at true distance
+    if dist_plot:
+        # fig_index = 3
+        plt.figure(figsize=(10,5), num = fig_index + 1)
 
-    plt.xlim(min_time_plot,max_time_plot)
+        plt.xlim(min_time_plot,max_time_plot)
 
-    if auto_dist == True:
-        if(max_dist_auto == min_dist_auto):
-            min_dist_auto -= 1
-            max_dist_auto += 1
-        dist_diff = max_dist_auto - min_dist_auto # add space at extremes
-        plt.ylim(min_dist_auto - 0.1 * dist_diff, max_dist_auto + 0.2 * dist_diff)
-    else:
-        plt.ylim(min_dist,max_dist)
+        if auto_dist == True:
+            if(max_dist_auto == min_dist_auto):
+                min_dist_auto -= 1
+                max_dist_auto += 1
+            dist_diff = max_dist_auto - min_dist_auto # add space at extremes
+            plt.ylim(min_dist_auto - 0.1 * dist_diff, max_dist_auto + 0.2 * dist_diff)
+        else:
+            plt.ylim(min_dist,max_dist)
 
-    for tr in st1good:
-        dist_offset = tr.stats.distance # trying for approx degrees
-        ttt = np.arange(len(tr.data)) * tr.stats.delta + (tr.stats.starttime - t1)
-        plt.plot(ttt, (tr.data - np.median(tr.data))*plot_scale_fac /(tr.data.max()
-            - tr.data.min()) + dist_offset, color = 'green')
+        for tr in st1good:
+            dist_offset = tr.stats.distance # trying for approx degrees
+            ttt = np.arange(len(tr.data)) * tr.stats.delta + (tr.stats.starttime - t1)
+            plt.plot(ttt, (tr.data - np.median(tr.data))*plot_scale_fac /(tr.data.max()
+                - tr.data.min()) + dist_offset, color = 'green')
 
-    for tr in st2good:
-        dist_offset = tr.stats.distance # trying for approx degrees
-        ttt = np.arange(len(tr.data)) * tr.stats.delta + (tr.stats.starttime - t2)
-        plt.plot(ttt, (tr.data - np.median(tr.data))*plot_scale_fac /(tr.data.max()
-            - tr.data.min()) + dist_offset, color = 'red')
-        if plot_sta_names:
-            plt.text(min_time_plot + 0.015 * (max_time_plot - min_time_plot), dist_offset + 0.003 * (max_dist_auto - min_dist_auto), tr.stats.station, color = 'black')
+        for tr in st2good:
+            dist_offset = tr.stats.distance # trying for approx degrees
+            ttt = np.arange(len(tr.data)) * tr.stats.delta + (tr.stats.starttime - t2)
+            plt.plot(ttt, (tr.data - np.median(tr.data))*plot_scale_fac /(tr.data.max()
+                - tr.data.min()) + dist_offset, color = 'red')
+            if plot_sta_names:
+                plt.text(min_time_plot + 0.015 * (max_time_plot - min_time_plot), dist_offset + 0.003 * (max_dist_auto - min_dist_auto), tr.stats.station, color = 'black')
 
-#%% -- Traveltime curves
-    if plot_tt:
-        # first traveltime curve
-        line_pts = 50
-        dist_vec  = np.arange(min_dist_auto, max_dist_auto, (max_dist_auto - min_dist_auto)/line_pts) # distance grid
-        time_vec1 = np.arange(min_dist_auto, max_dist_auto, (max_dist_auto - min_dist_auto)/line_pts) # empty time grid of same length (filled with -1000)
+    #%% -- Traveltime curves
+        if plot_tt:
+            # first traveltime curve
+            line_pts = 50
+            dist_vec  = np.arange(min_dist_auto, max_dist_auto, (max_dist_auto - min_dist_auto)/line_pts) # distance grid
+            time_vec1 = np.arange(min_dist_auto, max_dist_auto, (max_dist_auto - min_dist_auto)/line_pts) # empty time grid of same length (filled with -1000)
 
-        for i in range(0,line_pts):
-            arrivals = model.get_travel_times(source_depth_in_km=ev_depth1,distance_in_degree=dist_vec[i],phase_list=[phase1])
-            if(len(arrivals) == 0 and dist_vec[i] < 10 and phase1 == 'P'):  # in case first arrival is upgoing P, which is 'p'
-                arrivals = model.get_travel_times(source_depth_in_km=ev_depth1,distance_in_degree=dist_vec[i],phase_list='p')
-                if(len(arrivals) == 0):
-                    print('model.get_travel_times failed: dist, phase  ' + str(dist_vec[i]) + '   ' + phase1)
-            num_arrivals = len(arrivals)
-            found_it = 0
-            for j in range(0,num_arrivals):
-                if arrivals[j].name == phase1:
-                    time_vec1[i] = arrivals[j].time
-                    found_it = 1
-            if found_it == 0:
-                time_vec1[i] = np.nan
-        # second traveltime curve
-        if phase2 != 'no':
-            time_vec2 = np.arange(min_dist_auto, max_dist_auto, (max_dist_auto - min_dist_auto)/line_pts) # empty time grid of same length (filled with -1000)
             for i in range(0,line_pts):
-                arrivals = model.get_travel_times(source_depth_in_km=ev_depth1,distance_in_degree=dist_vec[i],phase_list=[phase2])
-                if(len(arrivals) == 0 and dist_vec[i] < 10 and phase2 == 'P'):  # in case first arrival is upgoing P, which is 'p'
+                arrivals = model.get_travel_times(source_depth_in_km=ev_depth1,distance_in_degree=dist_vec[i],phase_list=[phase1])
+                if(len(arrivals) == 0 and dist_vec[i] < 10 and phase1 == 'P'):  # in case first arrival is upgoing P, which is 'p'
                     arrivals = model.get_travel_times(source_depth_in_km=ev_depth1,distance_in_degree=dist_vec[i],phase_list='p')
                     if(len(arrivals) == 0):
-                        print('model.get_travel_times failed: dist, phase  ' + str(dist_vec[i]) + '   ' + phase2)
+                        print('model.get_travel_times failed: dist, phase  ' + str(dist_vec[i]) + '   ' + phase1)
                 num_arrivals = len(arrivals)
                 found_it = 0
                 for j in range(0,num_arrivals):
-                    if arrivals[j].name == phase2:
-                        time_vec2[i] = arrivals[j].time
+                    if arrivals[j].name == phase1:
+                        time_vec1[i] = arrivals[j].time
                         found_it = 1
                 if found_it == 0:
-                    time_vec2[i] = np.nan
+                    time_vec1[i] = np.nan
+            # second traveltime curve
+            if phase2 != 'no':
+                time_vec2 = np.arange(min_dist_auto, max_dist_auto, (max_dist_auto - min_dist_auto)/line_pts) # empty time grid of same length (filled with -1000)
+                for i in range(0,line_pts):
+                    arrivals = model.get_travel_times(source_depth_in_km=ev_depth1,distance_in_degree=dist_vec[i],phase_list=[phase2])
+                    if(len(arrivals) == 0 and dist_vec[i] < 10 and phase2 == 'P'):  # in case first arrival is upgoing P, which is 'p'
+                        arrivals = model.get_travel_times(source_depth_in_km=ev_depth1,distance_in_degree=dist_vec[i],phase_list='p')
+                        if(len(arrivals) == 0):
+                            print('model.get_travel_times failed: dist, phase  ' + str(dist_vec[i]) + '   ' + phase2)
+                    num_arrivals = len(arrivals)
+                    found_it = 0
+                    for j in range(0,num_arrivals):
+                        if arrivals[j].name == phase2:
+                            time_vec2[i] = arrivals[j].time
+                            found_it = 1
+                    if found_it == 0:
+                        time_vec2[i] = np.nan
+                if   rel_time == 1:
+                    time_vec2 = time_vec2 - time_vec1 + (dist_vec - ref1_dist) * ref_slow
+                if   rel_time == 3:
+                    time_vec2 = time_vec2 - time_vec1
+                elif rel_time == 2 or rel_time == 4:
+                    time_vec2 = time_vec2 - atime_ref
+                plt.plot(time_vec2,dist_vec, color = 'orange', label = phase2)
+            # third traveltime curve
+            if phase3 != 'no':
+                time_vec3 = np.arange(min_dist_auto, max_dist_auto, (max_dist_auto - min_dist_auto)/line_pts) # empty time grid of same length (filled with -1000)
+                for i in range(0,line_pts):
+                    arrivals = model.get_travel_times(source_depth_in_km=ev_depth1,distance_in_degree=dist_vec[i],phase_list=[phase3])
+                    if(len(arrivals) == 0 and dist_vec[i] < 10 and phase3 == 'P'):  # in case first arrival is upgoing P, which is 'p'
+                        arrivals = model.get_travel_times(source_depth_in_km=ev_depth1,distance_in_degree=dist_vec[i],phase_list='p')
+                        if(len(arrivals) == 0):
+                            print('model.get_travel_times failed: dist, phase  ' + str(dist_vec[i]) + '   ' + phase3)
+                    num_arrivals = len(arrivals)
+                    found_it = 0
+                    for j in range(0,num_arrivals):
+                        if arrivals[j].name == phase3:
+                            time_vec3[i] = arrivals[j].time
+                            found_it = 1
+                    if found_it == 0:
+                        time_vec3[i] = np.nan
+                if   rel_time == 1:
+                    time_vec3 = time_vec3 - time_vec1 + (dist_vec - ref1_dist) * ref_slow
+                if   rel_time == 3:
+                    time_vec3 = time_vec3 - time_vec1
+                elif rel_time == 2 or rel_time == 4:
+                    time_vec3 = time_vec3 - atime_ref
+                plt.plot(time_vec3,dist_vec, color = 'yellow', label = phase3)
+            # fourth traveltime curve
+            if phase4 != 'no':
+                time_vec4 = np.arange(min_dist_auto, max_dist_auto, (max_dist_auto - min_dist_auto)/line_pts) # empty time grid of same length (filled with -1000)
+                for i in range(0,line_pts):
+                    arrivals = model.get_travel_times(source_depth_in_km=ev_depth1,distance_in_degree=dist_vec[i],phase_list=[phase4])
+                    if(len(arrivals) == 0 and dist_vec[i] < 10 and phase4 == 'P'):  # in case first arrival is upgoing P, which is 'p'
+                        arrivals = model.get_travel_times(source_depth_in_km=ev_depth1,distance_in_degree=dist_vec[i],phase_list='p')
+                        if(len(arrivals) == 0):
+                            print('model.get_travel_times failed: dist, phase  ' + str(dist_vec[i]) + '   ' + phase4)
+                    num_arrivals = len(arrivals)
+                    found_it = 0
+                    for j in range(0,num_arrivals):
+                        if arrivals[j].name == phase4:
+                            time_vec4[i] = arrivals[j].time
+                            found_it = 1
+                    if found_it == 0:
+                        time_vec4[i] = np.nan
+                if   rel_time == 1:
+                    time_vec4 = time_vec4 - time_vec1 + (dist_vec - ref1_dist) * ref_slow
+                if   rel_time == 3:
+                    time_vec4 = time_vec4 - time_vec1
+                elif rel_time == 2 or rel_time == 4:
+                    time_vec4 = time_vec4 - atime_ref
+                plt.plot(time_vec4,dist_vec, color = 'purple', label = phase4)
             if   rel_time == 1:
-                time_vec2 = time_vec2 - time_vec1 + (dist_vec - ref1_dist) * ref_slow
+                time_vec1 = (dist_vec - ref1_dist) * ref_slow
             if   rel_time == 3:
-                time_vec2 = time_vec2 - time_vec1
+                time_vec1 = time_vec1 - time_vec1
             elif rel_time == 2 or rel_time == 4:
-                time_vec2 = time_vec2 - atime_ref
-            plt.plot(time_vec2,dist_vec, color = 'orange', label = phase2)
-        # third traveltime curve
-        if phase3 != 'no':
-            time_vec3 = np.arange(min_dist_auto, max_dist_auto, (max_dist_auto - min_dist_auto)/line_pts) # empty time grid of same length (filled with -1000)
-            for i in range(0,line_pts):
-                arrivals = model.get_travel_times(source_depth_in_km=ev_depth1,distance_in_degree=dist_vec[i],phase_list=[phase3])
-                if(len(arrivals) == 0 and dist_vec[i] < 10 and phase3 == 'P'):  # in case first arrival is upgoing P, which is 'p'
-                    arrivals = model.get_travel_times(source_depth_in_km=ev_depth1,distance_in_degree=dist_vec[i],phase_list='p')
-                    if(len(arrivals) == 0):
-                        print('model.get_travel_times failed: dist, phase  ' + str(dist_vec[i]) + '   ' + phase3)
-                num_arrivals = len(arrivals)
-                found_it = 0
-                for j in range(0,num_arrivals):
-                    if arrivals[j].name == phase3:
-                        time_vec3[i] = arrivals[j].time
-                        found_it = 1
-                if found_it == 0:
-                    time_vec3[i] = np.nan
-            if   rel_time == 1:
-                time_vec3 = time_vec3 - time_vec1 + (dist_vec - ref1_dist) * ref_slow
-            if   rel_time == 3:
-                time_vec3 = time_vec3 - time_vec1
-            elif rel_time == 2 or rel_time == 4:
-                time_vec3 = time_vec3 - atime_ref
-            plt.plot(time_vec3,dist_vec, color = 'yellow', label = phase3)
-        # fourth traveltime curve
-        if phase4 != 'no':
-            time_vec4 = np.arange(min_dist_auto, max_dist_auto, (max_dist_auto - min_dist_auto)/line_pts) # empty time grid of same length (filled with -1000)
-            for i in range(0,line_pts):
-                arrivals = model.get_travel_times(source_depth_in_km=ev_depth1,distance_in_degree=dist_vec[i],phase_list=[phase4])
-                if(len(arrivals) == 0 and dist_vec[i] < 10 and phase4 == 'P'):  # in case first arrival is upgoing P, which is 'p'
-                    arrivals = model.get_travel_times(source_depth_in_km=ev_depth1,distance_in_degree=dist_vec[i],phase_list='p')
-                    if(len(arrivals) == 0):
-                        print('model.get_travel_times failed: dist, phase  ' + str(dist_vec[i]) + '   ' + phase4)
-                num_arrivals = len(arrivals)
-                found_it = 0
-                for j in range(0,num_arrivals):
-                    if arrivals[j].name == phase4:
-                        time_vec4[i] = arrivals[j].time
-                        found_it = 1
-                if found_it == 0:
-                    time_vec4[i] = np.nan
-            if   rel_time == 1:
-                time_vec4 = time_vec4 - time_vec1 + (dist_vec - ref1_dist) * ref_slow
-            if   rel_time == 3:
-                time_vec4 = time_vec4 - time_vec1
-            elif rel_time == 2 or rel_time == 4:
-                time_vec4 = time_vec4 - atime_ref
-            plt.plot(time_vec4,dist_vec, color = 'purple', label = phase4)
-        if   rel_time == 1:
-            time_vec1 = (dist_vec - ref1_dist) * ref_slow
-        if   rel_time == 3:
-            time_vec1 = time_vec1 - time_vec1
-        elif rel_time == 2 or rel_time == 4:
-            time_vec1 = time_vec1 - atime_ref
-        plt.plot(time_vec1,dist_vec, color = 'blue', label = phase1)
+                time_vec1 = time_vec1 - atime_ref
+            plt.plot(time_vec1,dist_vec, color = 'blue', label = phase1)
 
-    if zoom: # draw gray lines to show zoom area
-        plt.plot((Zstart_buff, Zstart_buff), (min_dist,max_dist), color = 'gray', label = 'beam start')
-        plt.plot((Zend_buff, Zend_buff), (min_dist,max_dist), color = 'lightgray', label = 'beam end')
+        if zoom: # draw gray lines to show zoom area
+            plt.plot((Zstart_buff, Zstart_buff), (min_dist,max_dist), color = 'gray', label = 'beam start')
+            plt.plot((Zend_buff, Zend_buff), (min_dist,max_dist), color = 'lightgray', label = 'beam end')
 
-    plt.xlabel('Time (s)')
-    plt.ylabel('Epicentral distance from event (°)')
-    plt.legend(loc="upper left")
-    if ARRAY == 1:
-        plt.title(phase1 + ' for ' + fname1[43:53] + ' vs ' + fname2[43:53] + ' freqs ' + str(freq_min) + '-' + str(freq_max) + ' Hz')
-    elif ARRAY == 4 :
-        plt.title(phase1 + ' for ' + fname1[46:50] + '-' + fname1[50:52] + '-' + fname1[52:54] + ' vs ' + fname2[46:50] + '-' + fname2[50:52] + '-' + fname2[52:54] + ' for array WRA, ' + str(eq_num1) + '(g) and ' + str(eq_num2) + '(r) freqs ' + str(freq_min) + '-' + str(freq_max) + ' Hz')
-    elif ARRAY == 5 or ARRAY== 99:
-        plt.title(repeater + ' ' + phase1 + ' for ' + fname1[46:50] + '-' + fname1[50:52] + '-' + fname1[52:54] + ' vs ' + fname2[46:50] + '-' + fname2[50:52] + '-' + fname2[52:54] + ' for array YKA, ' + str(eq_num1) + '(g) and ' + str(eq_num2) + '(r) freqs ' + str(freq_min) + '-' + str(freq_max) + ' Hz')
-    elif ARRAY == 6:
-        plt.title(repeater + ' ' + phase1 + ' for ' + fname1[47:51] + '-' + fname1[51:53] + '-' + fname1[53:55] + ' vs ' + fname2[47:51] + '-' + fname2[51:53] + '-' + fname2[53:55] + ' for array ILAR, ' + str(eq_num1) + '(g) and ' + str(eq_num2) + '(r) freqs ' + str(freq_min) + '-' + str(freq_max) + ' Hz')
-    elif ARRAY == 7:
-        plt.title(repeater + ' ' + phase1 + ' for ' + fname1[49:53] + '-' + fname1[53:55] + '-' + fname1[55:57] + ' vs ' + fname2[49:53] + '-' + fname2[53:55] + '-' + fname2[55:57] + ' for global array, ' + str(eq_num1) + '(g) and ' + str(eq_num2) + '(r), freqs ' + str(freq_min) + '-' + str(freq_max) + ' Hz', y = 1)
-    else:
-        plt.title(phase1 + ' for ' + fname1[42:52] + ' vs ' + fname2[42:52] + ' freqs ' + str(freq_min) + '-' + str(freq_max) + ' Hz')
-    ax = plt.gca()
-    ax.get_yaxis().get_major_formatter().set_useOffset(False)
-    # plt.gca().get_xaxis().get_major_formatter().set_useOffset(False)  # turn off conversion of y-axis to offset numbering
-    # plt.rcParams['axes.formatter.useoffset'] = False #  these two commented commands worked for some but not all cases
-    os.chdir('/Users/vidale/Documents/Research/IC/Plots_hold')
-    plt.savefig(repeater + '_Array_' + str(ARRAY) + '_section')
+        plt.xlabel('Time (s)')
+        plt.ylabel('Epicentral distance from event (°)')
+        plt.legend(loc="upper left")
+        if ARRAY == 1:
+            plt.title(phase1 + ' for ' + fname1[43:53] + ' vs ' + fname2[43:53] + ' freqs ' + str(freq_min) + '-' + str(freq_max) + ' Hz')
+        elif ARRAY == 4 :
+            plt.title(phase1 + ' for ' + fname1[46:50] + '-' + fname1[50:52] + '-' + fname1[52:54] + ' vs ' + fname2[46:50] + '-' + fname2[50:52] + '-' + fname2[52:54] + ' for array WRA, ' + str(eq_num1) + '(g) and ' + str(eq_num2) + '(r) freqs ' + str(freq_min) + '-' + str(freq_max) + ' Hz')
+        elif ARRAY == 5 or ARRAY== 99:
+            plt.title(repeater + ' ' + phase1 + ' for ' + fname1[46:50] + '-' + fname1[50:52] + '-' + fname1[52:54] + ' vs ' + fname2[46:50] + '-' + fname2[50:52] + '-' + fname2[52:54] + ' for array YKA, ' + str(eq_num1) + '(g) and ' + str(eq_num2) + '(r) freqs ' + str(freq_min) + '-' + str(freq_max) + ' Hz')
+        elif ARRAY == 6:
+            plt.title(repeater + ' ' + phase1 + ' for ' + fname1[47:51] + '-' + fname1[51:53] + '-' + fname1[53:55] + ' vs ' + fname2[47:51] + '-' + fname2[51:53] + '-' + fname2[53:55] + ' for array ILAR, ' + str(eq_num1) + '(g) and ' + str(eq_num2) + '(r) freqs ' + str(freq_min) + '-' + str(freq_max) + ' Hz')
+        elif ARRAY == 7:
+            plt.title(repeater + ' ' + phase1 + ' for ' + fname1[49:53] + '-' + fname1[53:55] + '-' + fname1[55:57] + ' vs ' + fname2[49:53] + '-' + fname2[53:55] + '-' + fname2[55:57] + ' for global array, ' + str(eq_num1) + '(g) and ' + str(eq_num2) + '(r), freqs ' + str(freq_min) + '-' + str(freq_max) + ' Hz', y = 1)
+        else:
+            plt.title(phase1 + ' for ' + fname1[42:52] + ' vs ' + fname2[42:52] + ' freqs ' + str(freq_min) + '-' + str(freq_max) + ' Hz')
+        ax = plt.gca()
+        ax.get_yaxis().get_major_formatter().set_useOffset(False)
+        # plt.gca().get_xaxis().get_major_formatter().set_useOffset(False)  # turn off conversion of y-axis to offset numbering
+        # plt.rcParams['axes.formatter.useoffset'] = False #  these two commented commands worked for some but not all cases
+        os.chdir('/Users/vidale/Documents/Research/IC/Plots_hold')
+        plt.savefig(repeater + '_Array_' + str(ARRAY) + '_section')
 
 #%%  Save processed files
     cnt1 = len(st1good)

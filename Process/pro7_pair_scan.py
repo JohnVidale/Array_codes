@@ -70,8 +70,10 @@ def pro7_pair_scan(repeater = '0', slow_delta = 0.0005, turn_off_black = 1,
         arrayname = 'ILAR '
 
     start_time_wc = time.time()
-    beam_env_plot   = True
+    beam_env_plot   = False
     max_wiggly_plot = True
+    plot_diff = False
+    plot_beams = False
 
     IC_beam = False
     beam_stack_rad = 0.01
@@ -97,29 +99,47 @@ def pro7_pair_scan(repeater = '0', slow_delta = 0.0005, turn_off_black = 1,
             return df.loc[df[column] == value]
 
     # look up pair of earthquakes
-    df = pd.read_excel('/Users/vidale/Documents/GitHub/Array_codes/Files/ICevents.full.xlsx', sheet_name='pairs')
+    df = pd.read_excel('/Users/vidale/Documents/GitHub/Array_codes/Files/ICevents_full.xlsx', sheet_name='pairs')
     lines0 = search_df(df,'label',repeater,partial_match=True)
 
     eq_num1 = lines0.index1.iloc[0]
     eq_num2 = lines0.index2.iloc[0]
 
-    fname1 = '/Users/vidale/Documents/Research/IC/EvLocs/event' + str(eq_num1) + '.txt'
-    fname2 = '/Users/vidale/Documents/Research/IC/EvLocs/event' + str(eq_num2) + '.txt'
-    file1 = open(fname1, 'r')
-    file2 = open(fname2, 'r')
-    lines1=file1.readlines()
-    lines2=file2.readlines()
-    split_line1  = lines1[0].split()
-    split_line2  = lines2[0].split()
-    t1           = UTCDateTime(split_line1[1])
-    # t2 = UTCDateTime(split_line2[1])  # not needed
-    # date_label = '2018-04-02' # dates in filename
-    date_label1  = split_line1[1][0:10]
-    date_label2  = split_line2[1][0:10]
+    # read origin times for that pair in events
+    df = pd.read_excel('/Users/vidale/Documents/GitHub/Array_codes/Files/ICevents_full.xlsx', sheet_name='events')
+    lines1 = search_df(df,'INDEX',str(eq_num1),partial_match=True)
+    lines2 = search_df(df,'INDEX',str(eq_num2),partial_match=True)
+
+    time1 = lines1.TIME.iloc[0]
+    time2 = lines2.TIME.iloc[0]
+    t1           = UTCDateTime(time1)
+    t2           = UTCDateTime(time2)
+
+
+    #  new lines to match more specific naming
+    date_label1  = time1[0:10]
+    date_label2  = time2[0:10]
+    ev_lat1      = float(lines1.LAT)
+    ev_lat2      = float(lines2.LAT)
+    ev_lon1      = float(lines1.LON)
+    ev_lon2      = float(lines2.LON)
+    ev_depth1    = float(lines1.DEP)
+    ev_depth2    = float(lines2.DEP)
+
+    if abs(ev_depth1 - ev_depth2) > 0.001:  # depths come from 2nd sheet of parameters, should be equal
+        print(colored('depth 1 ' + str(ev_depth1) + ' does not equal depth2 ' + str(ev_depth2), 'red'))
+
+    if abs(ev_lat1 - ev_lat2) > 0.001:  # latitudes come from 2nd sheet of parameters, should be equal
+        print(colored('latitude 1 ' + str(ev_lat1) + ' does not equal latitude 2 ' + str(ev_lat2), 'red'))
+
+    if abs(ev_lon1 - ev_lon2) > 0.001:  # longitudes come from 2nd sheet of parameters, should be equal
+        print(colored('latitude 1 ' + str(ev_lat1) + ' does not equal latitude 2 ' + str(ev_lat2), 'red'))
+        
+    ev_lat = ev_lat1
+    ev_lon = ev_lon1
+    ev_depth = ev_depth1
+
     save_name = '/Users/vidale/Documents/Research/IC/Plots_hold/' + repeater + '_Array_' + str(ARRAY)
-    ev_lat       = float(split_line1[2])
-    ev_lon       = float(split_line1[3])
-    ev_depth     = float(split_line1[4])
 
     if ARRAY == 0:
         ref_lat =   36.30  # °N, around middle of Japan
@@ -1180,6 +1200,7 @@ def pro7_pair_scan(repeater = '0', slow_delta = 0.0005, turn_off_black = 1,
 
     #%% Beam sum plots
     if beam_sums or max_wiggly_plot:
+    # if (beam_sums or max_wiggly_plot) and plot_beams:
     #%% -- R-T tdiff amp-normed
         fig_index += 1
         stack_slice = np.zeros((slowR_n,slowT_n))
@@ -1203,44 +1224,45 @@ def pro7_pair_scan(repeater = '0', slow_delta = 0.0005, turn_off_black = 1,
                                                      ))/np.nansum(amp_ave_thres[start_index:end_index].data)
                 stack_slice[slowR_i, slowT_i] = num_val
 
-        y1, x1 = np.meshgrid(stack_Rslows,stack_Tslows)
-        fig, ax = plt.subplots(1, figsize=(7,0.8*7*(slowR_n/slowT_n)))  # try to make correct aspect ratio plot
-        c = ax.pcolormesh(x1, y1, np.transpose(stack_slice), cmap=plt.cm.coolwarm, vmin = -tdiff_clip, vmax = tdiff_clip)
-        fig.colorbar(c, ax=ax, label='time shift (s)')
-        ax.axis([x1.min(), x1.max(), y1.min(), y1.max()])
-        circle1 = plt.Circle((0, 0), 0.019, color='black', fill=False)
-        ax.add_artist(circle1)
-        circle2 = plt.Circle((0, 0), 0.040, color='black', fill=False)
-        ax.add_artist(circle2)  #outer core limit
+        if plot_beams:
+            y1, x1 = np.meshgrid(stack_Rslows,stack_Tslows)
+            fig, ax = plt.subplots(1, figsize=(7,0.8*7*(slowR_n/slowT_n)))  # try to make correct aspect ratio plot
+            c = ax.pcolormesh(x1, y1, np.transpose(stack_slice), cmap=plt.cm.coolwarm, vmin = -tdiff_clip, vmax = tdiff_clip)
+            fig.colorbar(c, ax=ax, label='time shift (s)')
+            ax.axis([x1.min(), x1.max(), y1.min(), y1.max()])
+            circle1 = plt.Circle((0, 0), 0.019, color='black', fill=False)
+            ax.add_artist(circle1)
+            circle2 = plt.Circle((0, 0), 0.040, color='black', fill=False)
+            ax.add_artist(circle2)  #outer core limit
 
-        c = ax.scatter(pred_Eslo, pred_Nslo, color='black'  , s=50, alpha=0.75)
-        plt.text(pred_Eslo, pred_Nslo, phase1, color = 'black')
-        c = ax.scatter(        0,         0, color='black' , s=50,  alpha=0.75)
-        plt.text(0, 0, '0', color = 'black')
-        if phase2 != 'no':
-            plt.text(pred_Eslo2, pred_Nslo2, phase2, color = 'black')
-            c = ax.scatter(pred_Eslo2, pred_Nslo2, color='gray'  , s=50, alpha=0.75)
-        if phase3 != 'no':
-            plt.text(pred_Eslo3, pred_Nslo3, phase3, color = 'black')
-            c = ax.scatter(pred_Eslo3, pred_Nslo3, color='gray'  , s=50, alpha=0.75)
-        if phase4 != 'no':
-            plt.text(pred_Eslo4, pred_Nslo4, phase4, color = 'black')
-            c = ax.scatter(pred_Eslo4, pred_Nslo4, color='gray'  , s=50, alpha=0.75)
-        if phasePKP_single or phasePKP_double:
-            plt.text(pred_EsloPKP1, pred_NsloPKP1, 'PKP1', color = 'black')
-            c = ax.scatter(pred_EsloPKP1, pred_NsloPKP1, color='gray'  , s=50, alpha=0.75)
-        if phasePKP_double:
-            plt.text(pred_EsloPKP2, pred_NsloPKP2, 'PKP2', color = 'black')
-            c = ax.scatter(pred_EsloPKP2, pred_NsloPKP2, color='gray'  , s=50, alpha=0.75)
+            c = ax.scatter(pred_Eslo, pred_Nslo, color='black'  , s=50, alpha=0.75)
+            plt.text(pred_Eslo, pred_Nslo, phase1, color = 'black')
+            c = ax.scatter(        0,         0, color='black' , s=50,  alpha=0.75)
+            plt.text(0, 0, '0', color = 'black')
+            if phase2 != 'no':
+                plt.text(pred_Eslo2, pred_Nslo2, phase2, color = 'black')
+                c = ax.scatter(pred_Eslo2, pred_Nslo2, color='gray'  , s=50, alpha=0.75)
+            if phase3 != 'no':
+                plt.text(pred_Eslo3, pred_Nslo3, phase3, color = 'black')
+                c = ax.scatter(pred_Eslo3, pred_Nslo3, color='gray'  , s=50, alpha=0.75)
+            if phase4 != 'no':
+                plt.text(pred_Eslo4, pred_Nslo4, phase4, color = 'black')
+                c = ax.scatter(pred_Eslo4, pred_Nslo4, color='gray'  , s=50, alpha=0.75)
+            if phasePKP_single or phasePKP_double:
+                plt.text(pred_EsloPKP1, pred_NsloPKP1, 'PKP1', color = 'black')
+                c = ax.scatter(pred_EsloPKP1, pred_NsloPKP1, color='gray'  , s=50, alpha=0.75)
+            if phasePKP_double:
+                plt.text(pred_EsloPKP2, pred_NsloPKP2, 'PKP2', color = 'black')
+                c = ax.scatter(pred_EsloPKP2, pred_NsloPKP2, color='gray'  , s=50, alpha=0.75)
 
-        if NS:
-            plt.ylabel('N Slowness (s/km)')
-            plt.xlabel('E Slowness (s/km)')
-        else:
-            plt.ylabel('R Slowness (s/km)')
-            plt.xlabel('T Slowness (s/km)')
-        plt.title(f'{pair_name} {arrayname} {date_label1} {date_label2} {start_buff:.0f} to {end_buff:.0f} time shift')
-        plt.savefig(save_name + '_Tbeam.png')
+            if NS:
+                plt.ylabel('N Slowness (s/km)')
+                plt.xlabel('E Slowness (s/km)')
+            else:
+                plt.ylabel('R Slowness (s/km)')
+                plt.xlabel('T Slowness (s/km)')
+            plt.title(f'{pair_name} {arrayname} {date_label1} {date_label2} {start_buff:.0f} to {end_buff:.0f} time shift')
+            plt.savefig(save_name + '_Tbeam.png')
 
     #%% -- R-T amplitude averaged over time window
         fig_index += 1
@@ -1256,10 +1278,6 @@ def pro7_pair_scan(repeater = '0', slow_delta = 0.0005, turn_off_black = 1,
                 # print('slowR_n is ' + str(slowR_n) + ' slowT_n is ' + str(slowT_n) + ' index is ' + str(index) + ' num_val is ' + str(num_val))
 
         # print('stack_slice[8,8] is ' + str(stack_slice[8,8]))
-        y1, x1 = np.meshgrid(stack_Rslows,stack_Tslows)
-        fig, ax = plt.subplots(1, figsize=(7,0.8*7*(slowR_n/slowT_n)))
-        smax = np.max(stack_slice)
-        smin = np.min(stack_slice)
 
         max_xy = np.where(stack_slice == stack_slice.max() ) # find indices of slowness with max amplitude, needed for max_wiggle_plot
         print('len of max_xy[0] is ' + str(len(max_xy[0])) + ' max is ' + str(stack_slice.max()) + ' min is ' + str(stack_slice.min()))
@@ -1269,51 +1287,56 @@ def pro7_pair_scan(repeater = '0', slow_delta = 0.0005, turn_off_black = 1,
         Rslow_max = int(max_xy[0]) * slow_delta + slowR_lo
         Tslow_max = int(max_xy[1]) * slow_delta + slowT_lo
 
-        if log_plot == True:
-            if (smax - smin) < log_plot_range:  # use full color scale even if range is less than specified
-                log_plot_range = smax - smin
-            c = ax.pcolormesh(x1, y1, np.transpose(stack_slice - smax), cmap=plt.cm.gist_rainbow_r, vmin= - log_plot_range, vmax=0)
-        else:
-            c = ax.pcolormesh(x1, y1, np.transpose(stack_slice/smax), cmap=plt.cm.gist_rainbow_r, vmin = 0)
-        if log_plot == True:
-            fig.colorbar(c, ax=ax, label='log amplitude')
-        else:
-            fig.colorbar(c, ax=ax, label='linear amplitude')
-        ax.axis([x1.min(), x1.max(), y1.min(), y1.max()])
-        circle1 = plt.Circle((0, 0), 0.019, color='black', fill=False)
-        ax.add_artist(circle1)  #inner core limit
-        circle2 = plt.Circle((0, 0), 0.040, color='black', fill=False)
-        ax.add_artist(circle2)  #outer core limit
+        if plot_beams:
+            y1, x1 = np.meshgrid(stack_Rslows,stack_Tslows)
+            smax = np.max(stack_slice)
+            smin = np.min(stack_slice)
+            fig, ax = plt.subplots(1, figsize=(7,0.8*7*(slowR_n/slowT_n)))
+            if log_plot:
+                if (smax - smin) < log_plot_range:  # use full color scale even if range is less than specified
+                    log_plot_range = smax - smin
+                c = ax.pcolormesh(x1, y1, np.transpose(stack_slice - smax), cmap=plt.cm.gist_rainbow_r, vmin= - log_plot_range, vmax=0)
+            else:
+                c = ax.pcolormesh(x1, y1, np.transpose(stack_slice/smax), cmap=plt.cm.gist_rainbow_r, vmin = 0)
+            if log_plot:
+                fig.colorbar(c, ax=ax, label='log amplitude')
+            else:
+                fig.colorbar(c, ax=ax, label='linear amplitude')
+            ax.axis([x1.min(), x1.max(), y1.min(), y1.max()])
+            circle1 = plt.Circle((0, 0), 0.019, color='black', fill=False)
+            ax.add_artist(circle1)  #inner core limit
+            circle2 = plt.Circle((0, 0), 0.040, color='black', fill=False)
+            ax.add_artist(circle2)  #outer core limit
 
-        c = ax.scatter(pred_Eslo, pred_Nslo, color='black'  , s=50, alpha=0.75)
-        plt.text(pred_Eslo, pred_Nslo, phase1, color = 'black')
-        c = ax.scatter(        0,         0, color='black' , s=50,  alpha=0.75)
-        text_offset = (x1.max() - x1.min())/50
-        plt.text(text_offset, 0, '0', color = 'black')
-        if phase2 != 'no':
-            plt.text(pred_Eslo2 + text_offset, pred_Nslo2, phase2, color = 'black')
-            c = ax.scatter(pred_Eslo2, pred_Nslo2, color='gray'  , s=50, alpha=0.75)
-        if phase3 != 'no':
-            plt.text(pred_Eslo3 + text_offset, pred_Nslo3, phase3, color = 'black')
-            c = ax.scatter(pred_Eslo3, pred_Nslo3, color='gray'  , s=50, alpha=0.75)
-        if phase4 != 'no':
-            plt.text(pred_Eslo4 + text_offset, pred_Nslo4, phase4, color = 'black')
-            c = ax.scatter(pred_Eslo4, pred_Nslo4, color='gray'  , s=50, alpha=0.75)
-        if phasePKP_single or phasePKP_double:
-            plt.text(pred_EsloPKP1 + text_offset, pred_NsloPKP1, 'PKP1', color = 'black')
-            c = ax.scatter(pred_EsloPKP1, pred_NsloPKP1, color='gray'  , s=50, alpha=0.75)
-        if phasePKP_double:
-            plt.text(pred_EsloPKP2 + text_offset, pred_NsloPKP2, 'PKP2', color = 'black')
-            c = ax.scatter(pred_EsloPKP2, pred_NsloPKP2, color='gray'  , s=50, alpha=0.75)
+            c = ax.scatter(pred_Eslo, pred_Nslo, color='black'  , s=50, alpha=0.75)
+            plt.text(pred_Eslo, pred_Nslo, phase1, color = 'black')
+            c = ax.scatter(        0,         0, color='black' , s=50,  alpha=0.75)
+            text_offset = (x1.max() - x1.min())/50
+            plt.text(text_offset, 0, '0', color = 'black')
+            if phase2 != 'no':
+                plt.text(pred_Eslo2 + text_offset, pred_Nslo2, phase2, color = 'black')
+                c = ax.scatter(pred_Eslo2, pred_Nslo2, color='gray'  , s=50, alpha=0.75)
+            if phase3 != 'no':
+                plt.text(pred_Eslo3 + text_offset, pred_Nslo3, phase3, color = 'black')
+                c = ax.scatter(pred_Eslo3, pred_Nslo3, color='gray'  , s=50, alpha=0.75)
+            if phase4 != 'no':
+                plt.text(pred_Eslo4 + text_offset, pred_Nslo4, phase4, color = 'black')
+                c = ax.scatter(pred_Eslo4, pred_Nslo4, color='gray'  , s=50, alpha=0.75)
+            if phasePKP_single or phasePKP_double:
+                plt.text(pred_EsloPKP1 + text_offset, pred_NsloPKP1, 'PKP1', color = 'black')
+                c = ax.scatter(pred_EsloPKP1, pred_NsloPKP1, color='gray'  , s=50, alpha=0.75)
+            if phasePKP_double:
+                plt.text(pred_EsloPKP2 + text_offset, pred_NsloPKP2, 'PKP2', color = 'black')
+                c = ax.scatter(pred_EsloPKP2, pred_NsloPKP2, color='gray'  , s=50, alpha=0.75)
 
-        if NS:
-            plt.xlabel('E Slowness (s/km)')
-            plt.ylabel('N Slowness (s/km)')
-        else:
-            plt.xlabel('T Slowness (s/km)')
-            plt.ylabel('R Slowness (s/km)')
-        plt.title(f'{pair_name} {arrayname} {date_label1} {date_label2} {start_buff:.0f} to {end_buff:.0f} beam amp')
-        plt.savefig(save_name + '_Abeam.png')
+            if NS:
+                plt.xlabel('E Slowness (s/km)')
+                plt.ylabel('N Slowness (s/km)')
+            else:
+                plt.xlabel('T Slowness (s/km)')
+                plt.ylabel('R Slowness (s/km)')
+            plt.title(f'{pair_name} {arrayname} {date_label1} {date_label2} {start_buff:.0f} to {end_buff:.0f} beam amp')
+            plt.savefig(save_name + '_Abeam.png')
 
     #%% Wiggly plot at max amplitude
     if max_wiggly_plot and zoom:
@@ -1348,6 +1371,13 @@ def pro7_pair_scan(repeater = '0', slow_delta = 0.0005, turn_off_black = 1,
         print('Length of ttt and max_trace1 and 2:  ' + str(len(ttt)) + ' ' +  str(len(max_trace1)) + ' ' +  str(len(max_trace2)))
         plt.plot(ttt, max_trace1, color = 'green')
         plt.plot(ttt, max_trace2, color = 'red')
+        # write out traces
+        do_write = False # option to write sum mseeds
+        if do_write:
+            fname1 = '/Users/vidale/Documents/Research/IC/Pro_Files/HD' + date_label1 + 'sel.mseed_114_1'
+            fname2 = '/Users/vidale/Documents/Research/IC/Pro_Files/HD' + date_label2 + 'sel.mseed_114_2'
+            max_trace1.write(fname1,format = 'MSEED')
+            max_trace2.write(fname2,format = 'MSEED')
         plt.plot((Zstart_buff, Zstart_buff), (-1, 1), color = 'gray')
         plt.text(Zstart_buff, -1, 'start', color = 'black')
         plt.plot((Zend_buff,     Zend_buff), (-1, 1), color = 'lightgray')
@@ -1447,7 +1477,7 @@ def pro7_pair_scan(repeater = '0', slow_delta = 0.0005, turn_off_black = 1,
         plt.savefig(save_name + '_' + 'pred_wig' + str(fig_index) + '.png')
 
     #%% Wiggly difference plot at predicted slowness
-    if pred_wiggles and zoom:
+    if pred_wiggles and zoom and plot_diff:
 
         misfit = 1000000  # find the grid point closest to the predicted slowness of phase1
         for slowR_i in range(slowR_n):  # loop over radial slownesses

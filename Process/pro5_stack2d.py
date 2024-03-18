@@ -7,13 +7,14 @@
 # saves 2D stack "_2Dstack.mseed" and envelope of 2D stack "_2Dstack_env.mseed"
 # John Vidale 2/2019
 
-def pro5stack2d(eq_num, slow_delta = 0.0005, slowR_lo = -0.1, slowR_hi = 0.1, slowT_lo = -0.1, slowT_hi = 0.1,
+def pro5stack2d(eq_num = 0, slow_delta = 0.0005, slowR_lo = -0.1, slowR_hi = 0.1, slowT_lo = -0.1, slowT_hi = 0.1,
               start_buff = -50, end_buff = 50, norm = True, ARRAY = 0, NS = False, decimate_fac = 0,
               ref_loc = False, ref_lat = 36.3, ref_lon = 138.5, stack_option = 1, min_dist = 0, max_dist = 180):
 
     from obspy import UTCDateTime
     from obspy import Stream, Trace
     from obspy import read
+    import pandas as pd
     from obspy.geodetics import gps2dist_azimuth
     import numpy as np
     import os
@@ -30,17 +31,37 @@ def pro5stack2d(eq_num, slow_delta = 0.0005, slowR_lo = -0.1, slowR_hi = 0.1, sl
     env_stack = 0  # flag to stack envelopes instead of oscillating seismograms
     start_time_wc = time.time()
 
-    fname = '/Users/vidale/Documents/Research/IC/EvLocs/event' + str(eq_num) + '.txt'
-    file = open(fname, 'r')
+    def search_df(df, column, value, partial_match=True):
+        df = df.astype({column:'string'})
+        if partial_match:
+            return df.loc[df[column].str.contains(value, na=False)]
+        else:
+            return df.loc[df[column] == value]
 
-    lines=file.readlines()
-    split_line = lines[0].split()
-#            ids.append(split_line[0])  ignore label for now
-    t           = UTCDateTime(split_line[1])
-    date_label  = split_line[1][0:10]
-    ev_lat      = float(      split_line[2])
-    ev_lon      = float(      split_line[3])
-#    ev_depth    = float(      split_line[4])
+    # read origin times for that pair in events
+    df = pd.read_excel('/Users/vidale/Documents/GitHub/Array_codes/Files/ICevents_full.xlsx', sheet_name='events')
+    lines = search_df(df,'INDEX',str(eq_num),partial_match=True)
+
+    event_time = lines.TIME.iloc[0]
+    t    = UTCDateTime(event_time)
+
+    #  new lines to match more specific naming
+    date_label  = event_time[0:10]
+    ev_lat      = float(lines.LAT)
+    ev_lon      = float(lines.LON)
+    ev_depth    = float(lines.DEP)
+
+#     fname = '/Users/vidale/Documents/Research/IC/EvLocs/event' + str(eq_num) + '.txt'
+#     file = open(fname, 'r')
+
+#     lines=file.readlines()
+#     split_line = lines[0].split()
+# #            ids.append(split_line[0])  ignore label for now
+#     t           = UTCDateTime(split_line[1])
+#     date_label  = split_line[1][0:10]
+#     ev_lat      = float(      split_line[2])
+#     ev_lon      = float(      split_line[3])
+# #    ev_depth    = float(      split_line[4])
 
     if not sys.warnoptions:
         warnings.simplefilter("ignore")

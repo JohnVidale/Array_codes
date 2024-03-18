@@ -4,7 +4,7 @@
 # Write out tdiff, ave_amp results
 # John Vidale 3/2019
 
-def pro6_cc_pair(eq_num1, eq_num2, slow_delta = 0.0005, Spyder = True,
+def pro6_cc_pair(eq_num1, eq_num2, repeater = '0', slow_delta = 0.0005, Spyder = True,
               slowR_lo = -0.1, slowR_hi = 0.1, slowT_lo = -0.1, slowT_hi = 0.1,
               start_buff = 1040, end_buff = 1180,
               cc_twin = 2, cc_len = 0.5, cc_interp1d = 5, cc_delta = 0.1, cc_thres = 0.8):
@@ -22,6 +22,7 @@ def pro6_cc_pair(eq_num1, eq_num2, slow_delta = 0.0005, Spyder = True,
     import sys
     import statistics
     import math
+    import pandas as pd
     from termcolor import colored
     file_directory = '/Users/vidale/Documents/GitHub/Array_codes/Process'
     os.chdir(file_directory)
@@ -33,19 +34,32 @@ def pro6_cc_pair(eq_num1, eq_num2, slow_delta = 0.0005, Spyder = True,
 
     start_time_wc = time.time()
 
-        #%% Input parameters and computed files
-    fname1 = '/Users/vidale/Documents/Research/IC/EvLocs/event' + str(eq_num1) + '.txt'
-    fname2 = '/Users/vidale/Documents/Research/IC/EvLocs/event' + str(eq_num2) + '.txt'
-    file1 = open(fname1, 'r')
-    file2 = open(fname2, 'r')
-    lines1=file1.readlines()
-    lines2=file2.readlines()
-    split_line1 = lines1[0].split()
-    split_line2 = lines2[0].split()
-    # t1          = UTCDateTime(split_line1[1])
-    # t2 = UTCDateTime(split_line2[1])
-    date_label1  = split_line1[1][0:10]
-    date_label2  = split_line2[1][0:10]
+    def search_df(df, column, value, partial_match=True):
+        df = df.astype({column:'string'})
+        if partial_match:
+            return df.loc[df[column].str.contains(value, na=False)]
+        else:
+            return df.loc[df[column] == value]
+
+    # look up pair of earthquakes and time shifts in pairs
+    df = pd.read_excel('/Users/vidale/Documents/GitHub/Array_codes/Files/ICevents_full.xlsx', sheet_name='pairs')
+    lines0       = search_df(df,'label'      ,repeater,partial_match=True)
+    eq_num1      = lines0.index1.iloc[0]
+    eq_num2      = lines0.index2.iloc[0]
+    tshift       = lines0.tshift.iloc[0]
+    shift_both   = lines0.shift_both.iloc[0]
+
+    # read origin times for that pair in events
+    df = pd.read_excel('/Users/vidale/Documents/GitHub/Array_codes/Files/ICevents_full.xlsx', sheet_name='events')
+    lines1 = search_df(df,'INDEX',str(eq_num1),partial_match=True)
+    lines2 = search_df(df,'INDEX',str(eq_num2),partial_match=True)
+
+    time1 = lines1.TIME.iloc[0]
+    time2 = lines2.TIME.iloc[0]
+
+    #  new lines to match more specific naming
+    date_label1  = time1[0:10]
+    date_label2  = time2[0:10]
     # date_label = '2018-04-02' # dates in filename
 
     #%% -- read files
