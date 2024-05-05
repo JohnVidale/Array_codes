@@ -46,8 +46,6 @@ def pro6_cc_pair(eq_num1, eq_num2, repeater = '0', slow_delta = 0.0005, Spyder =
     lines0       = search_df(df,'label'      ,repeater,partial_match=True)
     eq_num1      = lines0.index1.iloc[0]
     eq_num2      = lines0.index2.iloc[0]
-    tshift       = lines0.tshift.iloc[0]
-    shift_both   = lines0.shift_both.iloc[0]
 
     # read origin times for that pair in events
     df = pd.read_excel('/Users/vidale/Documents/GitHub/Array_codes/Files/ICevents_full.xlsx', sheet_name='events')

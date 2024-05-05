@@ -83,8 +83,8 @@ def run_compare_ind(repeater = 'NoName',do_global = False, do_YKA = False, do_IL
 
 #%% YKA PKIKP
     if do_YKA:
-        Zstart_buff = -10 # analysis window start relative to phase arrival
-        wind_len    =  30 # analysis window length
+        Zstart_buff = -20 # analysis window start relative to phase arrival
+        wind_len    =  40 # analysis window length
         plot_peak = 1.0
         run_compare_pair(repeater = repeater, dphase = 'PKIKP',
                 beam_width = beam_width, slow_delta = slow_delta, beam_offset = beam_offset,
@@ -120,7 +120,7 @@ def run_compare_ind(repeater = 'NoName',do_global = False, do_YKA = False, do_IL
     if do_ILAR_pre:
         Zstart_buff = -15 # analysis window start relative to phase arrival
         wind_len    =  16 # analysis window length
-        plot_peak = 0.04
+        plot_peak = 0.05
         run_compare_pair(repeater = repeater, dphase = 'PKIKP',
                 beam_width = beam_width, slow_delta = slow_delta, beam_offset = beam_offset, win_norm = win_norm,trace_norm = trace_norm,
                 freq_min = freq_min, freq_max = freq_max, stat_corr = 0, ARRAY = 6, trace_amp = 0.5,

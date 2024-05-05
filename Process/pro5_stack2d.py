@@ -68,19 +68,19 @@ def pro5stack2d(eq_num = 0, slow_delta = 0.0005, slowR_lo = -0.1, slowR_hi = 0.1
 
 #%% Get location file
     if ARRAY == 0: # Hinet set
-        sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_hinet.txt'
+        sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/Stations/sta_hinet.txt'
     elif ARRAY == 1:         # LASA set
-        sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_LASA.txt'
+        sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/Stations/sta_LASA.txt'
     elif ARRAY == 2: # China set and center
-        sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_ch.txt'
+        sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/Stations/sta_ch.txt'
     elif ARRAY == 3: #         NORSAR set
-        sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_NORSAR.txt'
+        sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/Stations/sta_NORSAR.txt'
     elif ARRAY == 4: #         Warramunga set
-        sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_AU_WR.txt'
+        sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/Stations/sta_AU_WR.txt'
     elif ARRAY == 5 or ARRAY == 99: #         Yellowknife set
-        sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_CN_YK.txt'
+        sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/Stations/sta_CN_YK.txt'
     elif ARRAY == 6: #         Yellowknife set
-        sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_ILAR.txt'
+        sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/Stations/sta_ILAR.txt'
 
 #%% Set array reference location if not input
     if ref_loc == False:

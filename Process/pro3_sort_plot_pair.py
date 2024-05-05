@@ -158,20 +158,20 @@ def pro3pair(repeater = '0', stat_corr = 1, simple_taper = False, apply_SNR = Fa
 
         if ARRAY == 0:
             if stat_corr == 1: # standard set
-                sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_statics_hinet.txt'
+                sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/Stations/sta_statics_hinet.txt'
             elif stat_corr == 2: # custom set made for SSI to Hi-Net PKiKP
-                sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/SSI_HiNet_statics.txt'
+                sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/Stations/SSI_HiNet_statics.txt'
             elif stat_corr == 3: # custom set made for Kawa PKiKP for Hi-NetP
-                sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/Kawa_HiNet_statics.txt'
+                sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/Stations/Kawa_HiNet_statics.txt'
 
         elif ARRAY == 1:
-            sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_statics_LASA.txt'
+            sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/Stations/sta_statics_LASA.txt'
         elif ARRAY == 2:
-            sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_statics_ch.txt'
+            sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/Stations/sta_statics_ch.txt'
         elif ARRAY == 5 or ARRAY == 99:
-            sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_statics_YKA.txt'
+            sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/Stations/sta_statics_YKA.txt'
         elif ARRAY == 6:
-            sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_statics_ILAR.txt'
+            sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/Stations/sta_statics_ILAR.txt'
         else:
             print(colored('ERROR - No station corrections in program for array ' + str(ARRAY), 'cyan'))
             sys.exit(-1)
@@ -199,21 +199,21 @@ def pro3pair(repeater = '0', stat_corr = 1, simple_taper = False, apply_SNR = Fa
             st_corr.append( split_line[5])
     else: # no static terms, always true for NORSAR
         if ARRAY == 0: # Hinet set
-            sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_hinet.txt'
+            sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/Stations/sta_hinet.txt'
         elif ARRAY == 1: #         LASA set
-            sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_LASA.txt'
+            sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/Stations/sta_LASA.txt'
         elif ARRAY == 2: #         LASA set
-            sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_ch.txt'
+            sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/Stations/sta_ch.txt'
         elif ARRAY == 3: #         NORSAR set
-            sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_NORSAR.txt'
+            sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/Stations/sta_NORSAR.txt'
         elif ARRAY == 4: #         Warramunga set
-            sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_AU_WR.txt'
+            sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/Stations/sta_AU_WR.txt'
         elif ARRAY == 5 or ARRAY == 99: #         Yellowknife set
-            sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_CN_YK.txt'
+            sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/Stations/sta_CN_YK.txt'
         elif ARRAY == 6: #         ILAR set
-            sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_ILAR.txt'
+            sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/Stations/sta_ILAR.txt'
         elif ARRAY == 7: #         Global set
-            sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/sta_global.txt'
+            sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/Stations/sta_global.txt'
         with open(sta_file, 'r') as file:
             lines = file.readlines()
 
@@ -728,6 +728,8 @@ def pro3pair(repeater = '0', stat_corr = 1, simple_taper = False, apply_SNR = Fa
                     if (eq_num1 == 748 or eq_num2 == 748) and (st_name == 'YKB1'):
                         doit = False
                     if (eq_num1 == 750 or eq_num2 == 750) and (st_name == 'YKR7'):
+                        doit = False
+                    if (eq_num1 == 757 or eq_num2 == 757) and (st_name == 'YKR2'):
                         doit = False
                     if (eq_num1 == 759 or eq_num2 == 759) and (st_name == 'YKB2'):
                         doit = False

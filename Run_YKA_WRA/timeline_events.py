@@ -13,6 +13,7 @@ import matplotlib.patches as patches
 # import pandas as pd
 from obspy import UTCDateTime
 import pandas as pd
+import os
 
 # look up pair of earthquakes and time shifts in pairs
 def search_df(df, column, value, partial_match=True):
@@ -123,13 +124,23 @@ do_ILAR_change8 = False  # individual arrays
 do_YKA_change8  = False
 
 # Zoomed in plot, both arrays, 2 levels of matches, year1 vs year2, Fig 5 in paper
-do_YKA_change9  = True
-do_ILAR_change9 = True
-combine9 = True
+do_YKA_change9  = False
+do_ILAR_change9 = False
+combine9 = False  # produces only-YKA  plot if false and YKA True  and ILAR false
+                  # produces only-ILAR plot if false and YKA False and ILAR True
+                  # shows both if all three are True
 which_plots9 = (do_YKA_change9, do_ILAR_change9)
 
 # Best guess plot, year1 vs year2, Fig 2 in paper
 do_cons_change10 = True
+
+# Zoomed in plot, both arrays, 2 levels of matches, year1 vs year2, Fig 5 in paper
+do_YKA_change11  = False
+do_ILAR_change11 = True
+combine11 = False  # produces only-YKA  plot if false and YKA True  and ILAR false
+                  # produces only-ILAR plot if false and YKA False and ILAR True
+                  # shows both if all three are True
+which_plots11 = (do_YKA_change11, do_ILAR_change11)
 
 min_index = 0
 max_index = pair_count + 1
@@ -866,9 +877,9 @@ if do_YKA_change9 or do_ILAR_change9:
                 elif cnt == 2:
                     plt.title('ILAR', fontsize=25)
             # diagonal lines
-            rect = patches.Rectangle([2004, 2004], 15.5, 15.5, linewidth=2.0, edgecolor='orange', facecolor='none')
+            rect = patches.Rectangle([2004, 2004], 14.5, 14.5, linewidth=2.0, edgecolor='orange', facecolor='none')
             ax.add_patch(rect)
-            rect = patches.Rectangle([2009, 2009], 10.5, 10.5, linewidth=2.0, edgecolor='darkorange', facecolor='none')
+            rect = patches.Rectangle([2009, 2009],  9.5,  9.5, linewidth=2.0, edgecolor='darkorange', facecolor='none')
             ax.add_patch(rect)
 
             # quirky array legend
@@ -918,6 +929,11 @@ if do_YKA_change9 or do_ILAR_change9:
             plt.rc('grid', linestyle="-", color='black')
             plt.legend(["no data", "noisy", "different", "similar"],loc='upper left', fontsize=16)
             # plt.legend(["no data", "noisy", "different", "same for up to 3s", "same for 3 to 20s", "same throughout"],loc='upper left', fontsize=16)
+    os.chdir('/Users/vidale/Documents/Research/IC/Plots_hold')
+    if zoomer:
+        plt.savefig('all_plot_zoom' + '.png')
+    else:
+        plt.savefig('all_plot' + '.png')
 
 #%% ILAR - 1st event date vs 2nd event date
 if do_cons_change10:
@@ -963,7 +979,7 @@ if do_cons_change10:
     plt.title('Best guess', fontsize=25)
 
     # time boxes    
-    rect = patches.Rectangle([2004, 2004], 16, 16, linewidth=2.0, edgecolor='gray', facecolor='none')
+    rect = patches.Rectangle([2004, 2004], 14.5, 14.5, linewidth=2.0, edgecolor='gray', facecolor='none')
     ax.add_patch(rect)
     
     # diagonal line
@@ -984,6 +1000,108 @@ if do_cons_change10:
     plt.grid()
     plt.rc('grid', linestyle="-", color='black')
     plt.legend(["no reliable estimate", "different", "similar"], fontsize=16)
+    os.chdir('/Users/vidale/Documents/Research/IC/Plots_hold')
+    plt.savefig('best_plot' + '.png')
+
+#%% color and plot temporal connections against years of separation
+if do_ILAR_change11:
+    print('made it into do_11')
+    fig_index = 52
+    if zoomer:
+        plt.figure(fig_index, figsize=(12, 6))
+    else:
+        plt.figure(fig_index, figsize=(12, 12))
+    # stupidity to get legend right
+    plt.plot(2005, c='silver', marker='.', markersize='12')
+    plt.plot(2005, c='limegreen', marker='.',markersize='12')
+    plt.plot(2005, c='red', marker='.',markersize='12')
+
+    if zoomer:
+        minx = 2003
+        maxx = 2024
+        miny = 2002
+        maxy = 2012
+    else:
+        minx = 1997
+        maxx = 2025
+        miny = 1997
+        maxy = 2025
+    plt.xlim(minx, maxx)
+    plt.ylim(miny, maxy)
+
+    for i in pair_range:
+        best = False
+        best_list = [30,31,34,36,37,38,39,41,43,67,79,109,114,123,319,321,334,339,341,355]
+        best = pair_index[i] in best_list
+
+        if pair_name[i][0] == 'P':
+            pair_str = pair_name[i][1:3]
+        else:
+            pair_str = pair_name[i][0:3]
+        index_num = int(pair_str)
+        change = Imatch[i]
+        if ((similarity[i] == 1) or (do_only_sim == False)) and ((index_num < 50) or do_both_sets):
+            if ((similarity[i] == 1) or (do_only_sim == False)) and ((index_num < 50) or do_both_sets):
+                if (use_N and lat[i] > NSsplit) or (use_S and lat[i] <= NSsplit) or cnt == 2:
+                    marker_type = '.'
+                    marker_size = 18
+                    d1 = date1[i]
+                    d2 = date2[i]
+                    # if change == -2:
+                    #     plt.plot(d2, d1, c='gainsboro', alpha=1, marker=marker_type,linewidth=1.5, markersize=marker_size, label="moderate change")
+                    if change == -1:
+                        plt.plot(d2, d1, c='silver', alpha=1, marker=marker_type,linewidth=1.5, markersize=marker_size)
+                    elif change == 0:
+                        plt.plot(d2, d1, c='limegreen', alpha=1, marker=marker_type,linewidth=2.0, markersize=marker_size)
+                    elif change == 1:
+                        plt.plot(d2, d1, c='red', alpha=1, marker=marker_type,linewidth=1.5, markersize=marker_size)
+                    # elif change == 1 and best == False:
+                    #     plt.plot(d2, d1, c='red', alpha=1, marker=marker_type,linewidth=1.5, markersize=marker_size)
+                    # elif change == 1 and best == True:
+                    #     plt.plot(d2, d1, c='black', alpha=1, marker=marker_type,linewidth=1.5, markersize=marker_size)
+                    if do_label and change != -2:
+                        if date1[i] > miny and date1[i] < maxy and date2[i] > minx and date2[i] < maxx:
+                            plt.text(date2[i], date1[i], int(pair_index[i]))
+
+        plt.xlabel('2nd event (date)', fontsize=20)
+        plt.ylabel('1st event (date)', fontsize=20)
+    ax = plt.gca()
+    ax.tick_params(right=True, labelright=True,top=True, labeltop=True)
+    plt.title('ILAR', fontsize=25)
+    # diagonal lines
+    # rect = patches.Rectangle([2004, 2004], 14, 14, linewidth=2.0, edgecolor='orange', facecolor='none')
+    # ax.add_patch(rect)
+
+    # quirky array legend
+    if zoomer:
+        rect = patches.Rectangle([2004.35, 2006.5], 2.5, 1.9, linewidth=2.0, edgecolor='lightgray', facecolor='none')
+    else:
+        rect = patches.Rectangle([1990.6, 2014.2], 4, 3, linewidth=1.5, edgecolor='lightgray', facecolor='none')
+
+    ax.add_patch(rect)
+    xy1 = [1997, 2025]
+    xy2 = [1997, 2025]
+    plt.plot(xy1, xy2, c='purple', alpha=1, marker='.',linewidth=2.0, markersize='12')
+    xy1 = [2003, 2025]
+    xy2 = [1997, 2018]
+    plt.plot(xy1, xy2, c='purple', alpha=1, marker='.',linewidth=2.0, markersize='12')
+    if zoomer:
+        ax.xaxis.set_ticks(np.arange(2005, 2021, 5))
+        ax.yaxis.set_ticks(np.arange(2005, 2011, 5))
+    else:
+        plt.figtext(0.16, 0.3, 'dt = 0 years',c='purple', fontsize=20)
+        plt.figtext(0.33, 0.125, 'dt = 6 years',c='purple', fontsize=20)
+    ax = plt.gca()
+    ax.tick_params(axis='both', labelsize=18)
+    plt.grid()
+    plt.rc('grid', linestyle="-", color='black')
+    plt.legend(["noisy", "different", "similar"],loc='upper left', fontsize=16)
+    os.chdir('/Users/vidale/Documents/Research/IC/Plots_hold')
+    if zoomer:
+        plt.savefig('Iall_plot_zoom' + '.png')
+    else:
+        plt.savefig('Iall_plot' + '.png')
+
 
 # show all plots
 plt.show()

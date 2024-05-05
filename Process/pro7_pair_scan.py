@@ -72,7 +72,7 @@ def pro7_pair_scan(repeater = '0', slow_delta = 0.0005, turn_off_black = 1,
     start_time_wc = time.time()
     beam_env_plot   = False
     max_wiggly_plot = True
-    plot_diff = False
+    plot_diff = True
     plot_beams = False
 
     IC_beam = False

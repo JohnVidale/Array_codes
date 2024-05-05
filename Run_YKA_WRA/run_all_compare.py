@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # John Vidale 7/2022
+
 # input is pair of traces
 # this program tapers, filters, selects range and SNR
 # plots against traveltime curves, either raw or reduced against traveltimes
@@ -25,7 +26,7 @@ from run_compare_ind      import run_compare_ind
 # run_compare_ind(repeater = 'P06') # long
 # run_compare_ind(repeater = 'P07')
 # run_compare_ind(repeater = 'P08')
-# run_compare_ind(repeater = 'P09')
+run_compare_ind(repeater = 'P09')
 # run_compare_ind(repeater = 'P10')
 # run_compare_ind(repeater = 'P11')
 # run_compare_ind(repeater = 'P12')
@@ -35,11 +36,8 @@ from run_compare_ind      import run_compare_ind
 # run_compare_ind(repeater = 'P16')
 # run_compare_ind(repeater = 'P17')
 # run_compare_ind(repeater = 'P18')
-# run_compare_ind(repeater = 'P19') # Missing
 # run_compare_ind(repeater = 'P20')
 # run_compare_ind(repeater = 'P21')
-# run_compare_ind(repeater = 'P22') # Missing
-# run_compare_ind(repeater = 'P23') # Missing
 # run_compare_ind(repeater = 'P24')
 # run_compare_ind(repeater = 'P25')
 # run_compare_ind(repeater = 'P26')
@@ -79,7 +77,7 @@ from run_compare_ind      import run_compare_ind
 # run_compare_ind(repeater = 'P65')
 # run_compare_ind(repeater = 'P66')
 # run_compare_ind(repeater = 'P67')
-run_compare_ind(repeater = 'P68')
+# run_compare_ind(repeater = 'P68')
 # run_compare_ind(repeater = 'P69')
 # run_compare_ind(repeater = 'P70')
 # run_compare_ind(repeater = 'P71')
@@ -197,7 +195,6 @@ run_compare_ind(repeater = 'P68')
 # run_compare_ind(repeater = 'P352')
 # run_compare_ind(repeater = 'P353')
 # run_compare_ind(repeater = 'P354')
-# run_compare_ind(repeater = 'P355')
 # run_compare_ind(repeater = 'P356')
 
 # run_compare_ind(repeater = 'COMP')
