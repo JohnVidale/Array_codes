@@ -43,7 +43,7 @@ def run_compare_global(repeater = 'NoName', start_buff =  0, wind_len    = 20,
     eq_num1 = lines0.index1.iloc[0]
     eq_num2 = lines0.index2.iloc[0]
 
-    print(colored('Running global events ' + str(eq_num1) + ' and ' + str(eq_num2), 'green'))
+    print(colored('Running global events ' + str(eq_num1) + ' and ' + str(eq_num2) + ' which is pair ' + repeater, 'green'))
     #%% Workflow selection
     get_small_1st  = False # get waveform data from tight arrays for 1st event
     get_small_2nd  = False # get waveform data from tight arrays for 2nd event
@@ -85,7 +85,7 @@ def run_compare_global(repeater = 'NoName', start_buff =  0, wind_len    = 20,
     #%% Cull seismic section for common stations
     if make_plots == True:
         pro3pair(ARRAY = ARRAY, repeater = repeater, stat_corr = 0,
-                    rel_time = 3, start_buff = start_buff, end_buff = end_buff,
+                    start_buff = start_buff, end_buff = end_buff, rel_time = 3,
                     freq_min = freq_min, freq_max = freq_max, do_interpolate = False,
                     apply_SNR = apply_SNR, SNR_thres = SNR_thres,
                     precursor_shift = precursor_shift, signal_dur = signal_dur, fig_index = 3,

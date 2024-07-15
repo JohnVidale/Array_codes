@@ -51,57 +51,43 @@ def pro5stack2d(eq_num = 0, slow_delta = 0.0005, slowR_lo = -0.1, slowR_hi = 0.1
     ev_lon      = float(lines.LON)
     ev_depth    = float(lines.DEP)
 
-#     fname = '/Users/vidale/Documents/Research/IC/EvLocs/event' + str(eq_num) + '.txt'
-#     file = open(fname, 'r')
-
-#     lines=file.readlines()
-#     split_line = lines[0].split()
-# #            ids.append(split_line[0])  ignore label for now
-#     t           = UTCDateTime(split_line[1])
-#     date_label  = split_line[1][0:10]
-#     ev_lat      = float(      split_line[2])
-#     ev_lon      = float(      split_line[3])
-# #    ev_depth    = float(      split_line[4])
-
     if not sys.warnoptions:
         warnings.simplefilter("ignore")
 
 #%% Get location file
-    if ARRAY == 0: # Hinet set
-        sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/Stations/sta_hinet.txt'
-    elif ARRAY == 1:         # LASA set
-        sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/Stations/sta_LASA.txt'
-    elif ARRAY == 2: # China set and center
-        sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/Stations/sta_ch.txt'
-    elif ARRAY == 3: #         NORSAR set
-        sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/Stations/sta_NORSAR.txt'
-    elif ARRAY == 4: #         Warramunga set
-        sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/Stations/sta_AU_WR.txt'
-    elif ARRAY == 5 or ARRAY == 99: #         Yellowknife set
-        sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/Stations/sta_CN_YK.txt'
-    elif ARRAY == 6: #         Yellowknife set
-        sta_file = '/Users/vidale/Documents/GitHub/Array_codes/Files/Stations/sta_ILAR.txt'
+    def get_non_static_file_path(array):
+        base_path = '/Users/vidale/Documents/GitHub/Array_codes/Files/Stations/'
+        non_static_file_paths = {
+            0:  'sta_hinet',
+            1:  'sta_LASA',
+            2:  'sta_ch',
+            3:  'sta_AU_AS',
+            4:  'sta_AU_WR',
+            5:  'sta_CN_YK',
+            6:  'sta_ILAR',
+            7:  'sta_global',
+            8:  'sta_NORSAR',
+            9:  'sta_IM_TX',
+            10: 'sta_IM_PD',
+        }
+        return f"{base_path}{non_static_file_paths.get(array)}.txt"
+    sta_file = get_non_static_file_path(ARRAY)
 
 #%% Set array reference location if not input
-    if ref_loc == False:
-        if ARRAY == 0: # Hinet set
-            ref_lat =   36.30
-            ref_lon =  138.50
-        elif ARRAY == 1:         # LASA set
-            ref_lat =   46.69
-            ref_lon = -106.22
-        elif ARRAY == 2: # China set and center
-            ref_lat =   38.00  # °N
-            ref_lon =  104.50  # °E
-        elif ARRAY == 4:
-            ref_lat =  -19.90  # °N Warramunga
-            ref_lon =  134.42  # °E
-        elif ARRAY == 5 or ARRAY == 99:
-            ref_lat =   62.49  # °N Yellowknife
-            ref_lon = -114.60  # °E
-        elif ARRAY == 6:
-            ref_lat =   64.77  # °N ILAR
-            ref_lon = -146.89  # °E
+    ref_lat_lon = { #(°N, °E)
+        0:  ( 36.00,  139.00),  # HiNet, around middle of Japan
+        1:  ( 46.70, -106.22),  # LASA
+        2:  ( 38.00,  104.50),   # China
+        3:  (-23.70,  133.94),  # ASAR
+        4:  (-19.89,  134.42),  # Warramunga
+        5:  ( 62.49, -114.60),  # Yellowknife
+        6:  ( 64.77, -146.89),  # ILAR
+        9:  ( 29.33, -103.67),  # TeXas AR
+        10: ( 42.76, -109.55), # PDAR Wyoming
+    }
+    if ARRAY in ref_lat_lon: 
+        ref_lat, ref_lon = ref_lat_lon[ARRAY]
+
     with open(sta_file, 'r') as file:
         lines = file.readlines()
     print(str(len(lines)) + ' stations read from ' + sta_file)

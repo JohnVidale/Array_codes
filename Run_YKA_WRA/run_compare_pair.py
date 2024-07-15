@@ -4,8 +4,8 @@
 # this program tapers, filters, selects range and SNR
 # plots against traveltime curves, either raw or reduced against traveltimes
 
-def run_compare_pair(repeater = '0', Zstart_buff =  0, wind_len    = 20, wind_buff = 30,
-                     precursor_shift  = -1000, signal_dur     = -1000, ARRAY = 5, pair_name = '',
+def run_compare_pair(repeater = '0', Zstart_buff =  0, wind_len = 20, wind_buff = 30,
+                     precursor_shift  = -1000, signal_dur = -1000, ARRAY = 5, pair_name = '',
                      beam_width = 0.04, beam_offset = 0.00, slow_delta = 0.0025, flip = False, plot_peak = 1,
                      freq_min = 1, freq_max = 3, trace_amp = 1,
                      min_dist = 0, max_dist = 180, dphase  = 'PKiKP', fig_index = 100, win_norm = False, trace_norm = True,
@@ -59,20 +59,11 @@ def run_compare_pair(repeater = '0', Zstart_buff =  0, wind_len    = 20, wind_bu
     do_6  = True
     do_7  = True
 
-    # eq_file1 = 'event1.txt'  # pair
-    # eq_file2 = 'event2.txt'
-    # eq_num1 = '633'  # pair
-    # eq_num2 = '649'
-
     #%% Common parameters
     # ARRAY      = 6
     auto_dist = True
     min_dist = 0
     max_dist = 180
-
-    # HF
-    # freq_min = 1
-    # freq_max = 2
 
     # Pro5 stacking
     # stat_corr = 0         # 0 no corr, 1 775 by Wei, 2 219 from SSI, 3 300 from Kawakatsu
@@ -86,14 +77,21 @@ def run_compare_pair(repeater = '0', Zstart_buff =  0, wind_len    = 20, wind_bu
     precursor_shift  = -2
     signal_dur       =  4
 
-    # phase1 = 'PP'
-    # phase2 = 'PP'
-    # phase3 = 'PP'
-    # phase4 = 'PP'
-    phase1 = 'PKiKP'
-    phase2 = 'PKIKP'
-    phase3 = 'PKP'
-    phase4 = 'pPKIKP'
+    if ARRAY == 3: # ASAR
+        phase1 = 'P'
+        phase2 = 'Pdiff'
+        phase3 = 'PcP'
+        phase4 = 'pP'
+    elif ARRAY in (4,9,10): # PDAR, WRA, TXAR
+        phase1 = 'Pdiff'
+        phase2 = 'PcP'
+        phase3 = 'PKP'
+        phase4 = 'PKiKP'
+    else: # inner core paths
+        phase1 = 'PKiKP'
+        phase2 = 'PKIKP'
+        phase3 = 'PKP'
+        phase4 = 'pPKiKP'
 
     # Window
     zoom = True                                     # to restrict time range and slowness range in pro7_pair_scan

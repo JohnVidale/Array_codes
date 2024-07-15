@@ -54,24 +54,23 @@ def pro7_pair_scan(repeater = '0', slow_delta = 0.0005, turn_off_black = 1,
         phasePKP_double = True
         phase4 = 'no'
 
-    if ARRAY == 0:
-        arrayname = 'HiNet '
-    elif ARRAY == 1:
-        arrayname = 'LASA '
-    elif ARRAY == 2:
-        arrayname = 'China '
-    elif ARRAY == 3:
-        arrayname = 'NORSAR '
-    elif ARRAY == 4:
-        arrayname = 'WRA '
-    elif ARRAY == 5:
-        arrayname = 'YKA '
-    elif ARRAY == 6:
-        arrayname = 'ILAR '
+    array_names = {
+        0: 'HiNet ',
+        1: 'LASA ',
+        2: 'China ',
+        3: 'ASAR ',
+        4: 'WRA ',
+        5: 'YKA ',
+        6: 'ILAR ',
+        8: 'NORSAR ',
+        9: 'TXAR ',
+        10:'PDAR',
+    }
+    arrayname = array_names.get(ARRAY)
 
     start_time_wc = time.time()
     beam_env_plot   = False
-    max_wiggly_plot = True
+    max_wiggly_plot = False
     plot_diff = True
     plot_beams = False
 
@@ -141,24 +140,19 @@ def pro7_pair_scan(repeater = '0', slow_delta = 0.0005, turn_off_black = 1,
 
     save_name = '/Users/vidale/Documents/Research/IC/Plots_hold/' + repeater + '_Array_' + str(ARRAY)
 
-    if ARRAY == 0:
-        ref_lat =   36.30  # °N, around middle of Japan
-        ref_lon =  138.50 # °E
-    elif ARRAY == 1:
-        ref_lat =   46.70  # °N keep only inner rings A-D
-        ref_lon = -106.22   # °E
-    elif ARRAY == 2:
-        ref_lat =   38.00  # °N China
-        ref_lon =  104.50  # °E
-    elif ARRAY == 4:
-        ref_lat =  -19.89  # °N Warramunga
-        ref_lon =  134.42  # °E
-    elif ARRAY == 5:
-        ref_lat =   62.49  # °N Yellowknife
-        ref_lon = -114.60  # °E
-    elif ARRAY == 6:
-        ref_lat =   64.77  # °N ILAR
-        ref_lon = -146.89  # °E
+    ref_lat_lon = { #(°N, °E)
+        0:  ( 36.00,  139.00),  # HiNet, around middle of Japan
+        1:  ( 46.70, -106.22),  # LASA
+        2:  ( 38.00,  104.50),  # China
+        3:  (-23.70,  133.94),  # ASAR
+        4:  (-19.89,  134.42),  # Warramunga
+        5:  ( 62.49, -114.60),  # Yellowknife
+        6:  ( 64.77, -146.89),  # ILAR
+        9:  ( 29.33, -103.67),  # TeXas AR
+        10: ( 42.76, -109.55),  # PDAR Wyoming
+    }
+    if ARRAY in ref_lat_lon: 
+        ref_lat, ref_lon = ref_lat_lon[ARRAY]
 
     ref_distance = gps2dist_azimuth(ref_lat,ref_lon,ev_lat,ev_lon)
     ref_dist     = ref_distance[0]/(1000*111)
@@ -167,6 +161,8 @@ def pro7_pair_scan(repeater = '0', slow_delta = 0.0005, turn_off_black = 1,
 
     # Estimate slowness of reference phases
     arrivals_ref   = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree=ref_dist, phase_list=[phase1])
+    if(len(arrivals_ref) == 0 and ref_dist > 90 and phase1 == 'P'):  # in case first arrival might be diffracted P
+        arrivals_ref   = model.get_travel_times(source_depth_in_km=ev_depth,distance_in_degree=ref_dist, phase_list=['Pdiff'])
     print(str(len(arrivals_ref)))
     if len(arrivals_ref) == 0:
         print('reference phase ' + phase1 + ' does not exist at distance ' + str(ref_distance))
