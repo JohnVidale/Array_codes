@@ -127,9 +127,9 @@ do_ILAR_change8 = False  # individual arrays
 do_YKA_change8  = False
 
 # Zoomed in plot, both arrays, 2 levels of matches, year1 vs year2, Fig S1 in paper
-do_YKA_change9  = False
-do_ILAR_change9 = False
-combine9 = False  # produces only-YKA  plot if false and YKA True  and ILAR false
+do_YKA_change9  = True
+do_ILAR_change9 = True
+combine9 = True  # produces only-YKA  plot if false and YKA True  and ILAR false
                   # produces only-ILAR plot if false and YKA False and ILAR True
                   # shows both if all three are True
 which_plots9 = (do_YKA_change9, do_ILAR_change9)
