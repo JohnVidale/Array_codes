@@ -4,8 +4,7 @@
 # this program tapers, filters, selects range and SNR
 # plots against traveltime curves, either raw or reduced against traveltimes
 
-def run_compare_pair(repeater = '0', Zstart_buff =  0, wind_len = 20, wind_buff = 30,
-                     precursor_shift  = -1000, signal_dur = -1000, ARRAY = 5, pair_name = '',
+def run_compare_pair(repeater = '0', Zstart_buff = -60, wind_len = 120, wind_buff = 30, ARRAY = 11, pair_name = '',
                      beam_width = 0.04, beam_offset = 0.00, slow_delta = 0.0025, flip = False, plot_peak = 1,
                      freq_min = 1, freq_max = 3, trace_amp = 1,
                      min_dist = 0, max_dist = 180, dphase  = 'PKiKP', fig_index = 100, win_norm = False, trace_norm = True,
@@ -55,9 +54,9 @@ def run_compare_pair(repeater = '0', Zstart_buff =  0, wind_len = 20, wind_buff 
     do_7  = False
 
     do_3  = True  # pair of events
-    do_5  = True
-    do_6  = True
-    do_7  = True
+    # do_5  = True
+    # do_6  = True
+    # do_7  = True
 
     #%% Common parameters
     # ARRAY      = 6
@@ -87,6 +86,11 @@ def run_compare_pair(repeater = '0', Zstart_buff =  0, wind_len = 20, wind_buff 
         phase2 = 'PcP'
         phase3 = 'PKP'
         phase4 = 'PKiKP'
+    elif ARRAY in (11,12): # PDAR, WRA, TXAR
+        phase1 = 'P'
+        phase2 = 'PcP'
+        phase3 = 'pPcP'
+        phase4 = 'sPcP'
     else: # inner core paths
         phase1 = 'PKiKP'
         phase2 = 'PKIKP'
@@ -103,6 +107,7 @@ def run_compare_pair(repeater = '0', Zstart_buff =  0, wind_len = 20, wind_buff 
     Zend_buff   = Zstart_buff + wind_len              # analysis window end
     start_buff  = Zstart_buff - wind_buff             # trace start relative to analysis window (if Zoom is True)
     end_buff    = Zstart_buff + wind_len + wind_buff  # trace end
+    print(f'Zstart_buff {Zstart_buff} wind_len {wind_len} wind_buff {wind_buff} Zend_buff {Zend_buff} start_buff {start_buff} end_buff {end_buff}')
 
     # slowness
     # beam_offset = 0.01
@@ -134,7 +139,7 @@ def run_compare_pair(repeater = '0', Zstart_buff =  0, wind_len = 20, wind_buff 
     # Pro 7 auto_slice == True options
     auto_slice      = False  # slices span wide range of R and T slownesses
     two_slice_plots = False  # makes R-T pair and snap through time span
-    beam_sums       = False  # sums tdiff and amp over time
+    beam_sums       = True  # sums tdiff and amp over time
     wiggly_plots    = False  # shows wiggly plots
 
     # Pro7 auto-plot options
@@ -159,7 +164,7 @@ def run_compare_pair(repeater = '0', Zstart_buff =  0, wind_len = 20, wind_buff 
     # wig_scale_fac = 0.5
     tdiff_scale_fac = 1
     log_plot_range = 2
-    plot_scale_fac = 2
+    plot_scale_fac = 3
 
     #%% Comparing events
     #%% -- Cull seismic section for common stations

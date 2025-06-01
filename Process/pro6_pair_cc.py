@@ -56,8 +56,8 @@ def pro6_cc_pair(eq_num1, eq_num2, repeater = '0', slow_delta = 0.0005, Spyder =
     time2 = lines2.TIME.iloc[0]
 
     #  new lines to match more specific naming
-    date_label1  = time1[0:10]
-    date_label2  = time2[0:10]
+    date_label1  = str(time1)[0:10]
+    date_label2  = str(time2)[0:10]
     # date_label = '2018-04-02' # dates in filename
 
     #%% -- read files

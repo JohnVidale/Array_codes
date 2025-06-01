@@ -3,14 +3,15 @@
 # this program tapers, filters, selects range and SNR
 # plots seismograms with traveltime curves, either raw or reduced against traveltimes
 # outputs selected traces, "*sel.mseed"
-# John Vidale 2/2019
+# John Vidale 2/2019, still working on it 4/2025
 
 def pro3pair(repeater = '0', stat_corr = 1, simple_taper = False, apply_SNR = False, SNR_thres = 1.7,
-            phase1 = 'PKP', phase2 = 'PKiKP', phase3 = 'PKIKP', phase4 = 'pPKP',
+            # phase1 = 'PKP', phase2 = 'PKiKP', phase3 = 'PKIKP', phase4 = 'pPKP',
+            phase1 = 'PcP', phase2 = 'pPcP', phase3 = 'sPcP', phase4 = 'P',
             rel_time = 1, start_buff = -200, end_buff = 500, precursor_shift = 0, signal_dur = 0,
-            plot_scale_fac = 0.05, corr_threshold = 0, off_center_shift = 0, win_norm = False, wind_buff = 0,
+            plot_scale_fac = 0.1, corr_threshold = 0, off_center_shift = 0, win_norm = True, wind_buff = 0,
             zoom = False, Zstart_buff = 0, Zend_buff = 0, flip = False, trace_amp = 1,
-            freq_min = 1, freq_max = 3, min_dist = 0, max_dist = 180, auto_dist = True, ARRAY = 0,
+            freq_min = 1, freq_max = 3, min_dist = 0, max_dist = 180, auto_dist = True, ARRAY = 11,
             ref_loc = False, ref_rad = 0.4, JST = False, fig_index = 100, do_interpolate = False,
             max_taper_length = 5., taper_frac = 0.2):
 
@@ -46,12 +47,12 @@ def pro3pair(repeater = '0', stat_corr = 1, simple_taper = False, apply_SNR = Fa
     noise_win_max = 10    # maximum length of noise window for SNR estimation, seconds
     # signal_dur = 5.       # signal length used in SNR calculation
     # precursor_shift = 3.  # shift in case SNR is used and signal starts before computed arrival time
-    plot_tt = 1           # plot the traveltimes?
+    plot_tt = True           # plot the traveltimes?
     do_decimate = False   # 0 if no decimation desired
     dec_factor = 10
     plot_sta_names = True
     dist_plot = False     # plot seismograms according to distance
-    blowup_PKIKP = False
+    blowup_PKIKP = False # magnify PKIKP phase
     # if ref_loc ==true,  use ref_rad        to filter station distance
     # if ref_loc ==false, use earthquake loc to filter station distance
     #    ref_rad = 0.4    # ° radius (°) set by input or at top
@@ -67,6 +68,8 @@ def pro3pair(repeater = '0', stat_corr = 1, simple_taper = False, apply_SNR = Fa
         7: (  0.00,    0.00)           ,  # global
         9: ( 29.33, -103.67),  # TeXas AR
         10:( 42.76, -109.55), # PDAR Wyoming
+        11:( 50.60,   78.50), # KURK
+        12:( 43.10,   70.50), # KKAR
     }
 
     if rel_time != 3:  # No reference distance needed if all traces aligned on phase
@@ -116,24 +119,24 @@ def pro3pair(repeater = '0', stat_corr = 1, simple_taper = False, apply_SNR = Fa
 
 
     #  new lines to match more specific naming
-    date_label1  = time1[0:10]
-    date_label2  = time2[0:10]
-    year_label1  = time1[0: 4]
-    year_label2  = time2[0: 4]
-    year_short_label1  = time1[2:4]
+    date_label1  = str(time1)[0:10]
+    date_label2  = str(time2)[0:10]
+    year_label1  = str(time1)[0: 4]
+    year_label2  = str(time2)[0: 4]
+    year_short_label1  = str(time1)[2:4]
 
-    year_short_label2  = time2[2:4]
-    month_label1   = time1[ 5: 7]
-    month_label2   = time2[ 5: 7]
-    day_label1     = time1[ 8:10]
-    day_label2     = time2[ 8:10]
-    hour_label1    = time1[11:13]
-    hour_label2    = time2[11:13]
-    minute_label1  = time1[14:16]
-    minute_label2  = time2[14:16]
+    year_short_label2  = str(time2)[2:4]
+    month_label1       = str(time1)[ 5: 7]
+    month_label2       = str(time2)[ 5: 7]
+    day_label1         = str(time1)[ 8:10]
+    day_label2         = str(time2)[ 8:10]
+    hour_label1        = str(time1)[11:13]
+    hour_label2        = str(time2)[11:13]
+    minute_label1      = str(time1)[14:16]
+    minute_label2      = str(time2)[14:16]
 
-    year1        = time1[0:4]
-    year2        = time2[0:4]
+    year1        = str(time1)[0:4]
+    year2        = str(time2)[0:4]
     ev_lat1      = float(lines1.LAT)
     ev_lat2      = float(lines2.LAT)
     ev_lon1      = float(lines1.LON)
@@ -186,6 +189,8 @@ def pro3pair(repeater = '0', stat_corr = 1, simple_taper = False, apply_SNR = Fa
             8: 'sta_NORSAR',
             9: 'sta_IM_TX',
             10: 'sta_IM_PD',
+            11: 'sta_KZ_KUR',
+            12: 'sta_KZ_KK',
             99: 'sta_CN_YK'
         }
         return f"{base_path}{non_static_file_paths.get(array)}.txt"
@@ -265,11 +270,14 @@ def pro3pair(repeater = '0', stat_corr = 1, simple_taper = False, apply_SNR = Fa
             7: "Global/",
             9: "TXAR/",
             10: "PDAR/",
+            11: "KUR/",
+            12: "KK/",
             99: ["YKA/", "YKA2/"]}
         return subdirectories.get(array)
     
     base_path = "/Users/vidale/Documents/Research/IC/Mseed/"
     subdirectory = get_subdirectory(ARRAY)
+    print('array is ' + str(ARRAY))
     if ARRAY == 99:
         fname1 = f"{base_path}{subdirectory[0]}{mseed_name1}.mseed"
         fname2 = f"{base_path}{subdirectory[1]}{mseed_name2}.mseed"
@@ -303,10 +311,24 @@ def pro3pair(repeater = '0', stat_corr = 1, simple_taper = False, apply_SNR = Fa
     print('st1 has ' + str(len(st1)) + ' traces')
     print('st2 has ' + str(len(st2)) + ' traces')
 
+    # for tr in st1:
+    #     station = tr.stats.station
+    #     start = tr.stats.starttime
+    #     duration = tr.stats.endtime - tr.stats.starttime
+    #     start_offset = start - t1  # <-- key difference here
+    #     print(f"Station: {station}, Start Offset: {start_offset:.2f} seconds, Duration: {duration:.2f} seconds")
+
+    # for tr in st2:
+    #     station = tr.stats.station
+    #     start = tr.stats.starttime
+    #     duration = tr.stats.endtime - tr.stats.starttime
+    #     start_offset = start - t2  # <-- key difference here
+    #     print(f"Station: {station}, Start Offset: {start_offset:.2f} seconds, Duration: {duration:.2f} seconds")
+
     # print('1: ' + st1[0].stats.station + ' 2: ' + st2[0].stats.station)
     if JST == False:
-        print('1st trace starts at ' + str(st1[0].stats.starttime) + ', event at ' + str(t1))
-        print('2nd trace starts at ' + str(st2[0].stats.starttime) + ', event at ' + str(t2))
+        print('1st trace for event 1 starts at ' + str(st1[0].stats.starttime) + ', event at ' + str(t1))
+        print('1st trace for event 2 starts at ' + str(st2[0].stats.starttime) + ', event at ' + str(t2))
     if JST == True:  # time shift actually applied in loop below
         temp_time1 = st1[0].stats.starttime - 9*60*60
         temp_time2 = st2[0].stats.starttime - 9*60*60
@@ -356,6 +378,7 @@ def pro3pair(repeater = '0', stat_corr = 1, simple_taper = False, apply_SNR = Fa
             tr.stats.starttime = UTCDateTime(temp_tt)
         if JST: # if necessary, convert JST -> UTC, time in Greenwich 9 hours earlier than Japan
             tr.stats.starttime = tr.stats.starttime - 9*60*60
+
         if tr.stats.station in st_names:  # find station in station list
             ii = st_names.index(tr.stats.station)
             tra1_sta_found += 1
@@ -660,6 +683,8 @@ def pro3pair(repeater = '0', stat_corr = 1, simple_taper = False, apply_SNR = Fa
 #%%  Check station is there for both events and impose SNR threshold
     st1good = Stream()
     st2good = Stream()
+    print(f"There are {len(st_pickalign1)} traces in the st_pickalign1.")
+    print(f"There are {len(st_pickalign2)} traces in the st_pickalign2.")
     if apply_SNR == True:
         print(f'SNR parameters: start buffer {start_buff:.1f} end buffer {end_buff:.1f} pre_shift {precursor_shift:.1f} sig duration {signal_dur:.1f}')
     for tr1 in st_pickalign1:
@@ -670,11 +695,13 @@ def pro3pair(repeater = '0', stat_corr = 1, simple_taper = False, apply_SNR = Fa
         # print(tr1.stats.station)
 
         for tr2 in st_pickalign2:
+            # print(tr1.stats.station + '  ' + tr2.stats.station + '  ' + tr1.stats.network + '  ' + tr2.stats.network)
             if ARRAY == 5 and tr2.stats.station[2] == 'A':  # overcome renaming of YKA stations in late 2013
                 tr2.stats.station = tr2.stats.station[0:2] + tr2.stats.station[3:5]
 
-            if ((tr1.stats.network  == tr2.stats.network) and
-                (tr1.stats.station  == tr2.stats.station)): # if this is a match, then station is on both lists
+            # if ((tr1.stats.network  == tr2.stats.network) and
+            #     (tr1.stats.station  == tr2.stats.station)): # if this is a match, then station is on both lists
+            if (tr1.stats.station  == tr2.stats.station): # some mseed volumes have wrong or missing network information
                 if apply_SNR == False:
                     conditions_actions = [
                         (701, 'YKB1'),
@@ -868,6 +895,7 @@ def pro3pair(repeater = '0', stat_corr = 1, simple_taper = False, apply_SNR = Fa
     plt.ylim(-1,len(st1good) + 1)
 
     tr_cnt = 0
+    scale_plot = 10*plot_scale_fac / tra1_in_range # make traces right height
     for tr in st1good:
         ttt = np.arange(len(tr.data)) * tr.stats.delta + (tr.stats.starttime - t1)
         if win_norm == True:
@@ -881,7 +909,7 @@ def pro3pair(repeater = '0', stat_corr = 1, simple_taper = False, apply_SNR = Fa
                 smax = abs(snippet.max())
         else:
             smax = tr.data.max() - tr.data.min()
-        plt.plot(ttt, (tr.data - np.median(tr.data))*trace_amp/smax + tr_cnt, color = 'green')
+        plt.plot(ttt, (tr.data - np.median(tr.data)) * trace_amp * scale_plot / smax + tr_cnt, color = 'green')
         # plt.plot(ttt, (tr.data - np.median(tr.data))*trace_amp/(tr.data.max() - tr.data.min()) + tr_cnt, color = 'green')
         tr_cnt = tr_cnt + 1
 
@@ -899,7 +927,9 @@ def pro3pair(repeater = '0', stat_corr = 1, simple_taper = False, apply_SNR = Fa
                 smax = abs(snippet.max())
         else:
             smax = tr.data.max() - tr.data.min()
-        plt.plot(ttt, (tr.data - np.median(tr.data))*trace_amp/smax + tr_cnt, color = 'red')
+
+
+        plt.plot(ttt, (tr.data - np.median(tr.data)) * trace_amp * scale_plot / smax + tr_cnt, color = 'red')
         # plt.plot(ttt, (tr.data - np.median(tr.data))*trace_amp/(tr.data.max() - tr.data.min()) + tr_cnt, color = 'red')
         if plot_sta_names:
             plt.text(min_time_plot + 0.05 * (max_time_plot - min_time_plot), tr_cnt + 0.03, tr.stats.station, color = 'black')
@@ -942,21 +972,24 @@ def pro3pair(repeater = '0', stat_corr = 1, simple_taper = False, apply_SNR = Fa
         else:
             plt.ylim(min_dist,max_dist)
 
+        scale_plot = plot_scale_fac * dist_diff / tra1_in_range # make traces right height
+        print(f'scale_plot {scale_plot:.3f} tra1_in_range {tra1_in_range:.3f} max_dist {max_dist:.3f} min_dist {min_dist:.3f}')
+
         for tr in st1good:
             dist_offset = tr.stats.distance # trying for approx degrees
             ttt = np.arange(len(tr.data)) * tr.stats.delta + (tr.stats.starttime - t1)
-            plt.plot(ttt, (tr.data - np.median(tr.data))*plot_scale_fac /(tr.data.max()
+            plt.plot(ttt, (tr.data - np.median(tr.data)) * scale_plot /(tr.data.max()
                 - tr.data.min()) + dist_offset, color = 'green')
 
         for tr in st2good:
             dist_offset = tr.stats.distance # trying for approx degrees
             ttt = np.arange(len(tr.data)) * tr.stats.delta + (tr.stats.starttime - t2)
-            plt.plot(ttt, (tr.data - np.median(tr.data))*plot_scale_fac /(tr.data.max()
+            plt.plot(ttt, (tr.data - np.median(tr.data)) * scale_plot /(tr.data.max()
                 - tr.data.min()) + dist_offset, color = 'red')
             if plot_sta_names:
                 plt.text(min_time_plot + 0.015 * (max_time_plot - min_time_plot), dist_offset + 0.003 * (max_dist_auto - min_dist_auto), tr.stats.station, color = 'black')
 
-        #%% -- Traveltime curves - lines don't appear 5/2024
+        #%% -- Traveltime curves
         if rel_time != 3:  # No reference distance needed if all traces aligned on phase
             if plot_tt:
                 def compute_travel_times(model, ev_depth, dist_vec, phase, ref_time_vec=None, rel_time=0, ref1_dist=0, ref_slow=0, atime_ref=0):

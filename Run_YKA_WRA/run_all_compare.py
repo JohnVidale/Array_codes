@@ -21,7 +21,7 @@ from run_compare_ind      import run_compare_ind
 # run_compare_ind(repeater = 'P01')
 # run_compare_ind(repeater = 'P02') # long
 # run_compare_ind(repeater = 'P03')
-# run_compare_ind(repeater = 'P04')
+run_compare_ind(repeater = 'P04')
 # run_compare_ind(repeater = 'P05')
 # run_compare_ind(repeater = 'P06') # long
 # run_compare_ind(repeater = 'P07')
@@ -206,7 +206,8 @@ from run_compare_ind      import run_compare_ind
 # run_compare_ind(repeater = 'P416')
 # run_compare_ind(repeater = 'P417')
 
-run_compare_ind(repeater = 'P500')
+# Kirgistan array, Kamchatka repeaters
+# run_compare_ind(repeater = 'P500')
 # run_compare_ind(repeater = 'P501')
 
 # run_compare_ind(repeater = 'COMP')

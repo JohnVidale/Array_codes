@@ -2,7 +2,7 @@
 # John Vidale 4/2020
 # last modified 8/2022
 
-def run_compare_ind(repeater = 'NoName',do_global = False, do_YKA = False, do_ILAR = False, do_ASAR = False):
+def run_compare_ind(repeater = 'NoName', do_YKA = False, do_ILAR = False, do_ASAR = False, do_global = False):
 
     import os
     import sys
@@ -37,6 +37,7 @@ def run_compare_ind(repeater = 'NoName',do_global = False, do_YKA = False, do_IL
             return df.loc[df[column] == value]
 
     # look up pair of earthquakes and time shifts in pairs
+    # TRUE/FALSE will read in from Excel as 1/0
     df = pd.read_excel('/Users/vidale/Documents/GitHub/Array_codes/Files/ICevents_full.xlsx', sheet_name='pairs')
     lines0       = search_df(df,'label'      ,repeater,partial_match=True)
     # eq_num1      = lines0.index1.iloc[0]
@@ -45,20 +46,11 @@ def run_compare_ind(repeater = 'NoName',do_global = False, do_YKA = False, do_IL
     # shift_both   = lines0.shift_both.iloc[0]
     # Y_shift      = lines0.Y_shift.iloc[0]
     # shift_bothY  = lines0.shift_bothY.iloc[0]
-    do_ASAR      = True
     do_YKA       = True
-    do_YKA_pre   = True
     do_ILAR      = lines0.ILAR.iloc[0]
     do_ASAR      = lines0.ASAR.iloc[0]
     do_global    = lines0.global_sta.iloc[0]
-
-    # wretched Excel quirk
-    if   do_ASAR   == 'TRUE':  do_ASAR   = 'True'
-    elif do_ASAR   == 'FALSE': do_ASAR   = 'False'
-    if   do_ILAR   == 'TRUE':  do_ILAR   = 'True'
-    elif do_ILAR   == 'FALSE': do_ILAR   = 'False'
-    if   do_global == 'TRUE':  do_global = 'True'
-    elif do_global == 'FALSE': do_global = 'False'
+    do_YKA_pre   = False
 
     # freq_min = 0.6; freq_max = 1.5
     freq_min = 1; freq_max = 2
@@ -66,14 +58,12 @@ def run_compare_ind(repeater = 'NoName',do_global = False, do_YKA = False, do_IL
     do_ILAR_pre = do_ILAR
 
     # Skip some arrays?
-    # do_global   = False
+    do_global   = False
     do_ASAR     = False
-    # do_YKA      = False
-    do_ILAR     = False
+    do_YKA      = False
+    # do_ILAR     = False
     do_YKA_pre  = False
-    do_ILAR_pre = False
-
-    print(colored('do_global ' + str(do_global) + ' and do_ILAR ' + str(do_ILAR) + ' and do_ASAR ' + str(do_ASAR) + ' and do_YKA ' + str(do_YKA), 'green'))
+    # do_ILAR_pre = False
 
     if do_global:
         start_buff = -10 # analysis window start relative to phase arrival
@@ -94,8 +84,8 @@ def run_compare_ind(repeater = 'NoName',do_global = False, do_YKA = False, do_IL
 
 #%% YKA PKIKP
     if do_YKA:
-        Zstart_buff = -30 # analysis window start relative to phase arrival
-        wind_len    =  80 # analysis window length
+        Zstart_buff = -20 # analysis window start relative to phase arrival
+        wind_len    =  40 # analysis window length
         plot_peak = 1.0
         run_compare_pair(repeater = repeater, dphase = 'PKIKP',
                 beam_width = beam_width, slow_delta = slow_delta, beam_offset = beam_offset,
@@ -117,7 +107,7 @@ def run_compare_ind(repeater = 'NoName',do_global = False, do_YKA = False, do_IL
 #%% YKA PKP precursor
     if do_YKA_pre:
         Zstart_buff = -15 # analysis window start relative to phase arrival
-        wind_len    =   7 # analysis window length
+        wind_len    =  17 # analysis window length
         plot_peak = 1.0
         run_compare_pair(repeater = repeater, dphase = 'PKIKP',
                 beam_width = beam_widthW, slow_delta = slow_deltaW, beam_offset = beam_offsetW,
@@ -126,8 +116,8 @@ def run_compare_ind(repeater = 'NoName',do_global = False, do_YKA = False, do_IL
                 fig_index = 600, do_interpolate =  True, pair_name = repeater, plot_peak = plot_peak)
 #%% ILAR PKP
     if do_ILAR:
-        Zstart_buff = -30 # analysis window start relative to phase arrival
-        wind_len    =  80 # analysis window length
+        Zstart_buff = -20 # analysis window start relative to phase arrival
+        wind_len    =  40 # analysis window length
         plot_peak = 1.0
         run_compare_pair(repeater = repeater, dphase = 'PKIKP',
                 beam_width = beam_width, slow_delta = slow_delta, beam_offset = beam_offset,
@@ -140,7 +130,7 @@ def run_compare_ind(repeater = 'NoName',do_global = False, do_YKA = False, do_IL
     trace_norm = False
     if do_ILAR_pre:
         Zstart_buff = -15 # analysis window start relative to phase arrival
-        wind_len    =  16 # analysis window length
+        wind_len    =  17 # analysis window length
         plot_peak = 0.05
         run_compare_pair(repeater = repeater, dphase = 'PKIKP',
                 beam_width = beam_width, slow_delta = slow_delta, beam_offset = beam_offset, win_norm = win_norm,trace_norm = trace_norm,

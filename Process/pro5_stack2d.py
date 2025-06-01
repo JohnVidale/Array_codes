@@ -46,7 +46,7 @@ def pro5stack2d(eq_num = 0, slow_delta = 0.0005, slowR_lo = -0.1, slowR_hi = 0.1
     t    = UTCDateTime(event_time)
 
     #  new lines to match more specific naming
-    date_label  = event_time[0:10]
+    date_label  = str(event_time)[0:10]
     ev_lat      = float(lines.LAT)
     ev_lon      = float(lines.LON)
     ev_depth    = float(lines.DEP)
@@ -69,6 +69,8 @@ def pro5stack2d(eq_num = 0, slow_delta = 0.0005, slowR_lo = -0.1, slowR_hi = 0.1
             8:  'sta_NORSAR',
             9:  'sta_IM_TX',
             10: 'sta_IM_PD',
+            11: 'sta_KZ_KUR',
+            12: 'sta_KZ_KK',
         }
         return f"{base_path}{non_static_file_paths.get(array)}.txt"
     sta_file = get_non_static_file_path(ARRAY)
@@ -77,13 +79,14 @@ def pro5stack2d(eq_num = 0, slow_delta = 0.0005, slowR_lo = -0.1, slowR_hi = 0.1
     ref_lat_lon = { #(°N, °E)
         0:  ( 36.00,  139.00),  # HiNet, around middle of Japan
         1:  ( 46.70, -106.22),  # LASA
-        2:  ( 38.00,  104.50),   # China
+        2:  ( 38.00,  104.50),  # China
         3:  (-23.70,  133.94),  # ASAR
         4:  (-19.89,  134.42),  # Warramunga
         5:  ( 62.49, -114.60),  # Yellowknife
         6:  ( 64.77, -146.89),  # ILAR
         9:  ( 29.33, -103.67),  # TeXas AR
-        10: ( 42.76, -109.55), # PDAR Wyoming
+        11: ( 50.60,   78.50),  # KURK
+        12: ( 43.10,   70.50),  # KKAR
     }
     if ARRAY in ref_lat_lon: 
         ref_lat, ref_lon = ref_lat_lon[ARRAY]
@@ -227,7 +230,7 @@ def pro5stack2d(eq_num = 0, slow_delta = 0.0005, slowR_lo = -0.1, slowR_hi = 0.1
                             nbeg1 = -nshift
                             nend1 = stack_nt
                             nbeg2 = 0
-                            nend2 = stack_nt + nshift;
+                            nend2 = stack_nt + nshift
                         elif nshift > 0:
                             nbeg1 = 0
                             nend1 = stack_nt - nshift

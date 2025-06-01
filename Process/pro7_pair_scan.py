@@ -65,16 +65,18 @@ def pro7_pair_scan(repeater = '0', slow_delta = 0.0005, turn_off_black = 1,
         8: 'NORSAR ',
         9: 'TXAR ',
         10:'PDAR',
+        11:'KUR',
+        12:'KK',
     }
     arrayname = array_names.get(ARRAY)
 
     start_time_wc = time.time()
-    beam_env_plot   = False
-    max_wiggly_plot = False
+    beam_env_plot   = True
+    max_wiggly_plot = True
     plot_diff = True
-    plot_beams = False
+    plot_beams = True
 
-    IC_beam = False
+    IC_beam = True
     beam_stack_rad = 0.01
     folder_name = '/Users/vidale/Documents/Research/IC/'
 
@@ -116,8 +118,8 @@ def pro7_pair_scan(repeater = '0', slow_delta = 0.0005, turn_off_black = 1,
 
 
     #  new lines to match more specific naming
-    date_label1  = time1[0:10]
-    date_label2  = time2[0:10]
+    date_label1  = str(time1)[0:10]
+    date_label2  = str(time2)[0:10]
     ev_lat1      = float(lines1.LAT)
     ev_lat2      = float(lines2.LAT)
     ev_lon1      = float(lines1.LON)
@@ -150,6 +152,8 @@ def pro7_pair_scan(repeater = '0', slow_delta = 0.0005, turn_off_black = 1,
         6:  ( 64.77, -146.89),  # ILAR
         9:  ( 29.33, -103.67),  # TeXas AR
         10: ( 42.76, -109.55),  # PDAR Wyoming
+        11: ( 50.60,   78.50),  # KURK
+        12: ( 43.10,   70.50),  # KKAR
     }
     if ARRAY in ref_lat_lon: 
         ref_lat, ref_lon = ref_lat_lon[ARRAY]

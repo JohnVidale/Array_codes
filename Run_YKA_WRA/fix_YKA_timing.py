@@ -80,7 +80,7 @@ def fix_YKA_timing(eq_num = 737):
 
     #%% -- Apply static
             st_name = tr.stats.station
-            # correction for shift to new instrumentation 2013, no idea what it's intermittent for 6 years
+            # correction for shift to new instrumentation 2013, no idea why it's intermittent for 6 years
             shifter = 0
 
             if eq_num <= 746 or (eq_num >= 800 and eq_num <= 827):
